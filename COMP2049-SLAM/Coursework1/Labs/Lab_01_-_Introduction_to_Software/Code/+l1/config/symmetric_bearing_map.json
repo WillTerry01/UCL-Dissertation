@@ -1,0 +1,64 @@
+  {
+      "sensors": [
+	{
+	    "gps": {
+		"enabled": true,
+		"sigmaR": 1,
+		"measurementPeriod": 1,
+		"occluders": [
+		    {
+			"x_min": -25,
+			"x_max": 25,
+			"y_min": -25,
+			"y_max": 25
+		    }
+		]
+
+	    },
+	    "bearing": {
+		"enabled": true,
+		"sigmaR": 0.001,
+		"measurementPeriod": 0.5,
+		"sensors": [
+		{
+		    "position": [
+			-80,
+			0
+		    ],
+		    "orientation": 0,
+		    "detectionRange": 85,
+		    "detectionAngle": 70
+		},
+      {
+	  "position": [
+	      80,
+	  0
+	],
+	  "orientation": -180,
+	"detectionRange": 85,
+	"detectionAngle": 70
+      },
+		    {
+	  "position": [
+	      0,
+	  80
+	],
+	  "orientation": -90,
+	"detectionRange": 85,
+	"detectionAngle": 70
+		    },
+		    {
+	  "position": [
+	      0,
+	  -80
+	],
+	  "orientation": 90,
+	"detectionRange": 85,
+	"detectionAngle": 70
+      }
+		]
+	    }
+	}
+      ]
+  }
+
