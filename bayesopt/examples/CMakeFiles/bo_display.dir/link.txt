@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/bo_display.dir/bo_display.cpp.o CMakeFiles/bo_display.dir/__/utils/displaygp.cpp.o  -o ../bin/bo_display   -L/home/will/Dissertation/UCL-Dissertation/bayesopt/lib  -Wl,-rpath,/home/will/Dissertation/UCL-Dissertation/bayesopt/lib ../lib/libbayesopt.a ../lib/libmatplotpp.a -lglut -lXmu -lXi -lGL -lGLU ../lib/libnlopt.a 
