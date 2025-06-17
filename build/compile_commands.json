@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/2d_example.dir/2D_example.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_example.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_example.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/1d_example.dir/1D_example.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/1D_example.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/1D_example.cpp"
+}
+]

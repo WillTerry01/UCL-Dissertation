@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/logging_application.dir/logging.o  -o logging_example  -lstuff 

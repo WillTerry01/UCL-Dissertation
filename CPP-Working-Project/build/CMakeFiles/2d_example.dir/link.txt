@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/2d_example.dir/2D_example.cpp.o  -o 2d_example  -lg2o_core -lg2o_stuff 

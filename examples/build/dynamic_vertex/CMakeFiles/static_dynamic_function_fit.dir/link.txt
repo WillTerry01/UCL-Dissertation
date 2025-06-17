@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/static_dynamic_function_fit.dir/static_dynamic_function_fit.o  -o static_dynamic_function_fit  -lcore -lsolver_eigen 
