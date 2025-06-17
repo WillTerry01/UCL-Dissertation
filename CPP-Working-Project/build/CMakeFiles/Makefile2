@@ -53,8 +53,7 @@ CMAKE_BINARY_DIR = /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/2d_example.dir/all
-all: CMakeFiles/1d_example.dir/all
+all: CMakeFiles/bayesopt_example.dir/all
 
 .PHONY : all
 
@@ -64,64 +63,36 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/2d_example.dir/clean
-clean: CMakeFiles/1d_example.dir/clean
+clean: CMakeFiles/bayesopt_example.dir/clean
 
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/2d_example.dir
+# Target rules for target CMakeFiles/bayesopt_example.dir
 
 # All Build rule for target.
-CMakeFiles/2d_example.dir/all:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/depend
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=3,4 "Built target 2d_example"
-.PHONY : CMakeFiles/2d_example.dir/all
+CMakeFiles/bayesopt_example.dir/all:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/depend
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=1,2 "Built target bayesopt_example"
+.PHONY : CMakeFiles/bayesopt_example.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/2d_example.dir/rule: cmake_check_build_system
+CMakeFiles/bayesopt_example.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/2d_example.dir/all
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/bayesopt_example.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 0
-.PHONY : CMakeFiles/2d_example.dir/rule
+.PHONY : CMakeFiles/bayesopt_example.dir/rule
 
 # Convenience name for target.
-2d_example: CMakeFiles/2d_example.dir/rule
+bayesopt_example: CMakeFiles/bayesopt_example.dir/rule
 
-.PHONY : 2d_example
-
-# clean rule for target.
-CMakeFiles/2d_example.dir/clean:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/clean
-.PHONY : CMakeFiles/2d_example.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/1d_example.dir
-
-# All Build rule for target.
-CMakeFiles/1d_example.dir/all:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/depend
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=1,2 "Built target 1d_example"
-.PHONY : CMakeFiles/1d_example.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/1d_example.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/1d_example.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 0
-.PHONY : CMakeFiles/1d_example.dir/rule
-
-# Convenience name for target.
-1d_example: CMakeFiles/1d_example.dir/rule
-
-.PHONY : 1d_example
+.PHONY : bayesopt_example
 
 # clean rule for target.
-CMakeFiles/1d_example.dir/clean:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/clean
-.PHONY : CMakeFiles/1d_example.dir/clean
+CMakeFiles/bayesopt_example.dir/clean:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/clean
+.PHONY : CMakeFiles/bayesopt_example.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -111,84 +111,44 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named 2d_example
+# Target rules for targets named bayesopt_example
 
 # Build rule for target.
-2d_example: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 2d_example
-.PHONY : 2d_example
+bayesopt_example: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 bayesopt_example
+.PHONY : bayesopt_example
 
 # fast build rule for target.
-2d_example/fast:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/build
-.PHONY : 2d_example/fast
+bayesopt_example/fast:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
+.PHONY : bayesopt_example/fast
 
-#=============================================================================
-# Target rules for targets named 1d_example
+bayesopt_example.o: bayesopt_example.cpp.o
 
-# Build rule for target.
-1d_example: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 1d_example
-.PHONY : 1d_example
-
-# fast build rule for target.
-1d_example/fast:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/build
-.PHONY : 1d_example/fast
-
-1D_example.o: 1D_example.cpp.o
-
-.PHONY : 1D_example.o
+.PHONY : bayesopt_example.o
 
 # target to build an object file
-1D_example.cpp.o:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/1D_example.cpp.o
-.PHONY : 1D_example.cpp.o
+bayesopt_example.cpp.o:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.o
+.PHONY : bayesopt_example.cpp.o
 
-1D_example.i: 1D_example.cpp.i
+bayesopt_example.i: bayesopt_example.cpp.i
 
-.PHONY : 1D_example.i
-
-# target to preprocess a source file
-1D_example.cpp.i:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/1D_example.cpp.i
-.PHONY : 1D_example.cpp.i
-
-1D_example.s: 1D_example.cpp.s
-
-.PHONY : 1D_example.s
-
-# target to generate assembly for a file
-1D_example.cpp.s:
-	$(MAKE) -f CMakeFiles/1d_example.dir/build.make CMakeFiles/1d_example.dir/1D_example.cpp.s
-.PHONY : 1D_example.cpp.s
-
-2D_example.o: 2D_example.cpp.o
-
-.PHONY : 2D_example.o
-
-# target to build an object file
-2D_example.cpp.o:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/2D_example.cpp.o
-.PHONY : 2D_example.cpp.o
-
-2D_example.i: 2D_example.cpp.i
-
-.PHONY : 2D_example.i
+.PHONY : bayesopt_example.i
 
 # target to preprocess a source file
-2D_example.cpp.i:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/2D_example.cpp.i
-.PHONY : 2D_example.cpp.i
+bayesopt_example.cpp.i:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.i
+.PHONY : bayesopt_example.cpp.i
 
-2D_example.s: 2D_example.cpp.s
+bayesopt_example.s: bayesopt_example.cpp.s
 
-.PHONY : 2D_example.s
+.PHONY : bayesopt_example.s
 
 # target to generate assembly for a file
-2D_example.cpp.s:
-	$(MAKE) -f CMakeFiles/2d_example.dir/build.make CMakeFiles/2d_example.dir/2D_example.cpp.s
-.PHONY : 2D_example.cpp.s
+bayesopt_example.cpp.s:
+	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.s
+.PHONY : bayesopt_example.cpp.s
 
 # Help Target
 help:
@@ -198,14 +158,10 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... 2d_example"
-	@echo "... 1d_example"
-	@echo "... 1D_example.o"
-	@echo "... 1D_example.i"
-	@echo "... 1D_example.s"
-	@echo "... 2D_example.o"
-	@echo "... 2D_example.i"
-	@echo "... 2D_example.s"
+	@echo "... bayesopt_example"
+	@echo "... bayesopt_example.o"
+	@echo "... bayesopt_example.i"
+	@echo "... bayesopt_example.s"
 .PHONY : help
 
 

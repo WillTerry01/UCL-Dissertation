@@ -8,21 +8,22 @@
 #include <g2o/solvers/dense/linear_solver_dense.h>
 #include <memory>
 #include <random>
+#include <Eigen/Dense>
 
 using namespace std;
 using namespace g2o;
 
-// Define a 2D vertex (state)
-class Vertex2D : public BaseVertex<2, Eigen::Vector2d> {
+// Define a 4D vertex (state: position and velocity)
+class Vertex4D : public BaseVertex<4, Eigen::Vector4d> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     virtual void setToOriginImpl() override {
-        _estimate = Eigen::Vector2d::Zero();
+        _estimate = Eigen::Vector4d::Zero();
     }
 
     virtual void oplusImpl(const double* update) override {
-        _estimate += Eigen::Vector2d(update[0], update[1]);
+        _estimate += Eigen::Vector4d(update[0], update[1], update[2], update[3]);
     }
 
     virtual bool read(std::istream&) override { return false; }
@@ -30,13 +31,14 @@ public:
 };
 
 // Unary edge representing a measurement of the 2D position
-class UnaryEdge2D : public BaseUnaryEdge<2, Eigen::Vector2d, Vertex2D> {
+class UnaryEdge2D : public BaseUnaryEdge<2, Eigen::Vector2d, Vertex4D> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     virtual void computeError() override {
-        const Vertex2D* v = static_cast<const Vertex2D*>(_vertices[0]);
-        _error = _measurement - v->estimate();
+        const Vertex4D* v = static_cast<const Vertex4D*>(_vertices[0]);
+        // Only use position part of state for measurement
+        _error = _measurement - v->estimate().head<2>();
     }
 
     virtual bool read(std::istream&) override { return false; }
@@ -45,7 +47,7 @@ public:
 
 int main() {
     // Setup the optimizer
-    typedef BlockSolver< BlockSolverTraits<2, 2> > BlockSolverType;
+    typedef BlockSolver< BlockSolverTraits<4, 2> > BlockSolverType;
     typedef LinearSolverDense<BlockSolverType::PoseMatrixType> LinearSolverType;
 
     auto linearSolver = std::make_unique<LinearSolverType>();
@@ -56,41 +58,58 @@ int main() {
     optimizer.setAlgorithm(solver);
     optimizer.setVerbose(false);
 
+    // Process noise covariance (Q) and measurement noise covariance (R)
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Identity() * 0.1;  // Process noise
+    Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * 1.0;  // Measurement noise
+
     // Add vertex (state)
-    Vertex2D* v = new Vertex2D();
+    Vertex4D* v = new Vertex4D();
     v->setId(0);
-    v->setEstimate(Eigen::Vector2d(0.0, 0.0));  // initial guess
+    v->setEstimate(Eigen::Vector4d(0.0, 0.0, 0.0, 0.0));  // initial state: [x, y, vx, vy]
     optimizer.addVertex(v);
 
     // Generate noisy measurements around a true position
     const Eigen::Vector2d true_position(5.0, 3.0);
+    const Eigen::Vector2d true_velocity(0.5, 0.3);  // Constant velocity
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::normal_distribution<> noise(0.0, 0.5);  // Gaussian noise with std dev 0.5
+    std::normal_distribution<> noise(0.0, 1.0);
 
     // Add measurements
     std::ofstream csv("build/2d_progress.csv");
-    csv << "iteration,x,y,total_error\n";
+    csv << "iteration,x,y,vx,vy,total_error\n";
 
     // Generate 10 noisy measurements
     for (int i = 0; i < 10; ++i) {
-        Eigen::Vector2d measurement = true_position;
+        // Update true position based on velocity
+        Eigen::Vector2d measurement = true_position + true_velocity * i;
         measurement.x() += noise(gen);
         measurement.y() += noise(gen);
 
         UnaryEdge2D* e = new UnaryEdge2D();
         e->setVertex(0, v);
         e->setMeasurement(measurement);
-        e->setInformation(Eigen::Matrix2d::Identity());
+        e->setInformation(R.inverse());  // Use measurement noise matrix
         e->setId(i);
         optimizer.addEdge(e);
+
+        // Add process noise edge
+        if (i > 0) {
+            // Create a binary edge for process model
+            // This would require implementing a new edge type for the process model
+            // For simplicity, we'll just add process noise to the state directly
+            Eigen::Vector4d process_noise;
+            process_noise << noise(gen), noise(gen), noise(gen), noise(gen);
+            process_noise = Q * process_noise;
+            v->setEstimate(v->estimate() + process_noise);
+        }
     }
 
     // Optimize step by step and log progress
     optimizer.initializeOptimization();
     int maxIterations = 20;
     for (int iter = 0; iter <= maxIterations; ++iter) {
-        if (iter > 0) optimizer.optimize(1); // one iteration at a time
+        if (iter > 0) optimizer.optimize(1);
         
         // Compute total error
         double totalError = 0.0;
@@ -104,19 +123,25 @@ int main() {
         csv << iter << "," 
             << v->estimate().x() << "," 
             << v->estimate().y() << "," 
+            << v->estimate().z() << "," 
+            << v->estimate().w() << "," 
             << totalError << "\n";
 
         std::cout << "Iter " << iter 
                   << ": Position = (" << v->estimate().x() << ", " << v->estimate().y() 
+                  << "), Velocity = (" << v->estimate().z() << ", " << v->estimate().w()
                   << "), Error = " << totalError << std::endl;
     }
     csv.close();
 
     // Output final result
-    std::cout << "Final optimized position: (" 
-              << v->estimate().x() << ", " << v->estimate().y() << ")" << std::endl;
+    std::cout << "Final optimized state: [" 
+              << v->estimate().x() << ", " << v->estimate().y() << ", "
+              << v->estimate().z() << ", " << v->estimate().w() << "]" << std::endl;
     std::cout << "True position: (" 
               << true_position.x() << ", " << true_position.y() << ")" << std::endl;
+    std::cout << "True velocity: (" 
+              << true_velocity.x() << ", " << true_velocity.y() << ")" << std::endl;
 
     return 0;
 }

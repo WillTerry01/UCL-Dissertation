@@ -6,5 +6,5 @@ CXX_FLAGS =   -std=gnu++17
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -isystem /usr/include/eigen3 
+CXX_INCLUDES = -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3 
 

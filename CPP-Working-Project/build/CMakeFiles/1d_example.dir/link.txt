@@ -1,1 +1,1 @@
-/usr/bin/c++     CMakeFiles/1d_example.dir/1D_example.cpp.o  -o 1d_example  -lg2o_core -lg2o_stuff 
+/usr/bin/c++     CMakeFiles/1d_example.dir/1D_example.cpp.o  -o 1d_example   -L/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/lib  -Wl,-rpath,/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/lib -lg2o_core -lg2o_stuff -lbayesopt 

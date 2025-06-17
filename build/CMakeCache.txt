@@ -14,6 +14,15 @@
 # EXTERNAL cache entries
 ########################
 
+//Value Computed by CMake
+BayesOptExample_BINARY_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/build
+
+//Value Computed by CMake
+BayesOptExample_SOURCE_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project
+
+//The directory containing a CMake configuration file for BayesOpt.
+BayesOpt_DIR:PATH=BayesOpt_DIR-NOTFOUND
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
@@ -144,7 +153,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=g2o_1d_example
+CMAKE_PROJECT_NAME:STATIC=BayesOptExample
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib

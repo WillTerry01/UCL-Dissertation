@@ -1,28 +1,33 @@
 cmake_minimum_required(VERSION 3.10)
-project(g2o_1d_example)
+project(BayesOptExample)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
 find_package(Eigen3 REQUIRED)
-find_package(g2o REQUIRED)
 
-# Add executables
-add_executable(1d_example 1D_example.cpp)
-add_executable(2d_example 2D_example.cpp)
+# Set BayesOpt paths manually since it's installed locally
+set(BAYESOPT_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/../bayesopt/include")
+set(BAYESOPT_LIBRARIES 
+    "${CMAKE_SOURCE_DIR}/../bayesopt/lib/libbayesopt.a"
+    "${CMAKE_SOURCE_DIR}/../bayesopt/lib/libnlopt.a"
+)
 
-# Link libraries and include directories for both executables
-foreach(target 1d_example 2d_example)
-    target_include_directories(${target} PRIVATE 
-        ${EIGEN3_INCLUDE_DIR}
-        ${G2O_INCLUDE_DIRS}
-    )
+# Add the executable
+add_executable(bayesopt_example bayesopt_example.cpp)
 
-    target_link_libraries(${target} PRIVATE
-        g2o_core
-        g2o_stuff
-        Eigen3::Eigen
-    )
-endforeach()
+# Link against required libraries
+target_link_libraries(bayesopt_example
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+)
+
+# Include directories
+target_include_directories(bayesopt_example
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+)
