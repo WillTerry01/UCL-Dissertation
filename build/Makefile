@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named 2d_factor_graph_trajectory
+
+# Build rule for target.
+2d_factor_graph_trajectory: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 2d_factor_graph_trajectory
+.PHONY : 2d_factor_graph_trajectory
+
+# fast build rule for target.
+2d_factor_graph_trajectory/fast:
+	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/build
+.PHONY : 2d_factor_graph_trajectory/fast
+
+#=============================================================================
 # Target rules for targets named bayesopt_example
 
 # Build rule for target.
@@ -122,6 +135,33 @@ bayesopt_example: cmake_check_build_system
 bayesopt_example/fast:
 	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
 .PHONY : bayesopt_example/fast
+
+2D_factor_graph_trajectory.o: 2D_factor_graph_trajectory.cpp.o
+
+.PHONY : 2D_factor_graph_trajectory.o
+
+# target to build an object file
+2D_factor_graph_trajectory.cpp.o:
+	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o
+.PHONY : 2D_factor_graph_trajectory.cpp.o
+
+2D_factor_graph_trajectory.i: 2D_factor_graph_trajectory.cpp.i
+
+.PHONY : 2D_factor_graph_trajectory.i
+
+# target to preprocess a source file
+2D_factor_graph_trajectory.cpp.i:
+	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.i
+.PHONY : 2D_factor_graph_trajectory.cpp.i
+
+2D_factor_graph_trajectory.s: 2D_factor_graph_trajectory.cpp.s
+
+.PHONY : 2D_factor_graph_trajectory.s
+
+# target to generate assembly for a file
+2D_factor_graph_trajectory.cpp.s:
+	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.s
+.PHONY : 2D_factor_graph_trajectory.cpp.s
 
 bayesopt_example.o: bayesopt_example.cpp.o
 
@@ -158,7 +198,11 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... 2d_factor_graph_trajectory"
 	@echo "... bayesopt_example"
+	@echo "... 2D_factor_graph_trajectory.o"
+	@echo "... 2D_factor_graph_trajectory.i"
+	@echo "... 2D_factor_graph_trajectory.s"
 	@echo "... bayesopt_example.o"
 	@echo "... bayesopt_example.i"
 	@echo "... bayesopt_example.s"
