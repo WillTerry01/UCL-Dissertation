@@ -6,11 +6,14 @@
 #include <g2o/core/base_vertex.h>
 #include <g2o/core/block_solver.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
-#include <g2o/solvers/dense/linear_solver_dense.h>
+#include <g2o/solvers/csparse/linear_solver_csparse.h>
 #include <Eigen/Dense>
 #include <random>
 #include <memory>
 #include <cmath>
+#include <g2o/core/marginal_covariance_cholesky.h>
+#include <g2o/core/sparse_block_matrix.h>
+#include <g2o/core/optimizable_graph.h>
 
 using namespace std;
 using namespace g2o;
@@ -59,7 +62,7 @@ public:
 
 int main() {
     // Parameters
-    int N = 50; // number of time steps
+    int N = 20; // number of time steps
     Eigen::Vector2d true_position(0.0, 0.0);
     Eigen::Vector2d true_velocity(1.0, 0.5);
     double dt = 1.0;
@@ -125,7 +128,7 @@ int main() {
 
     // Set up optimizer
     typedef BlockSolver< BlockSolverTraits<4, 4> > BlockSolverType;
-    typedef LinearSolverDense<BlockSolverType::PoseMatrixType> LinearSolverType;
+    typedef g2o::LinearSolverCSparse<BlockSolverType::PoseMatrixType> LinearSolverType;
     auto linearSolver = std::make_unique<LinearSolverType>();
     auto blockSolver = std::make_unique<BlockSolverType>(std::move(linearSolver));
     OptimizationAlgorithmLevenberg* solver = new OptimizationAlgorithmLevenberg(std::move(blockSolver));
@@ -166,17 +169,61 @@ int main() {
     optimizer.initializeOptimization();
     optimizer.optimize(20);
 
+    // --- Marginal Covariance and NEES Calculation (Sparse Solver) ---
+    std::vector<double> nees_values(N);
+    std::vector<double> cnis_values(N);
+    Eigen::Matrix<double, 2, 4> H;
+    H << 1, 0, 0, 0,
+         0, 1, 0, 0;
+    for (int k = 0; k < N; ++k) {
+        g2o::SparseBlockMatrix<Eigen::MatrixXd> spinv;
+        optimizer.computeMarginals(spinv, vertices[k]);
+        int idx = vertices[k]->hessianIndex();
+        Eigen::MatrixXd* covBlock = spinv.block(idx, idx);
+        if (!covBlock) {
+            std::cerr << "Covariance block not found for vertex " << k << std::endl;
+            continue;
+        }
+        Eigen::Vector4d error = vertices[k]->estimate() - true_states[k];
+        double nees = error.transpose() * covBlock->inverse() * error;
+        nees_values[k] = nees;
+
+        // --- CNIS Calculation ---
+        // Innovation: measurement - predicted measurement
+        Eigen::Vector2d z = measurements[k];
+        Eigen::Vector2d z_pred = H * vertices[k]->estimate();
+        Eigen::Vector2d innov = z - z_pred;
+        // Innovation covariance: S = H * P * H^T + R
+        Eigen::Matrix2d S = H * (*covBlock) * H.transpose() + R;
+        double cnis = innov.transpose() * S.inverse() * innov;
+        cnis_values[k] = cnis;
+    }
+    // Compute mean and covariance of NEES
+    double mean_nees = std::accumulate(nees_values.begin(), nees_values.end(), 0.0) / N;
+    double cov_nees = 0.0;
+    for (int k = 0; k < N; ++k) cov_nees += (nees_values[k] - mean_nees) * (nees_values[k] - mean_nees);
+    cov_nees /= (N - 1);
+    std::cout << "Mean NEES: " << mean_nees << ", Covariance NEES: " << cov_nees << std::endl;
+
+    // Compute mean and covariance of CNIS
+    double mean_cnis = std::accumulate(cnis_values.begin(), cnis_values.end(), 0.0) / N;
+    double cov_cnis = 0.0;
+    for (int k = 0; k < N; ++k) cov_cnis += (cnis_values[k] - mean_cnis) * (cnis_values[k] - mean_cnis);
+    cov_cnis /= (N - 1);
+    std::cout << "Mean CNIS: " << mean_cnis << ", Covariance CNIS: " << cov_cnis << std::endl;
+
     // Output results
     // Results are saved to: build/2d_trajectory_estimate.csv
     std::ofstream csv("/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2d_trajectory_estimate.csv");
-    csv << "t,true_x,true_y,est_x,est_y,true_vx,true_vy,est_vx,est_vy\n";
+    csv << "t,true_x,true_y,est_x,est_y,true_vx,true_vy,est_vx,est_vy,cnees,cnis\n";
     for (int k = 0; k < N; ++k) {
         Eigen::Vector4d est = vertices[k]->estimate();
         csv << k << ","
             << true_states[k][0] << "," << true_states[k][1] << ","
             << est[0] << "," << est[1] << ","
             << true_states[k][2] << "," << true_states[k][3] << ","
-            << est[2] << "," << est[3] << "\n";
+            << est[2] << "," << est[3] << ","
+            << nees_values[k] << "," << cnis_values[k] << "\n";
         std::cout << "t=" << k << ": true_pos = (" << true_states[k][0] << ", " << true_states[k][1]
                   << "), est_pos = (" << est[0] << ", " << est[1]
                   << "), true_vel = (" << true_states[k][2] << ", " << true_states[k][3]

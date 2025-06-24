@@ -31,7 +31,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 43,
+				"line" : 47,
 				"parent" : 0
 			}
 		]
@@ -89,11 +89,23 @@
 				"role" : "libraries"
 			},
 			{
+				"fragment" : "-lg2o_solver_csparse",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lg2o_csparse_extension",
+				"role" : "libraries"
+			},
+			{
 				"fragment" : "-lg2o_core",
 				"role" : "libraries"
 			},
 			{
 				"fragment" : "-lg2o_stuff",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lg2o_solver_dense",
 				"role" : "libraries"
 			}
 		],

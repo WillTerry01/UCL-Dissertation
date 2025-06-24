@@ -1,1 +1,1 @@
-/usr/bin/c++     CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o  -o 2d_factor_graph_trajectory  ../../bayesopt/lib/libbayesopt.a ../../bayesopt/lib/libnlopt.a -lg2o_core -lg2o_stuff 
+/usr/bin/c++     CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o  -o 2d_factor_graph_trajectory  ../../bayesopt/lib/libbayesopt.a ../../bayesopt/lib/libnlopt.a -lg2o_solver_csparse -lg2o_csparse_extension -lg2o_core -lg2o_stuff -lg2o_solver_dense 

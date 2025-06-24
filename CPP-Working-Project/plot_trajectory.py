@@ -49,4 +49,27 @@ plt.title('2D Velocity: True vs Estimated (Color = Time Step)')
 plt.legend(['True Velocity', 'Estimated Velocity'])
 cbar2 = plt.colorbar(sc3, label='Time step')
 plt.tight_layout()
-plt.show() 
+plt.show()
+
+# --- CNEES and CNIS Calculation ---
+# Now just plot the CNEES and CNIS columns from the CSV as separate figures
+
+plt.figure(figsize=(10, 4))
+plt.plot(data['cnees'].values, label='CNEES')
+plt.xlabel('Time step')
+plt.ylabel('CNEES Value')
+plt.title('CNEES over Time')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(10, 4))
+plt.plot(data['cnis'].values, label='CNIS', color='orange')
+plt.xlabel('Time step')
+plt.ylabel('CNIS Value')
+plt.title('CNIS over Time')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# NOTE: Replace the identity matrices with the actual state and innovation covariances for correct results. 

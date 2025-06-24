@@ -38,11 +38,16 @@ target_link_libraries(2d_factor_graph_trajectory
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
-    g2o_core g2o_stuff
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
 )
 target_include_directories(2d_factor_graph_trajectory
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
+    /usr/local/include
 )
