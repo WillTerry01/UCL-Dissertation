@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/tutorial_slam2d.dir/tutorial_slam2d.cpp.o  -o tutorial_slam2d  libtutorial_slam2d.a -lg2o_core -lg2o_stuff 

@@ -1,7 +1,22 @@
 [
 {
   "directory": "/home/will/Dissertation/UCL-Dissertation/build",
-  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/main.dir/main.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/main.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/main.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/single_run.dir/single_run.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/single_run.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/single_run.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3  -g   -std=gnu++17 -o CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp",
   "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp"
 },
 {

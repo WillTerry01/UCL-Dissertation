@@ -33,8 +33,9 @@ target_include_directories(bayesopt_example
     ${EIGEN3_INCLUDE_DIR}
 )
 
-add_executable(2d_factor_graph_trajectory 2D_factor_graph_trajectory.cpp)
-target_link_libraries(2d_factor_graph_trajectory
+# Executable for single run demo
+add_executable(single_run single_run.cpp 2D_factor_graph_trajectory.cpp)
+target_link_libraries(single_run
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
@@ -44,7 +45,27 @@ target_link_libraries(2d_factor_graph_trajectory
     g2o_stuff
     g2o_solver_dense
 )
-target_include_directories(2d_factor_graph_trajectory
+target_include_directories(single_run
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
+
+# Executable for main application (100 runs)
+add_executable(main main.cpp 2D_factor_graph_trajectory.cpp)
+target_link_libraries(main
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+)
+target_include_directories(main
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}

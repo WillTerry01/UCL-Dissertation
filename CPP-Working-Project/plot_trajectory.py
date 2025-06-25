@@ -30,7 +30,7 @@ y_est = data[:, 6]
 # Plot trajectories
 plt.figure(figsize=(10, 6))
 plt.plot(x_true, y_true, 'o-', label='True Trajectory', color='green', markersize=5)
-plt.plot(x_meas, y_meas, 's-', label='Measured Trajectory', color='orange', markersize=5)
+plt.plot(x_meas, y_meas, 'o', label='Measured Trajectory', color='orange', markersize=5)
 plt.plot(x_est, y_est, 'x-', label='Estimated Trajectory', color='blue', markersize=5)
 plt.xlabel('x')
 plt.ylabel('y')

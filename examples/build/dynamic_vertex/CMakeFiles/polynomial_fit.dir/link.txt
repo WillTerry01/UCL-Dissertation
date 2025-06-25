@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/polynomial_fit.dir/polynomial_fit.o  -o polynomial_fit  -lcore -lsolver_eigen 

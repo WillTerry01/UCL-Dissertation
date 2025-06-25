@@ -111,17 +111,30 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named 2d_factor_graph_trajectory
+# Target rules for targets named main
 
 # Build rule for target.
-2d_factor_graph_trajectory: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 2d_factor_graph_trajectory
-.PHONY : 2d_factor_graph_trajectory
+main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 main
+.PHONY : main
 
 # fast build rule for target.
-2d_factor_graph_trajectory/fast:
-	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/build
-.PHONY : 2d_factor_graph_trajectory/fast
+main/fast:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
+.PHONY : main/fast
+
+#=============================================================================
+# Target rules for targets named single_run
+
+# Build rule for target.
+single_run: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 single_run
+.PHONY : single_run
+
+# fast build rule for target.
+single_run/fast:
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/build
+.PHONY : single_run/fast
 
 #=============================================================================
 # Target rules for targets named bayesopt_example
@@ -142,7 +155,8 @@ bayesopt_example/fast:
 
 # target to build an object file
 2D_factor_graph_trajectory.cpp.o:
-	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.o
 .PHONY : 2D_factor_graph_trajectory.cpp.o
 
 2D_factor_graph_trajectory.i: 2D_factor_graph_trajectory.cpp.i
@@ -151,7 +165,8 @@ bayesopt_example/fast:
 
 # target to preprocess a source file
 2D_factor_graph_trajectory.cpp.i:
-	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.i
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.i
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.i
 .PHONY : 2D_factor_graph_trajectory.cpp.i
 
 2D_factor_graph_trajectory.s: 2D_factor_graph_trajectory.cpp.s
@@ -160,7 +175,8 @@ bayesopt_example/fast:
 
 # target to generate assembly for a file
 2D_factor_graph_trajectory.cpp.s:
-	$(MAKE) -f CMakeFiles/2d_factor_graph_trajectory.dir/build.make CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.s
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.s
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.s
 .PHONY : 2D_factor_graph_trajectory.cpp.s
 
 bayesopt_example.o: bayesopt_example.cpp.o
@@ -190,6 +206,60 @@ bayesopt_example.cpp.s:
 	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.s
 .PHONY : bayesopt_example.cpp.s
 
+main.o: main.cpp.o
+
+.PHONY : main.o
+
+# target to build an object file
+main.cpp.o:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.o
+.PHONY : main.cpp.o
+
+main.i: main.cpp.i
+
+.PHONY : main.i
+
+# target to preprocess a source file
+main.cpp.i:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.i
+.PHONY : main.cpp.i
+
+main.s: main.cpp.s
+
+.PHONY : main.s
+
+# target to generate assembly for a file
+main.cpp.s:
+	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.s
+.PHONY : main.cpp.s
+
+single_run.o: single_run.cpp.o
+
+.PHONY : single_run.o
+
+# target to build an object file
+single_run.cpp.o:
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.o
+.PHONY : single_run.cpp.o
+
+single_run.i: single_run.cpp.i
+
+.PHONY : single_run.i
+
+# target to preprocess a source file
+single_run.cpp.i:
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.i
+.PHONY : single_run.cpp.i
+
+single_run.s: single_run.cpp.s
+
+.PHONY : single_run.s
+
+# target to generate assembly for a file
+single_run.cpp.s:
+	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.s
+.PHONY : single_run.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -198,7 +268,8 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... 2d_factor_graph_trajectory"
+	@echo "... main"
+	@echo "... single_run"
 	@echo "... bayesopt_example"
 	@echo "... 2D_factor_graph_trajectory.o"
 	@echo "... 2D_factor_graph_trajectory.i"
@@ -206,6 +277,12 @@ help:
 	@echo "... bayesopt_example.o"
 	@echo "... bayesopt_example.i"
 	@echo "... bayesopt_example.s"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
+	@echo "... single_run.o"
+	@echo "... single_run.i"
+	@echo "... single_run.s"
 .PHONY : help
 
 

@@ -57,30 +57,47 @@ include CMakeFiles/main.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/main.dir/flags.make
 
-CMakeFiles/main.dir/1D_example.cpp.o: CMakeFiles/main.dir/flags.make
-CMakeFiles/main.dir/1D_example.cpp.o: ../1D_example.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/1D_example.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/1D_example.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/1D_example.cpp
+CMakeFiles/main.dir/main.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/main.cpp.o: ../main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/main.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/main.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/main.cpp
 
-CMakeFiles/main.dir/1D_example.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/1D_example.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/1D_example.cpp > CMakeFiles/main.dir/1D_example.cpp.i
+CMakeFiles/main.dir/main.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/main.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/main.cpp > CMakeFiles/main.dir/main.cpp.i
 
-CMakeFiles/main.dir/1D_example.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/1D_example.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/1D_example.cpp -o CMakeFiles/main.dir/1D_example.cpp.s
+CMakeFiles/main.dir/main.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/main.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/main.cpp -o CMakeFiles/main.dir/main.cpp.s
+
+CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o: CMakeFiles/main.dir/flags.make
+CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o: ../2D_factor_graph_trajectory.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp
+
+CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp > CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.i
+
+CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp -o CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.s
 
 # Object files for target main
 main_OBJECTS = \
-"CMakeFiles/main.dir/1D_example.cpp.o"
+"CMakeFiles/main.dir/main.cpp.o" \
+"CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o"
 
 # External object files for target main
 main_EXTERNAL_OBJECTS =
 
-main: CMakeFiles/main.dir/1D_example.cpp.o
+main: CMakeFiles/main.dir/main.cpp.o
+main: CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o
 main: CMakeFiles/main.dir/build.make
+main: ../../bayesopt/lib/libbayesopt.a
+main: ../../bayesopt/lib/libnlopt.a
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

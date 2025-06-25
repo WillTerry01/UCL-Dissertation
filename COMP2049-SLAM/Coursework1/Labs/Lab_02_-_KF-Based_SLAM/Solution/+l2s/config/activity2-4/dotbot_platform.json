@@ -1,5 +1,0 @@
-{
-    "sigmaQ": [0.01],
-    "B": 2.5,
-    "controller": "config/activity2-4/dotbot_controller.json"
-}

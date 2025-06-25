@@ -3,6 +3,7 @@
 
 CMakeFiles/2d_factor_graph_trajectory.dir/2D_factor_graph_trajectory.cpp.o
  /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.cpp
+ /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D_factor_graph_trajectory.h
  /usr/include/eigen3/Eigen/Cholesky
  /usr/include/eigen3/Eigen/Core
  /usr/include/eigen3/Eigen/Dense
