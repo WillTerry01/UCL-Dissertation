@@ -1,75 +1,42 @@
-import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
-# Read the CSV file
+# Read the CSV file using numpy (skip header, handle chi2 row)
 csv_path = '/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2d_trajectory_estimate.csv'
-data = pd.read_csv(csv_path)
-data.columns = data.columns.str.strip()
 
-print(data.head())
-print(data.columns)
+def load_csv_skip_chi2(path):
+    # Read all lines
+    with open(path, 'r') as f:
+        lines = f.readlines()
+    # Remove chi2 row if present
+    lines = [line for line in lines if not line.startswith('chi2')]
+    # Save to a temporary file-like object for numpy
+    from io import StringIO
+    data_str = ''.join(lines)
+    data = np.genfromtxt(StringIO(data_str), delimiter=',', skip_header=1)
+    return data
 
-# Prepare data for plotting
-x_true = data['true_x'].values
-y_true = data['true_y'].values
-x_est = data['est_x'].values
-y_est = data['est_y'].values
-t = data['t'].values
+data = load_csv_skip_chi2(csv_path)
 
-plt.figure(figsize=(10, 5))
+# Columns: t,true_x,true_y,meas_x,meas_y,est_x,est_y
+t = data[:, 0]
+x_true = data[:, 1]
+y_true = data[:, 2]
+x_meas = data[:, 3]
+y_meas = data[:, 4]
+x_est = data[:, 5]
+y_est = data[:, 6]
 
-# Plot true trajectory with color gradient
-sc1 = plt.scatter(x_true, y_true, c=t, cmap='viridis', label='True Trajectory', marker='o', s=30)
-# Plot estimated trajectory with color gradient
-sc2 = plt.scatter(x_est, y_est, c=t, cmap='plasma', label='Estimated Trajectory', marker='x', s=30)
-
+# Plot trajectories
+plt.figure(figsize=(10, 6))
+plt.plot(x_true, y_true, 'o-', label='True Trajectory', color='green', markersize=5)
+plt.plot(x_meas, y_meas, 's-', label='Measured Trajectory', color='orange', markersize=5)
+plt.plot(x_est, y_est, 'x-', label='Estimated Trajectory', color='blue', markersize=5)
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('2D Trajectory: True vs Estimated (Color = Time Step)')
-plt.legend(['True Trajectory', 'Estimated Trajectory'])
-cbar = plt.colorbar(sc1, label='Time step')
-plt.tight_layout()
-plt.show()
-
-# Plot velocity vectors (vx vs vy) with color gradient for time
-plt.figure(figsize=(10, 5))
-
-vx_true = data['true_vx'].values
-vy_true = data['true_vy'].values
-vx_est = data['est_vx'].values
-vy_est = data['est_vy'].values
-
-sc3 = plt.scatter(vx_true, vy_true, c=t, cmap='viridis', label='True Velocity', marker='o', s=30)
-sc4 = plt.scatter(vx_est, vy_est, c=t, cmap='plasma', label='Estimated Velocity', marker='x', s=30)
-
-plt.xlabel('vx')
-plt.ylabel('vy')
-plt.title('2D Velocity: True vs Estimated (Color = Time Step)')
-plt.legend(['True Velocity', 'Estimated Velocity'])
-cbar2 = plt.colorbar(sc3, label='Time step')
-plt.tight_layout()
-plt.show()
-
-# --- CNEES and CNIS Calculation ---
-# Now just plot the CNEES and CNIS columns from the CSV as separate figures
-
-plt.figure(figsize=(10, 4))
-plt.plot(data['cnees'].values, label='CNEES')
-plt.xlabel('Time step')
-plt.ylabel('CNEES Value')
-plt.title('CNEES over Time')
+plt.title('2D Trajectory: True vs Measured vs Estimated')
 plt.legend()
+plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-plt.figure(figsize=(10, 4))
-plt.plot(data['cnis'].values, label='CNIS', color='orange')
-plt.xlabel('Time step')
-plt.ylabel('CNIS Value')
-plt.title('CNIS over Time')
-plt.legend()
-plt.tight_layout()
-plt.show()
-
-# NOTE: Replace the identity matrices with the actual state and innovation covariances for correct results. 
