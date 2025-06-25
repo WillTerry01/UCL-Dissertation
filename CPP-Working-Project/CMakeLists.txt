@@ -34,8 +34,8 @@ target_include_directories(bayesopt_example
 )
 
 # Executable for single run demo
-add_executable(single_run single_run.cpp 2D_factor_graph_trajectory.cpp)
-target_link_libraries(single_run
+add_executable(2D_single_run 2D/2D_single_run.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_single_run
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
@@ -45,7 +45,7 @@ target_link_libraries(single_run
     g2o_stuff
     g2o_solver_dense
 )
-target_include_directories(single_run
+target_include_directories(2D_single_run
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -54,8 +54,8 @@ target_include_directories(single_run
 )
 
 # Executable for main application (100 runs)
-add_executable(main main.cpp 2D_factor_graph_trajectory.cpp)
-target_link_libraries(main
+add_executable(2D_main 2D/2D_main.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_main
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
@@ -65,7 +65,47 @@ target_link_libraries(main
     g2o_stuff
     g2o_solver_dense
 )
-target_include_directories(main
+target_include_directories(2D_main
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
+
+# Executable for 1D single run demo
+add_executable(1D_single_run 1D/1D_single_run.cpp 1D/1D_factor_graph_trajectory.cpp)
+target_link_libraries(1D_single_run
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+)
+target_include_directories(1D_single_run
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
+
+# Executable for 1D main application (1000 runs)
+add_executable(1D_main 1D/1D_main.cpp 1D/1D_factor_graph_trajectory.cpp)
+target_link_libraries(1D_main
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+)
+target_include_directories(1D_main
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}

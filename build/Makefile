@@ -111,30 +111,56 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named main
+# Target rules for targets named 1D_main
 
 # Build rule for target.
-main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 main
-.PHONY : main
+1D_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_main
+.PHONY : 1D_main
 
 # fast build rule for target.
-main/fast:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-.PHONY : main/fast
+1D_main/fast:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/build
+.PHONY : 1D_main/fast
 
 #=============================================================================
-# Target rules for targets named single_run
+# Target rules for targets named 1D_single_run
 
 # Build rule for target.
-single_run: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 single_run
-.PHONY : single_run
+1D_single_run: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_single_run
+.PHONY : 1D_single_run
 
 # fast build rule for target.
-single_run/fast:
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/build
-.PHONY : single_run/fast
+1D_single_run/fast:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/build
+.PHONY : 1D_single_run/fast
+
+#=============================================================================
+# Target rules for targets named 2D_main
+
+# Build rule for target.
+2D_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 2D_main
+.PHONY : 2D_main
+
+# fast build rule for target.
+2D_main/fast:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/build
+.PHONY : 2D_main/fast
+
+#=============================================================================
+# Target rules for targets named 2D_single_run
+
+# Build rule for target.
+2D_single_run: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 2D_single_run
+.PHONY : 2D_single_run
+
+# fast build rule for target.
+2D_single_run/fast:
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/build
+.PHONY : 2D_single_run/fast
 
 #=============================================================================
 # Target rules for targets named bayesopt_example
@@ -149,35 +175,173 @@ bayesopt_example/fast:
 	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
 .PHONY : bayesopt_example/fast
 
-2D_factor_graph_trajectory.o: 2D_factor_graph_trajectory.cpp.o
+1D/1D_factor_graph_trajectory.o: 1D/1D_factor_graph_trajectory.cpp.o
 
-.PHONY : 2D_factor_graph_trajectory.o
+.PHONY : 1D/1D_factor_graph_trajectory.o
 
 # target to build an object file
-2D_factor_graph_trajectory.cpp.o:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.o
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.o
-.PHONY : 2D_factor_graph_trajectory.cpp.o
+1D/1D_factor_graph_trajectory.cpp.o:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.o
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.o
+.PHONY : 1D/1D_factor_graph_trajectory.cpp.o
 
-2D_factor_graph_trajectory.i: 2D_factor_graph_trajectory.cpp.i
+1D/1D_factor_graph_trajectory.i: 1D/1D_factor_graph_trajectory.cpp.i
 
-.PHONY : 2D_factor_graph_trajectory.i
+.PHONY : 1D/1D_factor_graph_trajectory.i
 
 # target to preprocess a source file
-2D_factor_graph_trajectory.cpp.i:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.i
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.i
-.PHONY : 2D_factor_graph_trajectory.cpp.i
+1D/1D_factor_graph_trajectory.cpp.i:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.i
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.i
+.PHONY : 1D/1D_factor_graph_trajectory.cpp.i
 
-2D_factor_graph_trajectory.s: 2D_factor_graph_trajectory.cpp.s
+1D/1D_factor_graph_trajectory.s: 1D/1D_factor_graph_trajectory.cpp.s
 
-.PHONY : 2D_factor_graph_trajectory.s
+.PHONY : 1D/1D_factor_graph_trajectory.s
 
 # target to generate assembly for a file
-2D_factor_graph_trajectory.cpp.s:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/2D_factor_graph_trajectory.cpp.s
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.s
-.PHONY : 2D_factor_graph_trajectory.cpp.s
+1D/1D_factor_graph_trajectory.cpp.s:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.s
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.s
+.PHONY : 1D/1D_factor_graph_trajectory.cpp.s
+
+1D/1D_main.o: 1D/1D_main.cpp.o
+
+.PHONY : 1D/1D_main.o
+
+# target to build an object file
+1D/1D_main.cpp.o:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_main.cpp.o
+.PHONY : 1D/1D_main.cpp.o
+
+1D/1D_main.i: 1D/1D_main.cpp.i
+
+.PHONY : 1D/1D_main.i
+
+# target to preprocess a source file
+1D/1D_main.cpp.i:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_main.cpp.i
+.PHONY : 1D/1D_main.cpp.i
+
+1D/1D_main.s: 1D/1D_main.cpp.s
+
+.PHONY : 1D/1D_main.s
+
+# target to generate assembly for a file
+1D/1D_main.cpp.s:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_main.cpp.s
+.PHONY : 1D/1D_main.cpp.s
+
+1D/1D_single_run.o: 1D/1D_single_run.cpp.o
+
+.PHONY : 1D/1D_single_run.o
+
+# target to build an object file
+1D/1D_single_run.cpp.o:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_single_run.cpp.o
+.PHONY : 1D/1D_single_run.cpp.o
+
+1D/1D_single_run.i: 1D/1D_single_run.cpp.i
+
+.PHONY : 1D/1D_single_run.i
+
+# target to preprocess a source file
+1D/1D_single_run.cpp.i:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_single_run.cpp.i
+.PHONY : 1D/1D_single_run.cpp.i
+
+1D/1D_single_run.s: 1D/1D_single_run.cpp.s
+
+.PHONY : 1D/1D_single_run.s
+
+# target to generate assembly for a file
+1D/1D_single_run.cpp.s:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_single_run.cpp.s
+.PHONY : 1D/1D_single_run.cpp.s
+
+2D/2D_factor_graph_trajectory.o: 2D/2D_factor_graph_trajectory.cpp.o
+
+.PHONY : 2D/2D_factor_graph_trajectory.o
+
+# target to build an object file
+2D/2D_factor_graph_trajectory.cpp.o:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_factor_graph_trajectory.cpp.o
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_factor_graph_trajectory.cpp.o
+.PHONY : 2D/2D_factor_graph_trajectory.cpp.o
+
+2D/2D_factor_graph_trajectory.i: 2D/2D_factor_graph_trajectory.cpp.i
+
+.PHONY : 2D/2D_factor_graph_trajectory.i
+
+# target to preprocess a source file
+2D/2D_factor_graph_trajectory.cpp.i:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_factor_graph_trajectory.cpp.i
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_factor_graph_trajectory.cpp.i
+.PHONY : 2D/2D_factor_graph_trajectory.cpp.i
+
+2D/2D_factor_graph_trajectory.s: 2D/2D_factor_graph_trajectory.cpp.s
+
+.PHONY : 2D/2D_factor_graph_trajectory.s
+
+# target to generate assembly for a file
+2D/2D_factor_graph_trajectory.cpp.s:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_factor_graph_trajectory.cpp.s
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_factor_graph_trajectory.cpp.s
+.PHONY : 2D/2D_factor_graph_trajectory.cpp.s
+
+2D/2D_main.o: 2D/2D_main.cpp.o
+
+.PHONY : 2D/2D_main.o
+
+# target to build an object file
+2D/2D_main.cpp.o:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_main.cpp.o
+.PHONY : 2D/2D_main.cpp.o
+
+2D/2D_main.i: 2D/2D_main.cpp.i
+
+.PHONY : 2D/2D_main.i
+
+# target to preprocess a source file
+2D/2D_main.cpp.i:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_main.cpp.i
+.PHONY : 2D/2D_main.cpp.i
+
+2D/2D_main.s: 2D/2D_main.cpp.s
+
+.PHONY : 2D/2D_main.s
+
+# target to generate assembly for a file
+2D/2D_main.cpp.s:
+	$(MAKE) -f CMakeFiles/2D_main.dir/build.make CMakeFiles/2D_main.dir/2D/2D_main.cpp.s
+.PHONY : 2D/2D_main.cpp.s
+
+2D/2D_single_run.o: 2D/2D_single_run.cpp.o
+
+.PHONY : 2D/2D_single_run.o
+
+# target to build an object file
+2D/2D_single_run.cpp.o:
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_single_run.cpp.o
+.PHONY : 2D/2D_single_run.cpp.o
+
+2D/2D_single_run.i: 2D/2D_single_run.cpp.i
+
+.PHONY : 2D/2D_single_run.i
+
+# target to preprocess a source file
+2D/2D_single_run.cpp.i:
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_single_run.cpp.i
+.PHONY : 2D/2D_single_run.cpp.i
+
+2D/2D_single_run.s: 2D/2D_single_run.cpp.s
+
+.PHONY : 2D/2D_single_run.s
+
+# target to generate assembly for a file
+2D/2D_single_run.cpp.s:
+	$(MAKE) -f CMakeFiles/2D_single_run.dir/build.make CMakeFiles/2D_single_run.dir/2D/2D_single_run.cpp.s
+.PHONY : 2D/2D_single_run.cpp.s
 
 bayesopt_example.o: bayesopt_example.cpp.o
 
@@ -206,60 +370,6 @@ bayesopt_example.cpp.s:
 	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.s
 .PHONY : bayesopt_example.cpp.s
 
-main.o: main.cpp.o
-
-.PHONY : main.o
-
-# target to build an object file
-main.cpp.o:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.o
-.PHONY : main.cpp.o
-
-main.i: main.cpp.i
-
-.PHONY : main.i
-
-# target to preprocess a source file
-main.cpp.i:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.i
-.PHONY : main.cpp.i
-
-main.s: main.cpp.s
-
-.PHONY : main.s
-
-# target to generate assembly for a file
-main.cpp.s:
-	$(MAKE) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/main.cpp.s
-.PHONY : main.cpp.s
-
-single_run.o: single_run.cpp.o
-
-.PHONY : single_run.o
-
-# target to build an object file
-single_run.cpp.o:
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.o
-.PHONY : single_run.cpp.o
-
-single_run.i: single_run.cpp.i
-
-.PHONY : single_run.i
-
-# target to preprocess a source file
-single_run.cpp.i:
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.i
-.PHONY : single_run.cpp.i
-
-single_run.s: single_run.cpp.s
-
-.PHONY : single_run.s
-
-# target to generate assembly for a file
-single_run.cpp.s:
-	$(MAKE) -f CMakeFiles/single_run.dir/build.make CMakeFiles/single_run.dir/single_run.cpp.s
-.PHONY : single_run.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -268,21 +378,32 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... main"
-	@echo "... single_run"
+	@echo "... 1D_main"
+	@echo "... 1D_single_run"
+	@echo "... 2D_main"
+	@echo "... 2D_single_run"
 	@echo "... bayesopt_example"
-	@echo "... 2D_factor_graph_trajectory.o"
-	@echo "... 2D_factor_graph_trajectory.i"
-	@echo "... 2D_factor_graph_trajectory.s"
+	@echo "... 1D/1D_factor_graph_trajectory.o"
+	@echo "... 1D/1D_factor_graph_trajectory.i"
+	@echo "... 1D/1D_factor_graph_trajectory.s"
+	@echo "... 1D/1D_main.o"
+	@echo "... 1D/1D_main.i"
+	@echo "... 1D/1D_main.s"
+	@echo "... 1D/1D_single_run.o"
+	@echo "... 1D/1D_single_run.i"
+	@echo "... 1D/1D_single_run.s"
+	@echo "... 2D/2D_factor_graph_trajectory.o"
+	@echo "... 2D/2D_factor_graph_trajectory.i"
+	@echo "... 2D/2D_factor_graph_trajectory.s"
+	@echo "... 2D/2D_main.o"
+	@echo "... 2D/2D_main.i"
+	@echo "... 2D/2D_main.s"
+	@echo "... 2D/2D_single_run.o"
+	@echo "... 2D/2D_single_run.i"
+	@echo "... 2D/2D_single_run.s"
 	@echo "... bayesopt_example.o"
 	@echo "... bayesopt_example.i"
 	@echo "... bayesopt_example.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... single_run.o"
-	@echo "... single_run.i"
-	@echo "... single_run.s"
 .PHONY : help
 
 

@@ -56,7 +56,9 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/main.dir/DependInfo.cmake"
-  "CMakeFiles/single_run.dir/DependInfo.cmake"
+  "CMakeFiles/1D_main.dir/DependInfo.cmake"
+  "CMakeFiles/1D_single_run.dir/DependInfo.cmake"
+  "CMakeFiles/2D_main.dir/DependInfo.cmake"
+  "CMakeFiles/2D_single_run.dir/DependInfo.cmake"
   "CMakeFiles/bayesopt_example.dir/DependInfo.cmake"
   )
