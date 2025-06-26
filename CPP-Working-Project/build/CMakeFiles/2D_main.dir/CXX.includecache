@@ -6,20 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_factor_graph_trajectory.cpp
-2D_factor_graph_trajectory.h
-/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_factor_graph_trajectory.h
-iostream
--
-fstream
--
-random
--
-memory
--
-cmath
--
-
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_factor_graph_trajectory.h
 vector
 -

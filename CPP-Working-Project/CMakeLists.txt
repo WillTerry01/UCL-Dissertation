@@ -143,3 +143,23 @@ target_include_directories(1D_main
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
 )
+
+# Executable for running BayesOpt on the factor graph using CSV-loaded data
+add_executable(2D_bayesopt_from_csv 2D/2D_bayesopt_from_csv.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_bayesopt_from_csv
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+)
+target_include_directories(2D_bayesopt_from_csv
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
