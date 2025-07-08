@@ -1,0 +1,140 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "BayesOptExample",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "1D_main::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-1D_main-Debug-02e249e6f2d9efc55ca4.json",
+					"name" : "1D_main",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "1D_single_run::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-1D_single_run-Debug-faf26df42ee2fb6e4c6f.json",
+					"name" : "1D_single_run",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_bayesopt_from_csv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_bayesopt_from_csv-Debug-531ed2926dd54fb4e102.json",
+					"name" : "2D_bayesopt_from_csv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_bayesopt_from_csv_parallel::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_bayesopt_from_csv_parallel-Debug-fed356b9ac1a8458b0d5.json",
+					"name" : "2D_bayesopt_from_csv_parallel",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_generate_noisy_data::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_generate_noisy_data-Debug-8f6876729b5e99aa1eb6.json",
+					"name" : "2D_generate_noisy_data",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_main::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_main-Debug-59ffb60650b343f1d958.json",
+					"name" : "2D_main",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_main_from_csv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_main_from_csv-Debug-5c57498dde957ddeb31c.json",
+					"name" : "2D_main_from_csv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_single_run::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_single_run-Debug-9b2ae59e93cf935dd24b.json",
+					"name" : "2D_single_run",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "2D_single_run_mc::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-2D_single_run_mc-Debug-efdf99fc4a1f9cc8a3fc.json",
+					"name" : "2D_single_run_mc",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "bayesopt_example::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-bayesopt_example-Debug-c758f3c47cb30802591e.json",
+					"name" : "bayesopt_example",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/will/Dissertation/UCL-Dissertation/build",
+		"source" : "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 0
+	}
+}
