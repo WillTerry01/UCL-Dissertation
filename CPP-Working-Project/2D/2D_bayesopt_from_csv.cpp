@@ -10,6 +10,7 @@
 #include <sstream>
 #include <set>
 #include <limits>
+#include <chrono>
 
 // Helper function to infer num_graphs and N from the noisy states CSV
 void infer_problem_size(const std::string& filename, int& num_graphs, int& Trajectory_length) {
@@ -47,11 +48,11 @@ public:
           all_measurements_(all_measurements) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
+        auto eval_start = std::chrono::high_resolution_clock::now();
         double Qval = query(0);
         double Rval = query(1);
         // Enforce bounds for safety
         if (Qval < 0.1 || Rval < 0.1) {
-            // Log the invalid trial
             std::ofstream trialfile("../2D/2D_bayesopt_trials.csv", std::ios::app);
             trialfile << Qval << "," << Rval << "," << 1e6 << "\n";
             trialfile.close();
@@ -67,22 +68,21 @@ public:
             fg.run(all_states_[run], &all_measurements_[run], false);
             chi2_values[run] = fg.getChi2();
         }
-        // Compute meanChi2
         double meanChi2 = 0.0;
         for (int i = 0; i < num_graphs; ++i) meanChi2 += chi2_values[i];
         meanChi2 /= num_graphs;
-        // Compute covChi2
         double covChi2 = 0.0;
         for (int i = 0; i < num_graphs; ++i) covChi2 += (chi2_values[i] - meanChi2) * (chi2_values[i] - meanChi2);
         covChi2 /= (num_graphs - 1);
-        // Degrees of freedom: (N-1)*4 (process) + N*2 (measurement)
         int N = static_cast<int>(all_measurements_[0].size()) * 2 + (static_cast<int>(all_states_[0].size()) - 1) * 4;
         double C = std::abs(std::log(meanChi2 / N)) + std::abs(std::log(covChi2 / (2.0 * N)));
         std::cout << "Q: " << Qval << ", R: " << Rval << ", C: " << C << std::endl;
-        // Log the trial
         std::ofstream trialfile("../2D/2D_bayesopt_trials.csv", std::ios::app);
         trialfile << Qval << "," << Rval << "," << C << "\n";
         trialfile.close();
+        auto eval_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> eval_duration = eval_end - eval_start;
+        std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
         return C;
     }
 private:
@@ -126,10 +126,14 @@ int main() {
 
     CMetricBayesOpt opt(params, all_states, all_measurements);
     boost::numeric::ublas::vector<double> result(2);
+    auto total_start = std::chrono::high_resolution_clock::now();
     opt.optimize(result);
+    auto total_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> total_duration = total_end - total_start;
     double minC = opt.getValueAtMinimum();
 
     std::cout << "Best Q: " << result(0) << ", Best R: " << result(1) << ", Best C: " << minC << std::endl;
+    std::cout << "[Timing] Total BayesOpt optimization took " << total_duration.count() << " seconds." << std::endl;
     std::ofstream cfile("../2D/2D_bayesopt_best.txt");
     cfile << "Best Q: " << result(0) << ", Best R: " << result(1) << ", Best C: " << minC << std::endl;
     cfile.close();

@@ -18,7 +18,7 @@ int main() {
     }
     FactorGraph2DTrajectory fg;
     fg.Q_ = Eigen::Matrix4d::Identity() * 0.110528;
-    fg.R_ = Eigen::Matrix2d::Identity() * 0.134589;
+    fg.R_ = Eigen::Matrix2d::Identity() * 0.35;
     // Optionally modify fg.Q_ and fg.R_ here
     fg.run(true_states, nullptr, true); // Add process noise inside the function
     fg.writeCSV("../2D/2D_trajectory_estimate.csv");

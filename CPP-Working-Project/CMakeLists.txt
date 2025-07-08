@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages
 find_package(Eigen3 REQUIRED)
 find_package(g2o REQUIRED)
+find_package(OpenMP)
+
 
 # Set BayesOpt paths manually since it's installed locally
 set(BAYESOPT_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/../bayesopt/include")
@@ -157,6 +159,49 @@ target_link_libraries(2D_bayesopt_from_csv
     g2o_solver_dense
 )
 target_include_directories(2D_bayesopt_from_csv
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
+
+# Executable for single run Monte Carlo experiment (chi2 and MSE)
+add_executable(2D_single_run_mc 2D/2D_single_run_mc.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_single_run_mc
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+)
+target_include_directories(2D_single_run_mc
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+)
+
+
+# Executable for running BayesOpt on the factor graph using CSV-loaded data
+add_executable(2D_bayesopt_from_csv_parallel 2D/2D_bayesopt_from_csv_parallel.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_bayesopt_from_csv_parallel
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    
+)
+target_include_directories(2D_bayesopt_from_csv_parallel
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
