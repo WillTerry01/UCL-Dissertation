@@ -1,27 +1,25 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <random>
-#include <fstream>
 #include <iostream>
 #include <string>
+#include "H5Cpp.h"
 
 int main() {
     // Parameters
     int N = 20; // Trajectory length
-    int num_graphs = 100; // Number of Monte Carlo samples
+    int num_graphs = 1000; // Number of Monte Carlo samples
     double dt = 1.0;
     Eigen::Vector2d pos(0.0, 0.0);
     Eigen::Vector2d vel(1.0, 1.0);
     // Noise parameters (can be changed as needed)
-    double process_noise_std = 0.3162; // sqrt(0.1)
-    double meas_noise_std = 0.4472;    // sqrt(0.2)
+    double process_noise_std = sqrt(0.25); // sqrt(0.1)
+    double meas_noise_std = sqrt(0.25);    // sqrt(0.2)
     unsigned int base_seed = 42; // Fixed base seed for repeatability
 
-    // Open output files and write headers
-    std::ofstream states_csv("../2D/2D_noisy_states.csv");
-    std::ofstream meas_csv("../2D/2D_noisy_measurements.csv");
-    states_csv << "run,t,x,y,vx,vy\n";
-    meas_csv << "run,t,x_meas,y_meas\n";
+    // Prepare output arrays
+    std::vector<double> states(num_graphs * N * 4);
+    std::vector<double> measurements(num_graphs * N * 2);
 
     for (int run = 0; run < num_graphs; ++run) {
         // True trajectory
@@ -50,14 +48,37 @@ int main() {
             noisy_measurements[k][1] = noisy_states[k][1] + noise_r(gen);
         }
 
-        // Write to CSVs
+        // Store in output arrays
         for (int k = 0; k < N; ++k) {
-            states_csv << run << "," << k << "," << noisy_states[k][0] << "," << noisy_states[k][1] << "," << noisy_states[k][2] << "," << noisy_states[k][3] << "\n";
-            meas_csv << run << "," << k << "," << noisy_measurements[k][0] << "," << noisy_measurements[k][1] << "\n";
+            int state_idx = run * N * 4 + k * 4;
+            states[state_idx + 0] = noisy_states[k][0];
+            states[state_idx + 1] = noisy_states[k][1];
+            states[state_idx + 2] = noisy_states[k][2];
+            states[state_idx + 3] = noisy_states[k][3];
+            int meas_idx = run * N * 2 + k * 2;
+            measurements[meas_idx + 0] = noisy_measurements[k][0];
+            measurements[meas_idx + 1] = noisy_measurements[k][1];
         }
     }
-    states_csv.close();
-    meas_csv.close();
-    std::cout << "Saved all noisy states to ../2D/2D_noisy_states.csv and all measurements to ../2D/2D_noisy_measurements.csv" << std::endl;
+
+    // Save to HDF5
+    const std::string states_h5 = "../H5_Files/2D_noisy_states.h5";
+    const std::string meas_h5 = "../H5_Files/2D_noisy_measurements.h5";
+    hsize_t states_dims[3] = {static_cast<hsize_t>(num_graphs), static_cast<hsize_t>(N), 4};
+    hsize_t meas_dims[3] = {static_cast<hsize_t>(num_graphs), static_cast<hsize_t>(N), 2};
+
+    // States
+    H5::H5File states_file(states_h5, H5F_ACC_TRUNC);
+    H5::DataSpace states_space(3, states_dims);
+    H5::DataSet states_dataset = states_file.createDataSet("states", H5::PredType::NATIVE_DOUBLE, states_space);
+    states_dataset.write(states.data(), H5::PredType::NATIVE_DOUBLE);
+
+    // Measurements
+    H5::H5File meas_file(meas_h5, H5F_ACC_TRUNC);
+    H5::DataSpace meas_space(3, meas_dims);
+    H5::DataSet meas_dataset = meas_file.createDataSet("measurements", H5::PredType::NATIVE_DOUBLE, meas_space);
+    meas_dataset.write(measurements.data(), H5::PredType::NATIVE_DOUBLE);
+
+    std::cout << "Saved all noisy states to " << states_h5 << " and all measurements to " << meas_h5 << std::endl;
     return 0;
 } 

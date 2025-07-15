@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <fstream>
 #include <random>
+#include "H5Cpp.h" // <-- Add this
 
 int main() {
     int N = 20; // Trajectory length
@@ -15,8 +16,8 @@ int main() {
     double Rval = 0.2; // Measurement noise
     unsigned int base_seed = 42;
 
-    std::ofstream results_csv("2D_single_run_mc_results.csv");
-    results_csv << "run,chi2,mse\n";
+    // Prepare results array
+    std::vector<std::array<double, 3>> results(num_runs);
 
     for (int run = 0; run < num_runs; ++run) {
         // Generate true trajectory
@@ -61,9 +62,26 @@ int main() {
         }
         mse /= N;
 
-        results_csv << run << "," << chi2 << "," << mse << "\n";
+        results[run][0] = run;
+        results[run][1] = chi2;
+        results[run][2] = mse;
     }
-    results_csv.close();
-    std::cout << "Saved results to 2D_single_run_mc_results.csv" << std::endl;
+
+    // Save to HDF5
+    const std::string h5_filename = "../H5_Files/2D_single_run_mc_results.h5";
+    const std::string dataset_name = "results";
+    hsize_t dims[2] = {static_cast<hsize_t>(num_runs), 3};
+    H5::H5File file(h5_filename, H5F_ACC_TRUNC);
+    H5::DataSpace dataspace(2, dims);
+    H5::DataSet dataset = file.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, dataspace);
+    // Flatten results for HDF5
+    std::vector<double> flat_results;
+    flat_results.reserve(num_runs * 3);
+    for (const auto& row : results) {
+        flat_results.insert(flat_results.end(), row.begin(), row.end());
+    }
+    dataset.write(flat_results.data(), H5::PredType::NATIVE_DOUBLE);
+
+    std::cout << "Saved results to " << h5_filename << std::endl;
     return 0;
 } 

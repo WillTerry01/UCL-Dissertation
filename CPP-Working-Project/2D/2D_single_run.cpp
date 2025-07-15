@@ -17,11 +17,12 @@ int main() {
         true_states[k].tail<2>() = true_states[k-1].tail<2>();
     }
     FactorGraph2DTrajectory fg;
-    fg.Q_ = Eigen::Matrix4d::Identity() * 0.110528;
-    fg.R_ = Eigen::Matrix2d::Identity() * 0.35;
+    fg.Q_ = Eigen::Matrix4d::Identity() * 0.01;
+    fg.R_ = Eigen::Matrix2d::Identity() * 0.01;
     // Optionally modify fg.Q_ and fg.R_ here
     fg.run(true_states, nullptr, true); // Add process noise inside the function
-    fg.writeCSV("../2D/2D_trajectory_estimate.csv");
+    // fg.writeCSV("../H5_Files/2D_trajectory_estimate.csv");
+    fg.writeHDF5("../H5_Files/2D_trajectory_estimate.h5");
     std::cout << "Final chi2: " << fg.getChi2() << std::endl;
     return 0;
 } 

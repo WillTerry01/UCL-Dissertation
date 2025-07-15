@@ -4,6 +4,7 @@
 #include <random>
 #include <memory>
 #include <cmath>
+#include <H5Cpp.h>
 
 using namespace std;
 using namespace g2o;
@@ -110,4 +111,31 @@ void FactorGraph2DTrajectory::writeCSV(const std::string& filename) const {
     }
     csv << "chi2," << chi2_ << "\n";
     csv.close();
+}
+
+void FactorGraph2DTrajectory::writeHDF5(const std::string& filename) const {
+    using namespace H5;
+    const hsize_t N = N_;
+    const hsize_t D = 7; // t, true_x, true_y, meas_x, meas_y, est_x, est_y
+    std::vector<double> data(N * D);
+    for (int k = 0; k < N_; ++k) {
+        const auto& true_state = true_states_[k];
+        const auto& meas = measurements_[k];
+        const auto& v = vertices_[k]->estimate();
+        data[k * D + 0] = static_cast<double>(k);
+        data[k * D + 1] = true_state[0];
+        data[k * D + 2] = true_state[1];
+        data[k * D + 3] = meas[0];
+        data[k * D + 4] = meas[1];
+        data[k * D + 5] = v[0];
+        data[k * D + 6] = v[1];
+    }
+    H5File file(filename, H5F_ACC_TRUNC);
+    hsize_t dims[2] = {N, D};
+    DataSpace dataspace(2, dims);
+    DataSet dataset = file.createDataSet("trajectory", PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(data.data(), PredType::NATIVE_DOUBLE);
+    // Write chi2 as an attribute
+    Attribute chi2_attr = dataset.createAttribute("chi2", PredType::NATIVE_DOUBLE, DataSpace());
+    chi2_attr.write(PredType::NATIVE_DOUBLE, &chi2_);
 } 

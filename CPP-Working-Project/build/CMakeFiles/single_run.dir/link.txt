@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/single_run.dir/single_run.cpp.o CMakeFiles/single_run.dir/2D_factor_graph_trajectory.cpp.o  -o single_run  ../../bayesopt/lib/libbayesopt.a ../../bayesopt/lib/libnlopt.a -lg2o_solver_csparse -lg2o_csparse_extension -lg2o_core -lg2o_stuff -lg2o_solver_dense 

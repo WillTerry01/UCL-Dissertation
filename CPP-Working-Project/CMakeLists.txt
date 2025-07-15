@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Eigen3 REQUIRED)
 find_package(g2o REQUIRED)
 find_package(OpenMP)
-
+find_package(HDF5 REQUIRED COMPONENTS CXX)
 
 # Set BayesOpt paths manually since it's installed locally
 set(BAYESOPT_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/../bayesopt/include")
@@ -46,6 +46,7 @@ target_link_libraries(2D_single_run
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_single_run
     PRIVATE
@@ -53,6 +54,7 @@ target_include_directories(2D_single_run
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for main application (100 runs)
@@ -66,6 +68,7 @@ target_link_libraries(2D_main
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_main
     PRIVATE
@@ -73,6 +76,7 @@ target_include_directories(2D_main
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for generating noisy data for repeatable experiments
@@ -80,10 +84,12 @@ add_executable(2D_generate_noisy_data 2D/2D_generate_noisy_data.cpp)
 target_link_libraries(2D_generate_noisy_data
     PRIVATE
     Eigen3::Eigen
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_generate_noisy_data
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for running the factor graph on CSV-loaded data
@@ -97,6 +103,7 @@ target_link_libraries(2D_main_from_csv
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_main_from_csv
     PRIVATE
@@ -104,6 +111,7 @@ target_include_directories(2D_main_from_csv
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for 1D single run demo
@@ -117,6 +125,7 @@ target_link_libraries(1D_single_run
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(1D_single_run
     PRIVATE
@@ -124,6 +133,7 @@ target_include_directories(1D_single_run
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for 1D main application (1000 runs)
@@ -137,6 +147,7 @@ target_link_libraries(1D_main
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(1D_main
     PRIVATE
@@ -144,6 +155,7 @@ target_include_directories(1D_main
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for running BayesOpt on the factor graph using CSV-loaded data
@@ -157,6 +169,7 @@ target_link_libraries(2D_bayesopt_from_csv
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_bayesopt_from_csv
     PRIVATE
@@ -164,6 +177,7 @@ target_include_directories(2D_bayesopt_from_csv
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 # Executable for single run Monte Carlo experiment (chi2 and MSE)
@@ -177,6 +191,7 @@ target_link_libraries(2D_single_run_mc
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
 )
 target_include_directories(2D_single_run_mc
     PRIVATE
@@ -184,6 +199,7 @@ target_include_directories(2D_single_run_mc
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )
 
 
@@ -199,6 +215,7 @@ target_link_libraries(2D_bayesopt_from_csv_parallel
     g2o_core
     g2o_stuff
     g2o_solver_dense
+    ${HDF5_LIBRARIES}
     
 )
 target_include_directories(2D_bayesopt_from_csv_parallel
@@ -207,4 +224,5 @@ target_include_directories(2D_bayesopt_from_csv_parallel
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
     /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
 )

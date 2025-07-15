@@ -11,6 +11,7 @@
 #include <g2o/core/marginal_covariance_cholesky.h>
 #include <g2o/core/sparse_block_matrix.h>
 #include <g2o/core/optimizable_graph.h>
+#include <H5Cpp.h>
 
 // Vertex: 2D position and velocity [x, y, vx, vy]
 class Vertex4D : public g2o::BaseVertex<4, Eigen::Vector4d> {
@@ -62,7 +63,8 @@ public:
     // Run the factor graph optimization with user-provided true states and optional measurements.
     // If add_process_noise is true, process noise will be added to the true states inside the function.
     void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, bool add_process_noise = false);
-    void writeCSV(const std::string& filename = "2d_trajectory_estimate.csv") const;
+    void writeCSV(const std::string& filename = "../H5_Files/2d_trajectory_estimate.csv") const;
+    void writeHDF5(const std::string& filename = "../H5_Files/2d_trajectory_estimate.h5") const;
     double getChi2() const;
     // Getter for estimated state at time step k
     Eigen::Vector4d getEstimate(int k) const { return vertices_[k]->estimate(); }

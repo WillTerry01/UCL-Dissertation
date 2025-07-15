@@ -6,5 +6,5 @@ CXX_FLAGS =   -fopenmp -std=gnu++17
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -isystem /usr/include/eigen3 
+CXX_INCLUDES = -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -isystem /usr/include/eigen3 
 

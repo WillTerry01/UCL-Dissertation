@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import h5py
 
-# Load the CSV file
-csv_path = "2D_single_run_mc_results.csv"
-data = np.genfromtxt(csv_path, delimiter=',', skip_header=1)
+# Load the HDF5 file
+h5_path = "../H5_Files/2D_single_run_mc_results.h5"
+with h5py.File(h5_path, 'r') as f:
+    data = f['results'][:]
 chi2 = data[:, 1]
 mse = data[:, 2]
 
-# Sort by chi2 (ascending)
+# Sort by mse (ascending)
 sort_idx = np.argsort(mse)
 chi2_sorted = chi2[sort_idx]
 mse_sorted = mse[sort_idx]
@@ -17,7 +19,7 @@ fig, ax1 = plt.subplots(figsize=(10, 6))
 
 color1 = 'tab:blue'
 l1 = ax1.plot(runs_sorted, chi2_sorted, 'o-', color=color1, label='Chi² (sorted)')
-ax1.set_xlabel('Sorted Run Index (by Chi²)')
+ax1.set_xlabel('Sorted Run Index (by MSE)')
 ax1.set_ylabel('Chi²', color=color1)
 ax1.tick_params(axis='y', labelcolor=color1)
 

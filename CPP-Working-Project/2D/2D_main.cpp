@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <fstream>
 #include <iostream>
+#include "H5Cpp.h"
 
 int main() {
     int N = 20;
@@ -38,13 +39,13 @@ int main() {
         chi2_values[run] = fg.getChi2();
     }
 
-    // Write chi2 values to CSV
-    std::ofstream csv("../2D/2D_chi2_results.csv");
-    csv << "run,chi2\n";
-    for (int run = 0; run < num_runs; ++run) {
-        csv << run << "," << chi2_values[run] << "\n";
-    }
-    csv.close();
-    std::cout << "Saved chi2 values for " << num_runs << " runs to chi2_results.csv" << std::endl;
+    // Write chi2 values to HDF5
+    const std::string h5_filename = "../H5_Files/2D_chi2_results.h5";
+    hsize_t dims[1] = {static_cast<hsize_t>(num_runs)};
+    H5::H5File file(h5_filename, H5F_ACC_TRUNC);
+    H5::DataSpace dataspace(1, dims);
+    H5::DataSet dataset = file.createDataSet("chi2", H5::PredType::NATIVE_DOUBLE, dataspace);
+    dataset.write(chi2_values.data(), H5::PredType::NATIVE_DOUBLE);
+    std::cout << "Saved chi2 values for " << num_runs << " runs to " << h5_filename << std::endl;
     return 0;
 }
