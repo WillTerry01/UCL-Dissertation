@@ -13,8 +13,8 @@
 
 // Define Hyper Parameters for BAYESOPT
 void initialisation(bopt_params &params) {
-    params.n_iterations = 500;
-    params.n_init_samples = 250;
+    params.n_iterations = 125;
+    params.n_init_samples = 125;
     params.crit_name = (char*)"cEI"; // Expected Improvement
     params.verbose_level = 1;
     params.surr_name = (char*)"sGaussianProcess";  
@@ -59,8 +59,10 @@ public:
         double CNEES = 1e6;
         if (Qval >= 0.1 && Rval >= 0.1) {
             int num_graphs = all_states_.size();
-            int Trajectory_length = all_states_[0].size();
-            std::vector<double> cnees_values(num_graphs);
+            int T = all_states_[0].size();
+            int nx = 4; // state dimension
+            // Step 1: Compute NEES for each run and time step
+            std::vector<std::vector<double>> nees(num_graphs, std::vector<double>(T, 0.0));
             #pragma omp parallel for
             for (int run = 0; run < num_graphs; ++run) {
                 FactorGraph2DTrajectory fg;
@@ -75,22 +77,44 @@ public:
                 auto est_states = fg.getAllEstimates();
                 auto true_states = fg.getAllTrueStates();
                 Eigen::MatrixXd infoMat = fg.getFullInformationMatrix();
-                int N = est_states.size();
-                double sum_nees = 0.0;
-                for (int k = 0; k < N; ++k) {
+                for (int k = 0; k < T; ++k) {
                     Eigen::Vector4d err = true_states[k] - est_states[k];
-                    // Extract 4x4 block for state k
                     Eigen::Matrix4d info_block = infoMat.block<4,4>(k*4, k*4);
-                    Eigen::Matrix4d cov_block = info_block.inverse();
-                    double nees = err.transpose() * info_block * err;
-                    sum_nees += nees;
+                    double nees_k = err.transpose() * info_block * err;
+                    nees[run][k] = nees_k;
                 }
-                cnees_values[run] = sum_nees / N;
             }
-            double mean_cnees = 0.0;
-            for (int i = 0; i < num_graphs; ++i) mean_cnees += cnees_values[i];
-            mean_cnees /= num_graphs;
-            CNEES = mean_cnees;
+            // Step 2: For each time step, average NEES over all runs
+            std::vector<double> mean_nees_per_timestep(T, 0.0);
+            for (int k = 0; k < T; ++k) {
+                for (int run = 0; run < num_graphs; ++run) {
+                    mean_nees_per_timestep[k] += nees[run][k];
+                }
+                mean_nees_per_timestep[k] /= num_graphs;
+            }
+            // Step 3: Average over all time steps
+            double mean_nees = 0.0;
+            for (int k = 0; k < T; ++k) mean_nees += mean_nees_per_timestep[k];
+            mean_nees /= T;
+            // Step 4: Compute S_x (standard deviation of normalized NEES across all runs and time steps)
+            double Sx = 0.0;
+            for (int k = 0; k < T; ++k) {
+                for (int run = 0; run < num_graphs; ++run) {
+                    double normed = nees[run][k] / nx;
+                    double normed_mean = mean_nees_per_timestep[k] / nx;
+                    Sx += (normed - normed_mean) * (normed - normed_mean);
+                }
+            }
+            if (num_graphs > 1) {
+                Sx = std::sqrt(Sx / (T * (num_graphs - 1)));
+            } else {
+                Sx = 0.0; // Avoid division by zero if only one run
+            }
+
+            // Step 5: Compute the augmented CNEES metric
+            double log_mean = std::log(mean_nees / nx);
+            double log_Sx = (Sx > 0) ? std::log(Sx / (2*nx)) : 0.0; // Avoid log(0)
+            CNEES = std::sqrt(log_mean * log_mean + log_Sx * log_Sx);
         }
         trials_.push_back({Qval, Rval, CNEES});
         std::cout << "Q: " << Qval << ", R: " << Rval << ", CNEES: " << CNEES << std::endl;
@@ -130,7 +154,7 @@ int main() {
     // Bounds for Q and R
     boost::numeric::ublas::vector<double> lb(2), ub(2);
     lb(0) = 0.1; lb(1) = 0.1;
-    ub(0) = 1.0;  ub(1) = 1.0;
+    ub(0) = 5.0;  ub(1) = 5.0;
 
     CMetricBayesOpt opt(params, all_states, all_measurements, trials);
     boost::numeric::ublas::vector<double> result(2);

@@ -1,1 +1,1 @@
-Best Q: 1, Best R: 1, Best CNEES: 2.54507
+Best Q: 0.191957, Best R: 0.724081, Best CNEES: 1.63004
