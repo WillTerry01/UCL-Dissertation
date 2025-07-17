@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
 find_package(Eigen3 REQUIRED)
+# Set g2o_DIR to use the local build of g2o
+set(g2o_DIR "/home/will/Dissertation/UCL-Dissertation/g2o/local_install/lib/cmake/g2o")
 find_package(g2o REQUIRED)
 find_package(OpenMP)
 find_package(HDF5 REQUIRED COMPONENTS CXX)

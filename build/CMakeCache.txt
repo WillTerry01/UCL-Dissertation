@@ -327,7 +327,7 @@ g2o_1d_example_BINARY_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/build
 g2o_1d_example_SOURCE_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project
 
 //The directory containing a CMake configuration file for g2o.
-g2o_DIR:PATH=/opt/ros/noetic/lib/cmake/g2o
+g2o_DIR:PATH=/usr/local/lib/cmake/g2o
 
 
 ########################

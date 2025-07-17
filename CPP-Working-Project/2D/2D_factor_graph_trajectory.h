@@ -68,6 +68,7 @@ public:
     double getChi2() const;
     // Getter for estimated state at time step k
     Eigen::Vector4d getEstimate(int k) const { return vertices_[k]->estimate(); }
+    void printHessian() const;
 private:
     int N_;
     std::vector<Eigen::Vector4d> true_states_;
@@ -77,4 +78,5 @@ private:
     void setupOptimizer();
     void optimize();
     std::unique_ptr<g2o::SparseOptimizer> optimizer_;
+    g2o::BlockSolver<g2o::BlockSolverTraits<4, 4>>* blockSolver_ = nullptr;
 }; 

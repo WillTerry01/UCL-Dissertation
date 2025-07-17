@@ -21,6 +21,7 @@ int main() {
     fg.R_ = Eigen::Matrix2d::Identity() * 0.01;
     // Optionally modify fg.Q_ and fg.R_ here
     fg.run(true_states, nullptr, true); // Add process noise inside the function
+    fg.printHessian();
     // fg.writeCSV("../H5_Files/2D_trajectory_estimate.csv");
     fg.writeHDF5("../H5_Files/2D_trajectory_estimate.h5");
     std::cout << "Final chi2: " << fg.getChi2() << std::endl;

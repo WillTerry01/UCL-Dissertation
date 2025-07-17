@@ -55,6 +55,7 @@ void FactorGraph2DTrajectory::setupOptimizer() {
     typedef g2o::LinearSolverCSparse<BlockSolverType::PoseMatrixType> LinearSolverType;
     auto linearSolver = std::make_unique<LinearSolverType>();
     auto blockSolver = std::make_unique<BlockSolverType>(std::move(linearSolver));
+    blockSolver_ = blockSolver.get();
     OptimizationAlgorithmLevenberg* solver = new OptimizationAlgorithmLevenberg(std::move(blockSolver));
     optimizer_ = std::make_unique<SparseOptimizer>();
     optimizer_->setAlgorithm(solver);
@@ -138,4 +139,24 @@ void FactorGraph2DTrajectory::writeHDF5(const std::string& filename) const {
     // Write chi2 as an attribute
     Attribute chi2_attr = dataset.createAttribute("chi2", PredType::NATIVE_DOUBLE, DataSpace());
     chi2_attr.write(PredType::NATIVE_DOUBLE, &chi2_);
+}
+
+void FactorGraph2DTrajectory::printHessian() const {
+    if (!blockSolver_) {
+        std::cout << "BlockSolver not initialized." << std::endl;
+        return;
+    }
+    const auto* hessian = blockSolver_->hessian();
+    if (!hessian) {
+        std::cout << "Hessian is null." << std::endl;
+        return;
+    }
+    std::cout << "Hessian (pose-pose block):" << std::endl;
+    for (size_t i = 0; i < hessian->blockCols().size(); ++i) {
+        for (const auto& blockPair : hessian->blockCols()[i]) {
+            int row = blockPair.first;
+            const auto* block = blockPair.second;
+            std::cout << "Block (" << row << ", " << i << "):\n" << *block << "\n";
+        }
+    }
 } 
