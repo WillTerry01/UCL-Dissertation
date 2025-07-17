@@ -56,10 +56,24 @@ public:
 
 class FactorGraph2DTrajectory {
 public:
+    struct OutputOptions {
+        bool output_estimated_state = false;
+        bool output_true_state = false;
+        bool output_information_matrix = false;
+    };
+
     FactorGraph2DTrajectory();
     // Q_ and R_ are public for direct modification
     Eigen::Matrix4d Q_;
     Eigen::Matrix2d R_;
+    void setOutputOptions(const OutputOptions& options) { output_options_ = options; }
+    OutputOptions getOutputOptions() const { return output_options_; }
+    // Get all estimated states
+    std::vector<Eigen::Vector4d> getAllEstimates() const { return getEstimatesInternal(); }
+    // Get all true states
+    std::vector<Eigen::Vector4d> getAllTrueStates() const { return true_states_; }
+    // Get the full information matrix (Hessian)
+    Eigen::MatrixXd getFullInformationMatrix() const;
     // Run the factor graph optimization with user-provided true states and optional measurements.
     // If add_process_noise is true, process noise will be added to the true states inside the function.
     void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, bool add_process_noise = false);
@@ -75,6 +89,12 @@ private:
     std::vector<Eigen::Vector2d> measurements_;
     std::vector<Vertex4D*> vertices_;
     double chi2_;
+    OutputOptions output_options_;
+    std::vector<Eigen::Vector4d> getEstimatesInternal() const {
+        std::vector<Eigen::Vector4d> estimates;
+        for (const auto* v : vertices_) estimates.push_back(v->estimate());
+        return estimates;
+    }
     void setupOptimizer();
     void optimize();
     std::unique_ptr<g2o::SparseOptimizer> optimizer_;

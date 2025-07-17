@@ -1,6 +1,16 @@
 [
 {
   "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -isystem /usr/include/eigen3  -g   -fopenmp -std=gnu++17 -o CMakeFiles/2D_bayesopt_from_csv_parallel_CNEES.dir/2D/2D_bayesopt_from_csv_parallel_CNEES.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_bayesopt_from_csv_parallel_CNEES.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_bayesopt_from_csv_parallel_CNEES.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
+  "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -isystem /usr/include/eigen3  -g   -fopenmp -std=gnu++17 -o CMakeFiles/2D_bayesopt_from_csv_parallel_CNEES.dir/2D/2D_factor_graph_trajectory.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_factor_graph_trajectory.cpp",
+  "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_factor_graph_trajectory.cpp"
+},
+{
+  "directory": "/home/will/Dissertation/UCL-Dissertation/build",
   "command": "/usr/bin/g++   -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -isystem /usr/include/eigen3  -g   -fopenmp -std=gnu++17 -o CMakeFiles/2D_bayesopt_from_csv_parallel.dir/2D/2D_bayesopt_from_csv_parallel.cpp.o -c /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_bayesopt_from_csv_parallel.cpp",
   "file": "/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D/2D_bayesopt_from_csv_parallel.cpp"
 },

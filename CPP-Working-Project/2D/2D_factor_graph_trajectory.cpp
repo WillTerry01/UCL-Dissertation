@@ -159,4 +159,24 @@ void FactorGraph2DTrajectory::printHessian() const {
             std::cout << "Block (" << row << ", " << i << "):\n" << *block << "\n";
         }
     }
+}
+
+Eigen::MatrixXd FactorGraph2DTrajectory::getFullInformationMatrix() const {
+    if (!blockSolver_ || !blockSolver_->hessian()) {
+        std::cerr << "Hessian not available!" << std::endl;
+        return Eigen::MatrixXd();
+    }
+    const auto* hessian = blockSolver_->hessian();
+    int dim = hessian->rows();
+    Eigen::MatrixXd fullHessian = Eigen::MatrixXd::Zero(dim, dim);
+    for (size_t i = 0; i < hessian->blockCols().size(); ++i) {
+        for (const auto& blockPair : hessian->blockCols()[i]) {
+            int row = blockPair.first;
+            const auto* block = blockPair.second;
+            if (block) {
+                fullHessian.block(row * 4, i * 4, 4, 4) = *block;
+            }
+        }
+    }
+    return fullHessian;
 } 

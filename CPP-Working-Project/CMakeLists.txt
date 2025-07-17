@@ -228,3 +228,26 @@ target_include_directories(2D_bayesopt_from_csv_parallel
     /usr/local/include
     ${HDF5_INCLUDE_DIRS}
 )
+
+add_executable(2D_bayesopt_from_csv_parallel_CNEES 2D/2D_bayesopt_from_csv_parallel_CNEES.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_bayesopt_from_csv_parallel_CNEES
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+)
+
+target_include_directories(2D_bayesopt_from_csv_parallel_CNEES
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
