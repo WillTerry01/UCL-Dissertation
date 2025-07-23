@@ -41,8 +41,6 @@ g2o/core/optimization_algorithm_levenberg.h
 -
 g2o/solvers/csparse/linear_solver_csparse.h
 -
-g2o/core/marginal_covariance_cholesky.h
--
 g2o/core/sparse_block_matrix.h
 -
 g2o/core/optimizable_graph.h

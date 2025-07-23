@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/g++
 CXX_FLAGS = -g   -std=gnu++17
 
-CXX_DEFINES = 
+CXX_DEFINES = -DYAML_CPP_STATIC_DEFINE
 
-CXX_INCLUDES = -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -isystem /usr/include/eigen3 
+CXX_INCLUDES = -I/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/../bayesopt/include -I/usr/include/hdf5/serial -I/home/will/Dissertation/UCL-Dissertation/build/_deps/yaml-cpp-src/include -isystem /usr/include/eigen3 
 

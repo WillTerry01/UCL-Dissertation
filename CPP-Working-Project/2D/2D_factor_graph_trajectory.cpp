@@ -71,8 +71,11 @@ void FactorGraph2DTrajectory::setupOptimizer() {
         vertices_[k]->setEstimate(true_states_[k] + Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen)));
         optimizer_->addVertex(vertices_[k]);
     }
+    
+    // Use dt = 1.0 for now (can be made configurable later)
+    double dt = 1.0;
     for (int k = 1; k < N_; ++k) {
-        EdgeProcessModel* e = new EdgeProcessModel();
+        EdgeProcessModel* e = new EdgeProcessModel(dt);
         e->setVertex(0, vertices_[k-1]);
         e->setVertex(1, vertices_[k]);
         e->setMeasurement(Eigen::Vector4d::Zero());
@@ -167,8 +170,11 @@ Eigen::MatrixXd FactorGraph2DTrajectory::getFullInformationMatrix() const {
         return Eigen::MatrixXd();
     }
     const auto* hessian = blockSolver_->hessian();
-    int dim = hessian->rows();
-    Eigen::MatrixXd fullHessian = Eigen::MatrixXd::Zero(dim, dim);
+    
+    // Get the total dimension (number of vertices * vertex dimension)
+    int total_dim = N_ * 4;  // Each vertex has dimension 4
+    Eigen::MatrixXd fullHessian = Eigen::MatrixXd::Zero(total_dim, total_dim);
+    
     for (size_t i = 0; i < hessian->blockCols().size(); ++i) {
         for (const auto& blockPair : hessian->blockCols()[i]) {
             int row = blockPair.first;
@@ -179,4 +185,53 @@ Eigen::MatrixXd FactorGraph2DTrajectory::getFullInformationMatrix() const {
         }
     }
     return fullHessian;
+}
+
+void FactorGraph2DTrajectory::setQFromProcessNoiseIntensity(double q_intensity, double dt) {
+    // Construct the proper Q matrix for 2D linear tracking
+    // Q = [dt^3/3 * V₀    0           dt^2/2 * V₀    0        ]
+    //     [0               dt^3/3 * V₁ 0               dt^2/2 * V₁]
+    //     [dt^2/2 * V₀    0           dt * V₀         0        ]
+    //     [0               dt^2/2 * V₁ 0               dt * V₁  ]
+    Q_ = Eigen::Matrix4d::Zero();
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    
+    // Use same noise intensity for both x and y directions (V₀ = V₁ = q_intensity)
+    double V0 = q_intensity;
+    double V1 = q_intensity;
+    
+    // Add small numerical tolerance to ensure positive definiteness
+    double numerical_tolerance = 1e-10;
+    
+    // Position-position covariance (diagonal)
+    Q_(0, 0) = dt3 / 3.0 * V0 + numerical_tolerance;  // x position variance
+    Q_(1, 1) = dt3 / 3.0 * V1 + numerical_tolerance;  // y position variance
+    
+    // Velocity-velocity covariance (diagonal)
+    Q_(2, 2) = dt * V0 + numerical_tolerance;         // x velocity variance
+    Q_(3, 3) = dt * V1 + numerical_tolerance;         // y velocity variance
+    
+    // Position-velocity cross covariance
+    Q_(0, 2) = dt2 / 2.0 * V0;  // x position - x velocity covariance
+    Q_(2, 0) = Q_(0, 2);        // symmetric
+    Q_(1, 3) = dt2 / 2.0 * V1;  // y position - y velocity covariance
+    Q_(3, 1) = Q_(1, 3);        // symmetric
+}
+
+void FactorGraph2DTrajectory::setRFromMeasurementNoise(double sigma_x, double sigma_y) {
+    // Set R matrix for measurement noise with different variances for x and y
+    R_ = Eigen::Matrix2d::Zero();
+    R_(0, 0) = sigma_x * sigma_x;  // x measurement variance
+    R_(1, 1) = sigma_y * sigma_y;  // y measurement variance
+}
+
+void FactorGraph2DTrajectory::setQFromScalar(double q_scalar, double dt) {
+    // Legacy method: set Q as scalar multiple of identity
+    Q_ = Eigen::Matrix4d::Identity() * q_scalar;
+}
+
+void FactorGraph2DTrajectory::setRFromScalar(double r_scalar) {
+    // Legacy method: set R as scalar multiple of identity
+    R_ = Eigen::Matrix2d::Identity() * r_scalar;
 } 

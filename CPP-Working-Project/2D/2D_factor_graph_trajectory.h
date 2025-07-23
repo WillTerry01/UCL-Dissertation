@@ -8,7 +8,6 @@
 #include <g2o/core/block_solver.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/solvers/csparse/linear_solver_csparse.h>
-#include <g2o/core/marginal_covariance_cholesky.h>
 #include <g2o/core/sparse_block_matrix.h>
 #include <g2o/core/optimizable_graph.h>
 #include <H5Cpp.h>
@@ -29,17 +28,64 @@ public:
 class EdgeProcessModel : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, Vertex4D, Vertex4D> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    // Constructor to set dt and control input
+    EdgeProcessModel(double dt = 1.0) : dt_(dt) {}
+    
     void computeError() override {
         const Vertex4D* v1 = static_cast<const Vertex4D*>(_vertices[0]);
         const Vertex4D* v2 = static_cast<const Vertex4D*>(_vertices[1]);
-        double dt = 1.0;
-        Eigen::Vector4d pred;
-        pred.head<2>() = v1->estimate().head<2>() + v1->estimate().tail<2>() * dt;
-        pred.tail<2>() = v1->estimate().tail<2>();
+        
+        // State transition matrix F (constant velocity model)
+        // F = [1  0  dt  0]
+        //     [0  1  0   dt]
+        //     [0  0  1   0]
+        //     [0  0  0   1]
+        Eigen::Matrix4d F = Eigen::Matrix4d::Identity();
+        F(0, 2) = dt_;  // x position += x velocity * dt
+        F(1, 3) = dt_;  // y position += y velocity * dt
+        
+        // Control input matrix B (for future acceleration control)
+        // B = [0.5 * dt^2  0        ]
+        //     [0           0.5 * dt^2]
+        //     [dt          0        ]
+        //     [0           dt       ]
+        Eigen::Matrix<double, 4, 2> B;
+        double dt2 = dt_ * dt_;
+        B << 0.5 * dt2, 0.0,
+             0.0, 0.5 * dt2,
+             dt_, 0.0,
+             0.0, dt_;
+        
+        // Get control input (acceleration) - set to zero for constant velocity
+        // TODO: Modify this to get actual control input for controlled motion
+        Eigen::Vector2d acceleration = getControlInput();  // Currently returns zero
+        
+        // State equation: xₖ₊₁ = Fxₖ + Buₖ + vₖ
+        Eigen::Vector4d control_effect = B * acceleration;
+        Eigen::Vector4d pred = F * v1->estimate() + control_effect;
+        
+        // Error: e = xₖ₊₁ - (Fxₖ + Buₖ)
         _error = v2->estimate() - pred;
     }
+    
     bool read(std::istream&) override { return false; }
     bool write(std::ostream&) const override { return false; }
+    
+private:
+    double dt_;
+    
+    // Control input generation function - currently returns zero for constant velocity
+    // TODO: Modify this function to return actual control input for controlled motion
+    Eigen::Vector2d getControlInput() {
+        // For now, return zero acceleration (constant velocity)
+        // This can be modified later to return:
+        // - Sinusoidal acceleration: [A*sin(ω*t), A*cos(ω*t)]
+        // - Step acceleration: [a_x, a_y] for t > t_switch
+        // - Random acceleration: [N(0,σ²), N(0,σ²)]
+        // - Nonlinear control laws
+        return Eigen::Vector2d::Zero();
+    }
 };
 
 // Measurement edge: connects state to observed position
@@ -83,6 +129,13 @@ public:
     // Getter for estimated state at time step k
     Eigen::Vector4d getEstimate(int k) const { return vertices_[k]->estimate(); }
     void printHessian() const;
+
+    // Add these new methods
+    void setQFromProcessNoiseIntensity(double q_intensity, double dt = 1.0);
+    void setRFromMeasurementNoise(double sigma_x, double sigma_y);
+    void setQFromScalar(double q_scalar, double dt = 1.0);
+    void setRFromScalar(double r_scalar);
+
 private:
     int N_;
     std::vector<Eigen::Vector4d> true_states_;

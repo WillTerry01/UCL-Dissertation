@@ -5,6 +5,17 @@ project(BayesOptExample)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Include FetchContent module to fetch dependencies
+include(FetchContent)
+
+# Fetch yaml-cpp
+FetchContent_Declare(
+  yaml-cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG 0.8.0
+)
+FetchContent_MakeAvailable(yaml-cpp)
+
 # Find required packages
 find_package(Eigen3 REQUIRED)
 # Set g2o_DIR to use the local build of g2o
@@ -87,10 +98,43 @@ target_link_libraries(2D_generate_noisy_data
     PRIVATE
     Eigen3::Eigen
     ${HDF5_LIBRARIES}
+    yaml-cpp
 )
 target_include_directories(2D_generate_noisy_data
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for testing Q matrix construction
+add_executable(test_q_matrix 2D/test_q_matrix.cpp)
+target_link_libraries(test_q_matrix
+    PRIVATE
+    Eigen3::Eigen
+    yaml-cpp
+)
+target_include_directories(test_q_matrix
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+# Executable for testing factor graph Q matrix
+add_executable(test_factor_graph_q 2D/test_factor_graph_q.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(test_factor_graph_q
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+)
+target_include_directories(test_factor_graph_q
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
     ${HDF5_INCLUDE_DIRS}
 )
 
@@ -172,6 +216,7 @@ target_link_libraries(2D_bayesopt_from_csv
     g2o_stuff
     g2o_solver_dense
     ${HDF5_LIBRARIES}
+    yaml-cpp
 )
 target_include_directories(2D_bayesopt_from_csv
     PRIVATE
@@ -218,7 +263,7 @@ target_link_libraries(2D_bayesopt_from_csv_parallel
     g2o_stuff
     g2o_solver_dense
     ${HDF5_LIBRARIES}
-    
+    yaml-cpp
 )
 target_include_directories(2D_bayesopt_from_csv_parallel
     PRIVATE
@@ -241,6 +286,7 @@ target_link_libraries(2D_bayesopt_from_csv_parallel_CNEES
     g2o_stuff
     g2o_solver_dense
     ${HDF5_LIBRARIES}
+    yaml-cpp
 )
 
 target_include_directories(2D_bayesopt_from_csv_parallel_CNEES
@@ -251,3 +297,53 @@ target_include_directories(2D_bayesopt_from_csv_parallel_CNEES
     /usr/local/include
     ${HDF5_INCLUDE_DIRS}
 )
+
+add_executable(2D_bayesopt_NEES 2D/2D_bayesopt_NEES.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_bayesopt_NEES
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(2D_bayesopt_NEES
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for validating filter performance
+add_executable(2D_validate_filter 2D/2D_validate_filter.cpp 2D/2D_factor_graph_trajectory.cpp)
+target_link_libraries(2D_validate_filter
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(2D_validate_filter
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+

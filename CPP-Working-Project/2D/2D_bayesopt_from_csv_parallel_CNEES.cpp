@@ -10,15 +10,16 @@
 #include <omp.h>
 #include "H5Cpp.h"
 #include <array>
+#include <yaml-cpp/yaml.h>
 
 // Define Hyper Parameters for BAYESOPT
-void initialisation(bopt_params &params) {
-    params.n_iterations = 125;
-    params.n_init_samples = 125;
-    params.crit_name = (char*)"cEI"; // Expected Improvement
-    params.verbose_level = 1;
-    params.surr_name = (char*)"sGaussianProcess";  
-    params.noise = 1e-6;
+void initialisation(bopt_params &params, const YAML::Node& config) {
+    params.n_iterations = config["bayesopt"]["n_iterations"].as<int>();
+    params.n_init_samples = config["bayesopt"]["n_init_samples"].as<int>();
+    params.crit_name = strdup(config["bayesopt"]["crit_name"].as<std::string>().c_str());
+    params.verbose_level = config["bayesopt"]["verbose_level"].as<int>();
+    params.surr_name = strdup(config["bayesopt"]["surr_name"].as<std::string>().c_str());
+    params.noise = config["bayesopt"]["noise"].as<double>();
 }
 
 // Helper function to infer num_graphs and N from the HDF5 file
@@ -43,21 +44,27 @@ public:
     CMetricBayesOpt(const bopt_params &params,
                     const std::vector<std::vector<Eigen::Vector4d>> &all_states,
                     const std::vector<std::vector<Eigen::Vector2d>> &all_measurements,
-                    std::vector<std::array<double, 3>> &trials)
+                    std::vector<std::array<double, 3>> &trials,
+                    double lower_bound_Q, double upper_bound_Q,
+                    double lower_bound_R, double upper_bound_R)
         : bayesopt::ContinuousModel(2, params),
           all_states_(all_states),
           all_measurements_(all_measurements),
-          trials_(trials) {}
+          trials_(trials),
+          lower_bound_Q_(lower_bound_Q),
+          upper_bound_Q_(upper_bound_Q),
+          lower_bound_R_(lower_bound_R),
+          upper_bound_R_(upper_bound_R) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
         static int eval_count = 0;
         eval_count++;
         std::cout << "[BayesOpt] Iteration: " << eval_count << std::endl;
         auto eval_start = std::chrono::high_resolution_clock::now();
-        double Qval = query(0);
-        double Rval = query(1);
-        double CNEES = 1e6;
-        if (Qval >= 0.1 && Rval >= 0.1) {
+            double qval = query(0);  // Process noise intensity
+    double Rval = query(1);
+    double CNEES = 1e6;
+    if (qval >= lower_bound_Q_ && qval <= upper_bound_Q_ && Rval >= lower_bound_R_ && Rval <= upper_bound_R_) {
             int num_graphs = all_states_.size();
             int T = all_states_[0].size();
             int nx = 4; // state dimension
@@ -66,8 +73,9 @@ public:
             #pragma omp parallel for
             for (int run = 0; run < num_graphs; ++run) {
                 FactorGraph2DTrajectory fg;
-                fg.Q_ = Eigen::Matrix4d::Identity() * Qval;
-                fg.R_ = Eigen::Matrix2d::Identity() * Rval;
+                // Use proper Q matrix structure for 2D linear tracking
+                fg.setQFromProcessNoiseIntensity(qval, 1.0);  // dt = 1.0 from config
+                fg.setRFromScalar(Rval);
                 FactorGraph2DTrajectory::OutputOptions opts;
                 opts.output_estimated_state = true;
                 opts.output_true_state = true;
@@ -96,7 +104,7 @@ public:
             double mean_nees = 0.0;
             for (int k = 0; k < T; ++k) mean_nees += mean_nees_per_timestep[k];
             mean_nees /= T;
-            // Step 4: Compute S_x (standard deviation of normalized NEES across all runs and time steps)
+            // Step 4: Compute S_x (variance of normalized NEES across all runs and time steps)
             double Sx = 0.0;
             for (int k = 0; k < T; ++k) {
                 for (int run = 0; run < num_graphs; ++run) {
@@ -106,18 +114,50 @@ public:
                 }
             }
             if (num_graphs > 1) {
-                Sx = std::sqrt(Sx / (T * (num_graphs - 1)));
+                Sx = Sx / (T * (num_graphs - 1));
             } else {
                 Sx = 0.0; // Avoid division by zero if only one run
             }
 
-            // Step 5: Compute the augmented CNEES metric
+            // Compute CNEES for reporting
             double log_mean = std::log(mean_nees / nx);
-            double log_Sx = (Sx > 0) ? std::log(Sx / (2*nx)) : 0.0; // Avoid log(0)
-            CNEES = std::sqrt(log_mean * log_mean + log_Sx * log_Sx);
+            double log_Sx = (Sx > 0) ? std::log(Sx / (2 * nx)) : 0.0; // Avoid log(0)
+            double CNEES = std::abs(log_mean) + std::abs(log_Sx);
+
+            // Calculate overall NEES statistics across all runs and time steps
+            std::vector<double> all_nees_values;
+            all_nees_values.reserve(num_graphs * T);
+            for (int run = 0; run < num_graphs; ++run) {
+                for (int k = 0; k < T; ++k) {
+                    all_nees_values.push_back(nees[run][k]);
+                }
+            }
+            
+            // Calculate mean and variance of all NEES values
+            double overall_mean = 0.0;
+            for (const auto& val : all_nees_values) {
+                overall_mean += val;
+            }
+            overall_mean /= all_nees_values.size();
+            
+            double overall_variance = 0.0;
+            for (const auto& val : all_nees_values) {
+                overall_variance += (val - overall_mean) * (val - overall_mean);
+            }
+            overall_variance /= (all_nees_values.size() - 1);
+
+            // Objective for BO: CNEES
+            trials_.push_back({qval, Rval, CNEES});
+            std::cout << "q: " << qval << ", R: " << Rval << ", CNEES: " << CNEES 
+                      << ", NEES_mean: " << overall_mean << ", NEES_var: " << overall_variance << std::endl;
+            auto eval_end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> eval_duration = eval_end - eval_start;
+            std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
+            return CNEES;
         }
-        trials_.push_back({Qval, Rval, CNEES});
-        std::cout << "Q: " << Qval << ", R: " << Rval << ", CNEES: " << CNEES << std::endl;
+        trials_.push_back({qval, Rval, CNEES});
+        std::cout << "q: " << qval << ", R: " << Rval << ", CNEES: " << CNEES 
+                  << ", NEES_mean: N/A, NEES_var: N/A (out of bounds)" << std::endl;
         auto eval_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> eval_duration = eval_end - eval_start;
         std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
@@ -127,9 +167,13 @@ private:
     const std::vector<std::vector<Eigen::Vector4d>> &all_states_;
     const std::vector<std::vector<Eigen::Vector2d>> &all_measurements_;
     std::vector<std::array<double, 3>> &trials_;
+    double lower_bound_Q_, upper_bound_Q_, lower_bound_R_, upper_bound_R_;
 };
 
 int main() {
+    // Load configuration from YAML file
+    YAML::Node config = YAML::LoadFile("../BO_Parameters.yaml");
+
     // Infer problem size from the noisy states HDF5
     int Trajectory_length = 0;
     int num_graphs = 0;
@@ -149,14 +193,20 @@ int main() {
 
     // Set up BayesOpt parameters
     bopt_params params = initialize_parameters_to_default();
-    initialisation(params);
+    initialisation(params, config);
 
-    // Bounds for Q and R
+    // Bounds for Q and R from YAML
     boost::numeric::ublas::vector<double> lb(2), ub(2);
-    lb(0) = 0.1; lb(1) = 0.1;
-    ub(0) = 5.0;  ub(1) = 5.0;
+    lb(0) = config["parameters"][0]["lower_bound"].as<double>();
+    ub(0) = config["parameters"][0]["upper_bound"].as<double>();
+    lb(1) = config["parameters"][1]["lower_bound"].as<double>();
+    ub(1) = config["parameters"][1]["upper_bound"].as<double>();
 
-    CMetricBayesOpt opt(params, all_states, all_measurements, trials);
+    CMetricBayesOpt opt(
+        params, all_states, all_measurements, trials,
+        lb(0), ub(0), lb(1), ub(1)
+    );
+    opt.setBoundingBox(lb, ub);
     boost::numeric::ublas::vector<double> result(2);
     auto total_start = std::chrono::high_resolution_clock::now();
     opt.optimize(result);
@@ -177,10 +227,19 @@ int main() {
     }
     dataset.write(flat_trials.data(), H5::PredType::NATIVE_DOUBLE);
 
-    std::cout << "Best Q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
+    // Save best q, R, and final objective value to BO_Parameters.yaml
+    YAML::Node out_config = YAML::LoadFile("../BO_Parameters.yaml");
+    out_config["validate_filter"]["q"] = result(0);
+    out_config["validate_filter"]["R"] = result(1);
+    out_config["validate_filter"]["min_objective"] = minC;
+    std::ofstream yaml_out("../BO_Parameters.yaml");
+    yaml_out << out_config;
+    yaml_out.close();
+
+    std::cout << "Best q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
     std::cout << "[Timing] Total BayesOpt optimization took " << total_duration.count() << " seconds." << std::endl;
     std::ofstream cfile("../H5_Files/2D_bayesopt_best.txt");
-    cfile << "Best Q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
+    cfile << "Best q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
     cfile.close();
 
     return 0;
