@@ -29,6 +29,6 @@ parameters:
     name: R
     upper_bound: 10.0
 validate_filter:
-  R: 0.94392465239623569
-  min_objective: 0.09288801493837652
-  q: 1.833819493735209
+  R: 0.89946498998207969
+  min_objective: 0.14039367739196967
+  q: 0.31431152284378189

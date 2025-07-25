@@ -43,8 +43,8 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
     } else {
         // Generate measurements from true states if not provided
         measurements_.resize(N_);
-        // Use a more deterministic seed based on memory address and time
-        std::mt19937 gen(54321 + reinterpret_cast<uintptr_t>(this));  // Deterministic seed
+        std::random_device rd;
+        std::mt19937 gen(rd());
         std::normal_distribution<> noise_r(0.0, 0.1);
         for (int k = 0; k < N_; ++k) {
             measurements_[k][0] = true_states_[k][0] + noise_r(gen);
@@ -54,8 +54,8 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
     
     if (add_process_noise) {
         // Add process noise to true states
-        // Use a more deterministic seed based on memory address
-        std::mt19937 gen(98765 + reinterpret_cast<uintptr_t>(this));  // Deterministic seed
+        std::random_device rd;
+        std::mt19937 gen(rd());
         std::normal_distribution<> noise_q(0.0, 0.1);
         for (int k = 1; k < N_; ++k) {
             true_states_[k] += Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen));
@@ -65,9 +65,8 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
     setupOptimizer();
     
     // Initialize vertices with noisy true states
-    // Use deterministic seeding to avoid thread-dependent initialization issues
-    // Use a more deterministic seed based on memory address
-    std::mt19937 gen(12345 + reinterpret_cast<uintptr_t>(this));  // Deterministic seed
+    std::random_device rd;
+    std::mt19937 gen(rd());
     
     // Use proper multivariate initialization noise based on full Q matrix
     // Check if Q matrix is positive definite for Cholesky decomposition
