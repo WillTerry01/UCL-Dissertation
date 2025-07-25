@@ -11,11 +11,14 @@
 #include <omp.h>
 #include <yaml-cpp/yaml.h>
 
+// Function declaration for control input generation
+Eigen::Vector2d generateControlInput(int time_step, double dt);
+
 // Function to read the best Q and R values from the optimization results file
-bool load_best_params(double& best_q, double& best_r) {
+bool load_best_params(double& best_V0, double& best_meas_noise_var) {
     std::ifstream infile("../H5_Files/2D_bayesopt_best.txt");
     if (!infile.is_open()) {
-        std::cerr << "Error: Could not open 2D_bayesopt_best.txt to read Q and R values." << std::endl;
+        std::cerr << "Error: Could not open 2D_bayesopt_best.txt to read V0 and meas_noise_var values." << std::endl;
         std::cerr << "Please ensure the file exists and contains the best parameters." << std::endl;
         return false;
     }
@@ -26,14 +29,14 @@ bool load_best_params(double& best_q, double& best_r) {
         std::string temp;
         char comma;
 
-        // Expects format: "Best Q: 0.123, Best R: 4.56, ..."
-        if (ss >> temp >> temp >> best_q >> comma >> temp >> temp >> best_r) {
-             std::cout << "Successfully loaded Best Q: " << best_q << " and Best R: " << best_r << std::endl;
+        // Expects format: "Best V0: 0.123, Best meas_noise_std²: 4.56, ..."
+        if (ss >> temp >> temp >> best_V0 >> comma >> temp >> temp >> temp >> best_meas_noise_var) {
+             std::cout << "Successfully loaded Best V0: " << best_V0 << " and Best meas_noise_std²: " << best_meas_noise_var << std::endl;
              return true;
         }
     }
     
-    std::cerr << "Error: Could not parse Q and R from 2D_bayesopt_best.txt." << std::endl;
+    std::cerr << "Error: Could not parse V0 and meas_noise_var from 2D_bayesopt_best.txt." << std::endl;
     return false;
 }
 
@@ -43,10 +46,11 @@ int main() {
 
     // --- PART 1: SETUP ---
 
-    double best_Q = config["validate_filter"]["Q"].as<double>();
-    double best_R = config["validate_filter"]["R"].as<double>();
+    double best_V0 = config["validate_filter"]["q"].as<double>();  // Process noise intensity
+    double best_meas_noise_var = config["validate_filter"]["R"].as<double>();  // Measurement noise variance
+    double best_meas_noise_std = sqrt(best_meas_noise_var);
     
-    // if (!load_best_params(best_Q, best_R)) {
+    // if (!load_best_params(best_V0, best_meas_noise_var)) {
     //     return 1;
     // }
 
@@ -56,10 +60,64 @@ int main() {
     double dt = config["Data_Generation"]["dt"].as<double>();
     Eigen::Vector2d pos(config["Data_Generation"]["pos"]["x"].as<double>(), config["Data_Generation"]["pos"]["y"].as<double>());
     Eigen::Vector2d vel(config["Data_Generation"]["vel"]["x"].as<double>(), config["Data_Generation"]["vel"]["y"].as<double>());
-    double process_noise_std = sqrt(config["Data_Generation"]["process_noise_std"].as<double>()); 
-    double meas_noise_std = sqrt(config["Data_Generation"]["meas_noise_std"].as<double>());    
     unsigned int base_seed = 1339; // New seed for validation data
     int nx = 4;
+
+    // State transition matrix F (constant velocity model)
+    Eigen::Matrix4d F = Eigen::Matrix4d::Identity();
+    F(0, 2) = dt;  // x position += x velocity * dt
+    F(1, 3) = dt;  // y position += y velocity * dt
+
+    // Control input matrix B (for future acceleration control)
+    Eigen::Matrix<double, 4, 2> B;
+    double dt2 = dt * dt;
+    B << 0.5 * dt2, 0.0,
+         0.0, 0.5 * dt2,
+         dt, 0.0,
+         0.0, dt;
+
+    // Construct the process noise covariance matrix Q for 2D linear tracking
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+    double dt3 = dt2 * dt;
+    
+    // Position-position covariance (diagonal)
+    Q(0, 0) = dt3 / 3.0 * best_V0;  // x position variance
+    Q(1, 1) = dt3 / 3.0 * best_V0;  // y position variance (same as V0 for now)
+    
+    // Velocity-velocity covariance (diagonal)
+    Q(2, 2) = dt * best_V0;         // x velocity variance
+    Q(3, 3) = dt * best_V0;         // y velocity variance
+    
+    // Position-velocity cross covariance
+    Q(0, 2) = dt2 / 2.0 * best_V0;  // x position - x velocity covariance
+    Q(2, 0) = Q(0, 2);              // symmetric
+    Q(1, 3) = dt2 / 2.0 * best_V0;  // y position - y velocity covariance
+    Q(3, 1) = Q(1, 3);              // symmetric
+
+    // Construct the measurement noise covariance matrix R
+    Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
+    R(0, 0) = best_meas_noise_var;  // x measurement variance
+    R(1, 1) = best_meas_noise_var;  // y measurement variance
+
+    // Validate that Q and R are positive semi-definite
+    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q);
+    if (lltOfQ.info() != Eigen::Success) {
+        std::cerr << "ERROR: Q matrix is not positive semi-definite!" << std::endl;
+        std::cerr << "Q matrix:" << std::endl << Q << std::endl;
+        std::cerr << "V0 = " << best_V0 << ", dt = " << dt << std::endl;
+        return -1;
+    }
+
+    Eigen::LLT<Eigen::Matrix2d> lltOfR(R);
+    if (lltOfR.info() != Eigen::Success) {
+        std::cerr << "ERROR: R matrix is not positive semi-definite!" << std::endl;
+        std::cerr << "R matrix:" << std::endl << R << std::endl;
+        std::cerr << "meas_noise_std = " << best_meas_noise_std << std::endl;
+        return -1;
+    }
+
+    std::cout << "Q and R matrices are positive semi-definite ✓" << std::endl;
+    std::cout << "Using V0 = " << best_V0 << ", meas_noise_std = " << best_meas_noise_std << ", dt = " << dt << std::endl;
 
     // --- PART 2: GENERATE NEW, INDEPENDENT DATA IN MEMORY ---
     
@@ -69,25 +127,62 @@ int main() {
     std::vector<std::vector<Eigen::Vector2d>> all_measurements(num_graphs, std::vector<Eigen::Vector2d>(N));
 
     for (int run = 0; run < num_graphs; ++run) {
-        all_true_states[run][0] << pos.x(), pos.y(), vel.x(), vel.y();
+        // True trajectory
+        std::vector<Eigen::Vector4d> true_states(N);
+        true_states[0] << pos.x(), pos.y(), vel.x(), vel.y();
+        
+        // Add process noise using Q matrix
+        std::mt19937 gen(base_seed + run); // Different seed for each run
+        std::vector<Eigen::Vector4d> noisy_states = true_states;
+        
+        // Generate correlated process noise using Cholesky decomposition
+        Eigen::Matrix4d L = lltOfQ.matrixL();
+        
         for (int k = 1; k < N; ++k) {
-            all_true_states[run][k].head<2>() = all_true_states[run][k-1].head<2>() + all_true_states[run][k-1].tail<2>() * dt;
-            all_true_states[run][k].tail<2>() = all_true_states[run][k-1].tail<2>();
+            // Generate control input (acceleration) - set to zero for constant velocity
+            Eigen::Vector2d acceleration = generateControlInput(k, dt);  // Currently returns zero
+            
+            // State equation: xₖ₊₁ = Fxₖ + Buₖ + vₖ
+            Eigen::Vector4d control_effect = B * acceleration;
+            true_states[k] = F * true_states[k-1] + control_effect;
+            
+            // Generate uncorrelated standard normal noise
+            Eigen::Vector4d uncorrelated_noise;
+            std::normal_distribution<> normal_dist(0.0, 1.0);
+            for (int i = 0; i < 4; ++i) {
+                uncorrelated_noise[i] = normal_dist(gen);
+            }
+            
+            // Transform to correlated noise using Q = L*L^T
+            Eigen::Vector4d process_noise = L * uncorrelated_noise;
+            true_states[k] += process_noise;
+            
+            // Copy to noisy states (for consistency with existing code)
+            noisy_states[k] = true_states[k];
         }
 
-        std::mt19937 gen(base_seed + run); 
-        std::normal_distribution<> noise_q(0.0, process_noise_std);
-        std::vector<Eigen::Vector4d> noisy_states = all_true_states[run];
-        for (int k = 1; k < N; ++k) {
-            Eigen::Vector4d process_noise;
-            for (int i = 0; i < 4; ++i) process_noise[i] = noise_q(gen);
-            noisy_states[k] += process_noise;
-        }
-
-        std::normal_distribution<> noise_r(0.0, meas_noise_std);
+        // Generate noisy measurements from noisy states using R matrix
+        Eigen::Matrix2d L_R = lltOfR.matrixL();
+        std::vector<Eigen::Vector2d> noisy_measurements(N);
         for (int k = 0; k < N; ++k) {
-            all_measurements[run][k][0] = noisy_states[k][0] + noise_r(gen);
-            all_measurements[run][k][1] = noisy_states[k][1] + noise_r(gen);
+            // Generate uncorrelated standard normal measurement noise
+            Eigen::Vector2d uncorrelated_meas_noise;
+            std::normal_distribution<> normal_dist(0.0, 1.0);
+            for (int i = 0; i < 2; ++i) {
+                uncorrelated_meas_noise[i] = normal_dist(gen);
+            }
+            
+            // Transform to correlated measurement noise using R = L_R*L_R^T
+            Eigen::Vector2d measurement_noise = L_R * uncorrelated_meas_noise;
+            
+            // Add measurement noise to position measurements
+            noisy_measurements[k] = noisy_states[k].head<2>() + measurement_noise;
+        }
+
+        // Store in output arrays
+        for (int k = 0; k < N; ++k) {
+            all_true_states[run][k] = true_states[k];
+            all_measurements[run][k] = noisy_measurements[k];
         }
     }
     
@@ -95,7 +190,7 @@ int main() {
 
     // --- PART 3: RUN FILTER AND CALCULATE NEES ---
 
-    std::cout << "\nRunning filter with Q=" << best_Q << " and R=" << best_R << " on new data..." << std::endl;
+    std::cout << "\nRunning filter with V0=" << best_V0 << " and meas_noise_std=" << best_meas_noise_std << " on new data..." << std::endl;
 
     // Initialize accumulators for NEES statistics per Monte Carlo run
     std::vector<double> nees_sum_per_run(num_graphs, 0.0);
@@ -106,11 +201,15 @@ int main() {
     #pragma omp parallel for
     for (int run = 0; run < num_graphs; ++run) {
         FactorGraph2DTrajectory fg;
-        fg.Q_ = Eigen::Matrix4d::Identity() * best_Q;
-        fg.R_ = Eigen::Matrix2d::Identity() * best_R;
+        
+        // Use proper Q matrix structure for 2D linear tracking with theoretical structure
+        fg.setQFromProcessNoiseIntensity(best_V0, dt);
+        
+        // Use proper R matrix structure (2x2 diagonal matrix)
+        fg.setRFromMeasurementNoise(best_meas_noise_std, best_meas_noise_std);
         
         // This run uses the generated measurements. The true states are passed separately for error calculation.
-        fg.run(all_true_states[run], &all_measurements[run], false);
+        fg.run(all_true_states[run], &all_measurements[run], false, dt);
 
         auto est_states = fg.getAllEstimates();
         Eigen::MatrixXd infoMat = fg.getFullInformationMatrix();
@@ -234,15 +333,15 @@ int main() {
         H5::Attribute overall_variance_attr = file.createAttribute("overall_variance", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
         H5::Attribute theoretical_mean_attr = file.createAttribute("theoretical_mean", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
         H5::Attribute theoretical_variance_attr = file.createAttribute("theoretical_variance", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
-        H5::Attribute Q_attr = file.createAttribute("Q", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
-        H5::Attribute R_attr = file.createAttribute("R", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
+        H5::Attribute V0_attr = file.createAttribute("V0", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
+        H5::Attribute meas_noise_std_attr = file.createAttribute("meas_noise_std", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
         
         overall_mean_attr.write(H5::PredType::NATIVE_DOUBLE, &sample_mean);
         overall_variance_attr.write(H5::PredType::NATIVE_DOUBLE, &sample_variance);
         theoretical_mean_attr.write(H5::PredType::NATIVE_DOUBLE, &theoretical_mean);
         theoretical_variance_attr.write(H5::PredType::NATIVE_DOUBLE, &theoretical_variance);
-        Q_attr.write(H5::PredType::NATIVE_DOUBLE, &best_Q);
-        R_attr.write(H5::PredType::NATIVE_DOUBLE, &best_R);
+        V0_attr.write(H5::PredType::NATIVE_DOUBLE, &best_V0);
+        meas_noise_std_attr.write(H5::PredType::NATIVE_DOUBLE, &best_meas_noise_std);
         
         file.close();
         std::cout << "NEES validation results saved to " << h5_filename << std::endl;
@@ -252,4 +351,16 @@ int main() {
     }
 
     return 0;
+}
+
+// Control input generation function - currently returns zero for constant velocity
+// TODO: Modify this function to generate non-zero acceleration for controlled motion
+Eigen::Vector2d generateControlInput(int time_step, double dt) {
+    // For now, return zero acceleration (constant velocity)
+    // This can be modified later to generate:
+    // - Sinusoidal acceleration: [A*sin(ω*t), A*cos(ω*t)]
+    // - Step acceleration: [a_x, a_y] for t > t_switch
+    // - Random acceleration: [N(0,σ²), N(0,σ²)]
+    // - Nonlinear control laws
+    return Eigen::Vector2d::Zero();
 } 

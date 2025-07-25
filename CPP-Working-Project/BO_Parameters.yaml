@@ -1,32 +1,33 @@
-bayesopt:
-  n_iterations: 500
-  n_init_samples: 20
-  crit_name: cLCB
-  lcb_alpha: 2.0
-  verbose_level: 1
-  surr_name: sGaussianProcess
-  noise: 0.01
-parameters:
-  - name: q  # Process noise intensity for acceleration
-    lower_bound: 0.01
-    upper_bound: 5.0
-  - name: R
-    lower_bound: 0.01
-    upper_bound: 5.0
 Data_Generation:
-  q: 0.5  # Continuous-time white noise intensity for acceleration
-  meas_noise_std: 0.5
-  num_graphs: 1000
-  trajectory_length: 20
-  seed: 40
   dt: 0.1
+  meas_noise_var: 0.25
+  num_graphs: 100
   pos:
     x: 0.0
     y: 0.0
+  q: 0.1
+  seed: 42
+  trajectory_length: 20
+  use_process_noise: true
   vel:
     x: 1.0
     y: 1.0
+bayesopt:
+  crit_name: cLCB
+  lcb_alpha: 2.0
+  n_init_samples: 20
+  n_iterations: 500
+  noise: 0.5
+  surr_name: sGaussianProcess
+  verbose_level: 1
+parameters:
+  - lower_bound: 0.01
+    name: q
+    upper_bound: 10000
+  - lower_bound: 0.01
+    name: R
+    upper_bound: 5000
 validate_filter:
-  q: 3.7732820373883964  # Process noise intensity
-  R: 0.37686663055343406
-  min_objective: 1.105382056710112
+  R: 241.66294375999493
+  min_objective: 0.52062500634678766
+  q: 957.34899723086016

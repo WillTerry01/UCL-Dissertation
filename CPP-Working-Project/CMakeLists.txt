@@ -347,3 +347,67 @@ target_include_directories(2D_validate_filter
     ${HDF5_INCLUDE_DIRS}
 )
 
+# 2D-Tracking folder ##########################################################
+
+# Executable for generating tracking data (clean trajectory + noisy measurements)
+add_executable(tracking_gen_data 2D-Tracking/tracking_gen_data.cpp)
+target_link_libraries(tracking_gen_data
+    PRIVATE
+    Eigen3::Eigen
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(tracking_gen_data
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for BayesOpt tracking with CNEES
+add_executable(BO_Tracking_CNEES 2D-Tracking/BO_Tracking_CNEES.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(BO_Tracking_CNEES
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(BO_Tracking_CNEES
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for validating filter performance
+add_executable(Validate_QR 2D-Tracking/Validate_QR.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(Validate_QR
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(Validate_QR
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)

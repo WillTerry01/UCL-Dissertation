@@ -22,8 +22,8 @@ def load_nees_data(filename):
         overall_variance = f.attrs['overall_variance']
         theoretical_mean = f.attrs['theoretical_mean']
         theoretical_variance = f.attrs['theoretical_variance']
-        Q = f.attrs['Q']
-        R = f.attrs['R']
+        Q = f.attrs['V0']
+        R = f.attrs['meas_noise_std']
         
     return {
         'monte_carlo_runs': monte_carlo_runs,

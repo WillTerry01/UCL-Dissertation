@@ -42,10 +42,10 @@ int main() {
         std::cout << "Q(0,2) = q*dt^3/2 = " << q << "*1^3/2 = " << q/2.0 << std::endl;
     }
     
-    // Test the legacy scalar method for comparison
-    std::cout << "\n=== Testing legacy scalar method ===" << std::endl;
-    fg.setQFromScalar(0.25, 1.0);
-    std::cout << "Q Matrix (scalar):" << std::endl;
+    // Test the proper method with scalar noise intensity
+    std::cout << "\n=== Testing proper method with scalar noise intensity ===" << std::endl;
+    fg.setQFromProcessNoiseIntensity(0.25, 1.0);
+    std::cout << "Q Matrix (proper method):" << std::endl;
     std::cout << std::fixed << std::setprecision(6) << fg.Q_ << std::endl;
     
     return 0;

@@ -51,7 +51,7 @@ int main() {
         FactorGraph2DTrajectory fg;
         fg.Q_ = Eigen::Matrix4d::Identity() * 0.5; // Tune as desired
         fg.R_ = Eigen::Matrix2d::Identity() * 0.5; // Tune as desired
-        fg.run(all_states[run], &all_measurements[run], false);
+        fg.run(all_states[run], &all_measurements[run], false, 1.0);  // Use dt=1.0 for this file
         chi2_values[run] = fg.getChi2();
         all_traj_data[run].reserve(Trajectory_length * 7);
         for (int t = 0; t < Trajectory_length; ++t) {

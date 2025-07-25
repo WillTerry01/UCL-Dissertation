@@ -10,7 +10,7 @@ int main() {
     std::vector<Eigen::Vector4d> true_states(N);
     Eigen::Vector2d pos(0.0, 0.0);
     Eigen::Vector2d vel(1.0, 1.0);
-    double dt = 1.0;
+    double dt = 0.1;  // Use the same dt as data generation
     true_states[0] << pos.x(), pos.y(), vel.x(), vel.y();
     for (int k = 1; k < N; ++k) {
         true_states[k].head<2>() = true_states[k-1].head<2>() + true_states[k-1].tail<2>() * dt;
@@ -20,7 +20,7 @@ int main() {
     fg.Q_ = Eigen::Matrix4d::Identity() * 0.01;
     fg.R_ = Eigen::Matrix2d::Identity() * 0.01;
     // Optionally modify fg.Q_ and fg.R_ here
-    fg.run(true_states, nullptr, true); // Add process noise inside the function
+    fg.run(true_states, nullptr, true, dt); // Add process noise inside the function
     fg.printHessian();
     // fg.writeCSV("../H5_Files/2D_trajectory_estimate.csv");
     fg.writeHDF5("../H5_Files/2D_trajectory_estimate.h5");

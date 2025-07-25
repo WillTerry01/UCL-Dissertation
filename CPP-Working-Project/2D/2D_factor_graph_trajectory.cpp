@@ -10,43 +10,87 @@ using namespace std;
 using namespace g2o;
 
 FactorGraph2DTrajectory::FactorGraph2DTrajectory() : N_(0), chi2_(0.0) {
-    Q_ = Eigen::Matrix4d::Identity() * 0.1;
-    R_ = Eigen::Matrix2d::Identity() * 0.5;
+    // Q_ and R_ will be set by setQFromProcessNoiseIntensity() and setRFromMeasurementNoise()
+    // No need to initialize with legacy values
 }
 
-void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, bool add_process_noise) {
-    N_ = static_cast<int>(true_states.size());
-    true_states_ = true_states;
-    if (add_process_noise && N_ > 1) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::normal_distribution<> noise_q(0.0, sqrt(Q_(0,0)));
-        for (int k = 1; k < N_; ++k) {
-            Eigen::Vector4d process_noise;
-            process_noise << noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen);
-            true_states_[k] += process_noise;
-        }
+void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, bool add_process_noise, double dt) {
+    // Check if Q and R matrices are properly initialized
+    if (Q_.isZero()) {
+        throw std::runtime_error("Q matrix is not initialized. Please call setQFromProcessNoiseIntensity() or set Q_ directly before calling run().");
     }
-    measurements_.resize(N_);
+    if (R_.isZero()) {
+        throw std::runtime_error("R matrix is not initialized. Please call setRFromMeasurementNoise() or set R_ directly before calling run().");
+    }
+    
+    // Check if matrices are positive definite (required for inverse)
+    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q_);
+    if (lltOfQ.info() != Eigen::Success) {
+        throw std::runtime_error("Q matrix is not positive definite. Cannot compute inverse for factor graph.");
+    }
+    
+    Eigen::LLT<Eigen::Matrix2d> lltOfR(R_);
+    if (lltOfR.info() != Eigen::Success) {
+        throw std::runtime_error("R matrix is not positive definite. Cannot compute inverse for factor graph.");
+    }
+    
+    N_ = true_states.size();
+    true_states_ = true_states;
+    dt_ = dt;  // Store the dt parameter
+    
     if (measurements) {
         measurements_ = *measurements;
     } else {
-        // Generate noisy measurements from true states using R_
+        // Generate measurements from true states if not provided
+        measurements_.resize(N_);
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::normal_distribution<> noise_p(0.0, sqrt(R_(0,0)));
+        std::normal_distribution<> noise_r(0.0, 0.1);
         for (int k = 0; k < N_; ++k) {
-            measurements_[k] = true_states_[k].head<2>() + Eigen::Vector2d(noise_p(gen), noise_p(gen));
+            measurements_[k][0] = true_states_[k][0] + noise_r(gen);
+            measurements_[k][1] = true_states_[k][1] + noise_r(gen);
         }
     }
-
-    // //print the q and r parameters
-    // std::cout << "Q: " << Q_ << std::endl;
-    // std::cout << "R: " << R_ << std::endl;ers
-    // std::cout << "Q: " << Q_ << std::endl;
-    // std::cout << "R: " << R_ << std::e
-
+    
+    if (add_process_noise) {
+        // Add process noise to true states
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::normal_distribution<> noise_q(0.0, 0.1);
+        for (int k = 1; k < N_; ++k) {
+            true_states_[k] += Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen));
+        }
+    }
+    
     setupOptimizer();
+    
+    // Initialize vertices with noisy true states
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<> noise_q(0.0, 0.1);
+    for (int k = 0; k < N_; ++k) {
+        vertices_[k]->setId(k);
+        vertices_[k]->setEstimate(true_states_[k] + Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen)));
+        optimizer_->addVertex(vertices_[k]);
+    }
+    
+    // Use the dt parameter passed to the method
+    for (int k = 1; k < N_; ++k) {
+        EdgeProcessModel* e = new EdgeProcessModel(dt_);
+        e->setVertex(0, vertices_[k-1]);
+        e->setVertex(1, vertices_[k]);
+        e->setMeasurement(Eigen::Vector4d::Zero());
+        e->setInformation(Q_.inverse());
+        optimizer_->addEdge(e);
+    }
+    for (int k = 0; k < N_; ++k) {
+        EdgeMeasurement* e = new EdgeMeasurement();
+        e->setVertex(0, vertices_[k]);
+        e->setMeasurement(measurements_[k]);
+        e->setInformation(R_.inverse());
+        optimizer_->addEdge(e);
+    }
+    
     optimize();
 }
 
@@ -61,33 +105,10 @@ void FactorGraph2DTrajectory::setupOptimizer() {
     optimizer_->setAlgorithm(solver);
     optimizer_->setVerbose(false);
 
+    // Create vertices but don't add them yet - they will be added in run()
     vertices_.resize(N_);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::normal_distribution<> noise_q(0.0, sqrt(Q_(0,0)));
     for (int k = 0; k < N_; ++k) {
         vertices_[k] = new Vertex4D();
-        vertices_[k]->setId(k);
-        vertices_[k]->setEstimate(true_states_[k] + Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen)));
-        optimizer_->addVertex(vertices_[k]);
-    }
-    
-    // Use dt = 1.0 for now (can be made configurable later)
-    double dt = 1.0;
-    for (int k = 1; k < N_; ++k) {
-        EdgeProcessModel* e = new EdgeProcessModel(dt);
-        e->setVertex(0, vertices_[k-1]);
-        e->setVertex(1, vertices_[k]);
-        e->setMeasurement(Eigen::Vector4d::Zero());
-        e->setInformation(Q_.inverse());
-        optimizer_->addEdge(e);
-    }
-    for (int k = 0; k < N_; ++k) {
-        EdgeMeasurement* e = new EdgeMeasurement();
-        e->setVertex(0, vertices_[k]);
-        e->setMeasurement(measurements_[k]);
-        e->setInformation(R_.inverse());
-        optimizer_->addEdge(e);
     }
 }
 
@@ -226,12 +247,4 @@ void FactorGraph2DTrajectory::setRFromMeasurementNoise(double sigma_x, double si
     R_(1, 1) = sigma_y * sigma_y;  // y measurement variance
 }
 
-void FactorGraph2DTrajectory::setQFromScalar(double q_scalar, double dt) {
-    // Legacy method: set Q as scalar multiple of identity
-    Q_ = Eigen::Matrix4d::Identity() * q_scalar;
-}
-
-void FactorGraph2DTrajectory::setRFromScalar(double r_scalar) {
-    // Legacy method: set R as scalar multiple of identity
-    R_ = Eigen::Matrix2d::Identity() * r_scalar;
-} 
+ 

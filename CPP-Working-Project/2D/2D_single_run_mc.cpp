@@ -50,7 +50,7 @@ int main() {
         FactorGraph2DTrajectory fg;
         fg.Q_ = Eigen::Matrix4d::Identity() * Qval;
         fg.R_ = Eigen::Matrix2d::Identity() * Rval;
-        fg.run(noisy_states, &noisy_measurements, false);
+        fg.run(noisy_states, &noisy_measurements, false, 1.0);  // Use dt=1.0 for this file
         double chi2 = fg.getChi2();
 
         // Compute MSE between estimated and true trajectory (positions only)

@@ -67,7 +67,7 @@ public:
             FactorGraph2DTrajectory fg;
             fg.Q_ = Eigen::Matrix4d::Identity() * Qval;
             fg.R_ = Eigen::Matrix2d::Identity() * Rval;
-            fg.run(all_states_[run], &all_measurements_[run], false);
+            fg.run(all_states_[run], &all_measurements_[run], false, 1.0);  // Use dt=1.0 for this file
             int num_estimates = fg.getAllEstimates().size();
             std::vector<double> run_nees(num_estimates);
             for (int k = 0; k < num_estimates; ++k) {

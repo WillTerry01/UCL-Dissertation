@@ -112,6 +112,7 @@ public:
     // Q_ and R_ are public for direct modification
     Eigen::Matrix4d Q_;
     Eigen::Matrix2d R_;
+    double dt_;  // Add dt as a member variable
     void setOutputOptions(const OutputOptions& options) { output_options_ = options; }
     OutputOptions getOutputOptions() const { return output_options_; }
     // Get all estimated states
@@ -122,7 +123,7 @@ public:
     Eigen::MatrixXd getFullInformationMatrix() const;
     // Run the factor graph optimization with user-provided true states and optional measurements.
     // If add_process_noise is true, process noise will be added to the true states inside the function.
-    void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, bool add_process_noise = false);
+    void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, bool add_process_noise = false, double dt = 1.0);
     void writeCSV(const std::string& filename = "../H5_Files/2d_trajectory_estimate.csv") const;
     void writeHDF5(const std::string& filename = "../H5_Files/2d_trajectory_estimate.h5") const;
     double getChi2() const;
@@ -133,8 +134,6 @@ public:
     // Add these new methods
     void setQFromProcessNoiseIntensity(double q_intensity, double dt = 1.0);
     void setRFromMeasurementNoise(double sigma_x, double sigma_y);
-    void setQFromScalar(double q_scalar, double dt = 1.0);
-    void setRFromScalar(double r_scalar);
 
 private:
     int N_;

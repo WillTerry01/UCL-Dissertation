@@ -46,7 +46,8 @@ public:
                     const std::vector<std::vector<Eigen::Vector2d>> &all_measurements,
                     std::vector<std::array<double, 3>> &trials,
                     double lower_bound_Q, double upper_bound_Q,
-                    double lower_bound_R, double upper_bound_R)
+                    double lower_bound_R, double upper_bound_R,
+                    double dt)
         : bayesopt::ContinuousModel(2, params),
           all_states_(all_states),
           all_measurements_(all_measurements),
@@ -54,44 +55,99 @@ public:
           lower_bound_Q_(lower_bound_Q),
           upper_bound_Q_(upper_bound_Q),
           lower_bound_R_(lower_bound_R),
-          upper_bound_R_(upper_bound_R) {}
+          upper_bound_R_(upper_bound_R),
+          dt_(dt) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
         static int eval_count = 0;
         eval_count++;
         std::cout << "[BayesOpt] Iteration: " << eval_count << std::endl;
         auto eval_start = std::chrono::high_resolution_clock::now();
-            double qval = query(0);  // Process noise intensity
-    double Rval = query(1);
-    double CNEES = 1e6;
-    if (qval >= lower_bound_Q_ && qval <= upper_bound_Q_ && Rval >= lower_bound_R_ && Rval <= upper_bound_R_) {
+        
+        double V0 = query(0);  // Process noise intensity for x-direction
+        double V1 = query(0);  // Process noise intensity for y-direction (same as V0 for now)
+        double meas_noise_std = sqrt(query(1));  // Measurement noise standard deviation
+        double CNEES = 1e6;
+        
+        if (V0 >= lower_bound_Q_ && V0 <= upper_bound_Q_ && meas_noise_std*meas_noise_std >= lower_bound_R_ && meas_noise_std*meas_noise_std <= upper_bound_R_) {
             int num_graphs = all_states_.size();
             int T = all_states_[0].size();
             int nx = 4; // state dimension
+            
             // Step 1: Compute NEES for each run and time step
             std::vector<std::vector<double>> nees(num_graphs, std::vector<double>(T, 0.0));
             #pragma omp parallel for
             for (int run = 0; run < num_graphs; ++run) {
                 FactorGraph2DTrajectory fg;
-                // Use proper Q matrix structure for 2D linear tracking
-                fg.setQFromProcessNoiseIntensity(qval, 1.0);  // dt = 1.0 from config
-                fg.setRFromScalar(Rval);
+                
+                // Use proper Q matrix structure for 2D linear tracking with theoretical structure
+                fg.setQFromProcessNoiseIntensity(V0, dt_);  // Use actual dt from data generation
+                
+                // Use proper R matrix structure (2x2 diagonal matrix)
+                fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
+                
                 FactorGraph2DTrajectory::OutputOptions opts;
                 opts.output_estimated_state = true;
                 opts.output_true_state = true;
                 opts.output_information_matrix = true;
                 fg.setOutputOptions(opts);
-                fg.run(all_states_[run], &all_measurements_[run], false);
+                fg.run(all_states_[run], &all_measurements_[run], false, dt_);
                 auto est_states = fg.getAllEstimates();
                 auto true_states = fg.getAllTrueStates();
                 Eigen::MatrixXd infoMat = fg.getFullInformationMatrix();
+                
+                // Check if information matrix is valid
+                if (infoMat.rows() == 0 || infoMat.cols() == 0) {
+                    std::cerr << "ERROR: Information matrix is empty for run " << run << std::endl;
+                    continue;
+                }
+                
+                // Check if information matrix has the expected size
+                if (infoMat.rows() != T * 4 || infoMat.cols() != T * 4) {
+                    std::cerr << "ERROR: Information matrix has wrong size: " 
+                              << infoMat.rows() << "x" << infoMat.cols() 
+                              << " (expected " << T * 4 << "x" << T * 4 << ")" << std::endl;
+                    continue;
+                }
+                
                 for (int k = 0; k < T; ++k) {
                     Eigen::Vector4d err = true_states[k] - est_states[k];
                     Eigen::Matrix4d info_block = infoMat.block<4,4>(k*4, k*4);
+                    
+                    // Debug: Print detailed information for first few iterations
+                    if (eval_count <= 3 && run == 0 && k < 3) {
+                        std::cout << "DEBUG: Iteration " << eval_count << ", Run " << run << ", Time " << k << std::endl;
+                        std::cout << "  True state: " << true_states[k].transpose() << std::endl;
+                        std::cout << "  Est state:  " << est_states[k].transpose() << std::endl;
+                        std::cout << "  Error:      " << err.transpose() << std::endl;
+                        std::cout << "  Error norm: " << err.norm() << std::endl;
+                        std::cout << "  Info block:" << std::endl << info_block << std::endl;
+                        std::cout << "  Info block trace: " << info_block.trace() << std::endl;
+                        std::cout << "  Info block det:   " << info_block.determinant() << std::endl;
+                        
+                        // Check if info block is positive definite
+                        Eigen::LLT<Eigen::Matrix4d> lltOfInfo(info_block);
+                        bool is_pd = (lltOfInfo.info() == Eigen::Success);
+                        std::cout << "  Info block is PD: " << (is_pd ? "YES" : "NO") << std::endl;
+                        
+                        if (is_pd) {
+                            Eigen::Matrix4d cov_block = info_block.inverse();
+                            std::cout << "  Cov block:" << std::endl << cov_block << std::endl;
+                            std::cout << "  Cov block trace: " << cov_block.trace() << std::endl;
+                        }
+                    }
+                    
                     double nees_k = err.transpose() * info_block * err;
                     nees[run][k] = nees_k;
+                    
+                    // Debug: Print NEES value for first few iterations
+                    if (eval_count <= 3 && run == 0 && k < 3) {
+                        std::cout << "  NEES: " << nees_k << std::endl;
+                        std::cout << "  ---" << std::endl;
+                    }
                 }
             }
+            
             // Step 2: For each time step, average NEES over all runs
             std::vector<double> mean_nees_per_timestep(T, 0.0);
             for (int k = 0; k < T; ++k) {
@@ -100,10 +156,12 @@ public:
                 }
                 mean_nees_per_timestep[k] /= num_graphs;
             }
+            
             // Step 3: Average over all time steps
             double mean_nees = 0.0;
             for (int k = 0; k < T; ++k) mean_nees += mean_nees_per_timestep[k];
             mean_nees /= T;
+            
             // Step 4: Compute S_x (variance of normalized NEES across all runs and time steps)
             double Sx = 0.0;
             for (int k = 0; k < T; ++k) {
@@ -147,16 +205,18 @@ public:
             overall_variance /= (all_nees_values.size() - 1);
 
             // Objective for BO: CNEES
-            trials_.push_back({qval, Rval, CNEES});
-            std::cout << "q: " << qval << ", R: " << Rval << ", CNEES: " << CNEES 
+            trials_.push_back({V0, meas_noise_std*meas_noise_std, CNEES});
+            std::cout << "V0: " << V0 << ", meas_noise_std²: " << meas_noise_std*meas_noise_std 
+                      << ", CNEES: " << CNEES 
                       << ", NEES_mean: " << overall_mean << ", NEES_var: " << overall_variance << std::endl;
             auto eval_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> eval_duration = eval_end - eval_start;
             std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
             return CNEES;
         }
-        trials_.push_back({qval, Rval, CNEES});
-        std::cout << "q: " << qval << ", R: " << Rval << ", CNEES: " << CNEES 
+        trials_.push_back({V0, meas_noise_std*meas_noise_std, CNEES});
+        std::cout << "V0: " << V0 << ", meas_noise_std²: " << meas_noise_std*meas_noise_std 
+                  << ", CNEES: " << CNEES 
                   << ", NEES_mean: N/A, NEES_var: N/A (out of bounds)" << std::endl;
         auto eval_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> eval_duration = eval_end - eval_start;
@@ -168,11 +228,16 @@ private:
     const std::vector<std::vector<Eigen::Vector2d>> &all_measurements_;
     std::vector<std::array<double, 3>> &trials_;
     double lower_bound_Q_, upper_bound_Q_, lower_bound_R_, upper_bound_R_;
+    double dt_;
 };
 
 int main() {
     // Load configuration from YAML file
     YAML::Node config = YAML::LoadFile("../BO_Parameters.yaml");
+
+    // Get dt from data generation config
+    double dt = config["Data_Generation"]["dt"].as<double>();
+    std::cout << "Using dt = " << dt << " from data generation config" << std::endl;
 
     // Infer problem size from the noisy states HDF5
     int Trajectory_length = 0;
@@ -195,16 +260,16 @@ int main() {
     bopt_params params = initialize_parameters_to_default();
     initialisation(params, config);
 
-    // Bounds for Q and R from YAML
+    // Bounds for V0 (process noise intensity) and meas_noise_std² (measurement noise variance)
     boost::numeric::ublas::vector<double> lb(2), ub(2);
-    lb(0) = config["parameters"][0]["lower_bound"].as<double>();
-    ub(0) = config["parameters"][0]["upper_bound"].as<double>();
-    lb(1) = config["parameters"][1]["lower_bound"].as<double>();
-    ub(1) = config["parameters"][1]["upper_bound"].as<double>();
+    lb(0) = config["parameters"][0]["lower_bound"].as<double>();  // V0 lower bound
+    ub(0) = config["parameters"][0]["upper_bound"].as<double>();  // V0 upper bound
+    lb(1) = config["parameters"][1]["lower_bound"].as<double>();  // meas_noise_std² lower bound
+    ub(1) = config["parameters"][1]["upper_bound"].as<double>();  // meas_noise_std² upper bound
 
     CMetricBayesOpt opt(
         params, all_states, all_measurements, trials,
-        lb(0), ub(0), lb(1), ub(1)
+        lb(0), ub(0), lb(1), ub(1), dt
     );
     opt.setBoundingBox(lb, ub);
     boost::numeric::ublas::vector<double> result(2);
@@ -227,19 +292,21 @@ int main() {
     }
     dataset.write(flat_trials.data(), H5::PredType::NATIVE_DOUBLE);
 
-    // Save best q, R, and final objective value to BO_Parameters.yaml
+    // Save best V0, meas_noise_std², and final objective value to BO_Parameters.yaml
     YAML::Node out_config = YAML::LoadFile("../BO_Parameters.yaml");
-    out_config["validate_filter"]["q"] = result(0);
-    out_config["validate_filter"]["R"] = result(1);
+    out_config["validate_filter"]["q"] = result(0);  // V0 (process noise intensity)
+    out_config["validate_filter"]["R"] = result(1);  // meas_noise_std² (measurement noise variance)
     out_config["validate_filter"]["min_objective"] = minC;
     std::ofstream yaml_out("../BO_Parameters.yaml");
     yaml_out << out_config;
     yaml_out.close();
 
-    std::cout << "Best q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
+    std::cout << "Best V0: " << result(0) << ", Best meas_noise_std²: " << result(1) 
+              << ", Best CNEES: " << minC << std::endl;
     std::cout << "[Timing] Total BayesOpt optimization took " << total_duration.count() << " seconds." << std::endl;
     std::ofstream cfile("../H5_Files/2D_bayesopt_best.txt");
-    cfile << "Best q: " << result(0) << ", Best R: " << result(1) << ", Best CNEES: " << minC << std::endl;
+    cfile << "Best V0: " << result(0) << ", Best meas_noise_std²: " << result(1) 
+          << ", Best CNEES: " << minC << std::endl;
     cfile.close();
 
     return 0;
