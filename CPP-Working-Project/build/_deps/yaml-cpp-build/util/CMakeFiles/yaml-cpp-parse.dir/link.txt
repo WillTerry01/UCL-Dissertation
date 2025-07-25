@@ -1,1 +1,1 @@
-/usr/bin/c++     CMakeFiles/yaml-cpp-parse.dir/parse.cpp.o  -o parse  ../libyaml-cpp.a 
+/usr/bin/c++  -O3 -DNDEBUG   CMakeFiles/yaml-cpp-parse.dir/parse.cpp.o  -o parse  ../libyaml-cpp.a 

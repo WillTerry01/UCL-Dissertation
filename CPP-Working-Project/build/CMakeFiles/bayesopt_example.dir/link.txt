@@ -1,1 +1,1 @@
-/usr/bin/c++     CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.o  -o bayesopt_example  ../../bayesopt/lib/libbayesopt.a ../../bayesopt/lib/libnlopt.a 
+/usr/bin/c++  -O3 -DNDEBUG   CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.o  -o bayesopt_example  ../../bayesopt/lib/libbayesopt.a ../../bayesopt/lib/libnlopt.a 

@@ -68,6 +68,10 @@ int main(int argc, char* argv[]) {
     // Get dt from data generation config
     double dt = config["Data_Generation"]["dt"].as<double>();
     std::cout << "Using dt = " << dt << " from data generation config" << std::endl;
+    
+    // Get DOF calculation method from YAML config
+    std::string dof_method = config["nees_analysis"]["dof_method"].as<std::string>("nees");
+    std::cout << "DOF calculation method: " << dof_method << std::endl;
 
     std::vector<std::vector<Eigen::Vector4d>> all_states;
     std::vector<std::vector<Eigen::Vector2d>> all_measurements;
@@ -97,7 +101,7 @@ int main(int argc, char* argv[]) {
         num_graphs = config["Data_Generation"]["num_graphs"].as<int>();
         Eigen::Vector2d pos(config["Data_Generation"]["pos"]["x"].as<double>(), config["Data_Generation"]["pos"]["y"].as<double>());
         Eigen::Vector2d vel(config["Data_Generation"]["vel"]["x"].as<double>(), config["Data_Generation"]["vel"]["y"].as<double>());
-        unsigned int base_seed = 42; // Different seed for independent validation data
+        unsigned int base_seed = 1337; // Different seed for independent validation data
 
         // State transition matrix F (constant velocity model)
         Eigen::Matrix4d F = Eigen::Matrix4d::Identity();
@@ -333,8 +337,27 @@ int main(int argc, char* argv[]) {
         sample_variance = 0.0;
     }
 
-    // For full system NEES: theoretical values for Chi-Squared with k=N*4 degrees of freedom
-    int total_dof = N * nx;  // Total degrees of freedom for full system
+    // DOF calculation for NEES (not NIS)
+    // Khosoussi et al. propositions are for NIS (measurement space), not NEES (state space)
+    // For full-trajectory NEES, DOF should be related to state parameters being estimated
+    int nz = 2; // measurement dimension for 2D position measurements
+    
+    int total_dof_nees = N * nx;               // Correct for NEES: total state parameters
+    int total_dof_khosoussi_prop3 = N * nz + (N - 1) * nx;  // Khosoussi Prop 3 (for NIS)
+    int total_dof_khosoussi_prop4 = (N * nz + (N - 1) * nx) - (N * nx);  // Khosoussi Prop 4 (for NIS)
+    
+    // Choose DOF calculation method based on YAML configuration
+    int total_dof;
+    if (dof_method == "proposition_3") {
+        total_dof = total_dof_khosoussi_prop3;
+        std::cout << "Using Khosoussi Proposition 3 (for NIS): DOF = " << total_dof << std::endl;
+    } else if (dof_method == "proposition_4") {
+        total_dof = total_dof_khosoussi_prop4;
+        std::cout << "Using Khosoussi Proposition 4 (for NIS): DOF = " << total_dof << std::endl;
+    } else {
+        total_dof = total_dof_nees;  // Default to correct NEES formulation
+        std::cout << "Using NEES formulation: DOF = T × nx = " << total_dof << std::endl;
+    }
     double theoretical_mean = total_dof;
     double theoretical_variance = 2 * total_dof;
 
@@ -346,7 +369,10 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Total NEES samples calculated: " << num_graphs << " (one per run)" << std::endl;
     std::cout << "Method: Full system covariance matrix (includes off-diagonal correlations)" << std::endl;
-    std::cout << "Total degrees of freedom: " << total_dof << std::endl;
+    std::cout << "DOF Values - NEES: " << total_dof_nees 
+              << ", Khosoussi Prop 3: " << total_dof_khosoussi_prop3 
+              << ", Khosoussi Prop 4: " << total_dof_khosoussi_prop4 
+              << ", Using: " << total_dof << std::endl;
     std::cout << "---------------------------------" << std::endl;
     std::cout << "              |  Full System    |  Theoretical (χ², k=" << total_dof << ")" << std::endl;
     std::cout << "---------------------------------" << std::endl;

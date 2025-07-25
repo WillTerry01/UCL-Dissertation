@@ -47,7 +47,8 @@ public:
                     std::vector<std::array<double, 3>> &trials,
                     double lower_bound_Q, double upper_bound_Q,
                     double lower_bound_R, double upper_bound_R,
-                    double dt)
+                    double dt,
+                    const std::string &dof_method)
         : bayesopt::ContinuousModel(2, params),
           all_states_(all_states),
           all_measurements_(all_measurements),
@@ -56,7 +57,8 @@ public:
           upper_bound_Q_(upper_bound_Q),
           lower_bound_R_(lower_bound_R),
           upper_bound_R_(upper_bound_R),
-          dt_(dt) {}
+          dt_(dt),
+          dof_method_(dof_method) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
         static int eval_count = 0;
@@ -74,6 +76,7 @@ public:
             int num_graphs = all_states_.size();
             int T = all_states_[0].size();
             int nx = 4; // state dimension
+            int nz = 2; // measurement dimension
             
             // Step 1: Compute NEES for each run using full system covariance
             std::vector<double> nees_full_system(num_graphs, 0.0);
@@ -171,8 +174,31 @@ public:
                 variance_nees_full_system = 0.0; // Avoid division by zero if only one run
             }
 
-            // For full system NEES: expected mean is T*nx (total degrees of freedom)
-            int total_dof = T * nx;  // n_x in the formula = total degrees of freedom
+            // DOF calculation for NEES (not NIS)
+            // Khosoussi et al. propositions are for NIS (measurement space), not NEES (state space)
+            // For full-trajectory NEES, DOF should be related to state parameters being estimated
+            
+            int total_dof_nees = T * nx;               // Correct for NEES: total state parameters
+            int total_dof_khosoussi_prop3 = T * nz + (T - 1) * nx;  // Khosoussi Prop 3 (for NIS)
+            int total_dof_khosoussi_prop4 = (T * nz + (T - 1) * nx) - (T * nx);  // Khosoussi Prop 4 (for NIS)
+            
+            // Choose DOF calculation method based on YAML configuration
+            int total_dof;
+            if (dof_method_ == "proposition_3") {
+                total_dof = total_dof_khosoussi_prop3;
+            } else if (dof_method_ == "proposition_4") {
+                total_dof = total_dof_khosoussi_prop4;
+            } else {
+                total_dof = total_dof_nees;  // Default to correct NEES formulation
+            }
+            
+            // Debug output showing all DOF calculations for comparison
+            if (eval_count <= 3) {  // Only show for first few evaluations
+                std::cout << "DOF Comparison - NEES: " << total_dof_nees 
+                          << ", Khosoussi Prop 3: " << total_dof_khosoussi_prop3 
+                          << ", Khosoussi Prop 4: " << total_dof_khosoussi_prop4 
+                          << ", Using (" << dof_method_ << "): " << total_dof << std::endl;
+            }
             
             // Compute CNEES exactly as in the provided formula:
             // C_NEES = |log(ε̃_x / n_x)| + |log(S̃_x / (2*n_x))|
@@ -208,6 +234,7 @@ private:
     std::vector<std::array<double, 3>> &trials_;
     double lower_bound_Q_, upper_bound_Q_, lower_bound_R_, upper_bound_R_;
     double dt_;
+    std::string dof_method_;
 };
 
 int main() {
@@ -217,6 +244,10 @@ int main() {
     // Get dt from data generation config
     double dt = config["Data_Generation"]["dt"].as<double>();
     std::cout << "Using dt = " << dt << " from data generation config" << std::endl;
+    
+    // Get DOF calculation method from YAML config
+    std::string dof_method = config["nees_analysis"]["dof_method"].as<std::string>("nees");
+    std::cout << "DOF calculation method: " << dof_method << std::endl;
 
     // Infer problem size from the noisy states HDF5
     int Trajectory_length = 0;
@@ -248,7 +279,7 @@ int main() {
 
     CMetricBayesOpt opt(
         params, all_states, all_measurements, trials,
-        lb(0), ub(0), lb(1), ub(1), dt
+        lb(0), ub(0), lb(1), ub(1), dt, dof_method
     );
     opt.setBoundingBox(lb, ub);
     boost::numeric::ublas::vector<double> result(2);

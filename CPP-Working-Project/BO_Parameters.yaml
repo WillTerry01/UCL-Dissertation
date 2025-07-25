@@ -1,13 +1,13 @@
 Data_Generation:
   dt: 0.1
-  meas_noise_var: 0.5
-  num_graphs: 100
+  meas_noise_var: 1.0
+  num_graphs: 500
   pos:
     x: 0.0
     y: 0.0
-  q: 1.0
+  q: 0.5
   seed: 42
-  trajectory_length: 20
+  trajectory_length: 50
   use_process_noise: true
   vel:
     x: 1.0
@@ -15,7 +15,7 @@ Data_Generation:
 bayesopt:
   crit_name: cLCB
   lcb_alpha: 2.0
-  n_init_samples: 20
+  n_init_samples: 50
   n_iterations: 500
   noise: 0.5
   surr_name: sGaussianProcess
@@ -26,8 +26,14 @@ parameters:
     upper_bound: 2.0
   - lower_bound: 0.01
     name: R
-    upper_bound: 2.0
+    upper_bound: 10.0
 validate_filter:
-  R: 1.3011753610321797
-  min_objective: 0.0035869356109693696
-  q: 0.93469646060651068
+  R: 8.3956157805190923
+  min_objective: 0.31170534348700657
+  q: 0.74129148497972386
+nees_analysis:
+  # DOF calculation method for NEES consistency tests
+  # "nees": DOF = T × nx (correct for NEES - state estimation error)  
+  # "proposition_3": DOF = Nz (Khosoussi et al. - for NIS measurement innovation)
+  # "proposition_4": DOF = Nz - Nx (Khosoussi et al. - for NIS with constraints)
+  dof_method: "nees"  # Options: "nees", "proposition_3", "proposition_4"
