@@ -109,10 +109,6 @@ public:
     };
 
     FactorGraph2DTrajectory();
-    // Q_ and R_ are public for direct modification
-    Eigen::Matrix4d Q_;
-    Eigen::Matrix2d R_;
-    double dt_;  // Add dt as a member variable
     void setOutputOptions(const OutputOptions& options) { output_options_ = options; }
     OutputOptions getOutputOptions() const { return output_options_; }
     // Get all estimated states
@@ -136,19 +132,20 @@ public:
     void setRFromMeasurementNoise(double sigma_x, double sigma_y);
 
 private:
-    int N_;
+    std::vector<Vertex4D*> vertices_;
     std::vector<Eigen::Vector4d> true_states_;
     std::vector<Eigen::Vector2d> measurements_;
-    std::vector<Vertex4D*> vertices_;
+    std::unique_ptr<g2o::SparseOptimizer> optimizer_;
+    g2o::BlockSolver<g2o::BlockSolverTraits<4, 4>>* blockSolver_;
+    int N_;
     double chi2_;
+    Eigen::Matrix4d Q_;
+    Eigen::Matrix2d R_;
     OutputOptions output_options_;
-    std::vector<Eigen::Vector4d> getEstimatesInternal() const {
-        std::vector<Eigen::Vector4d> estimates;
-        for (const auto* v : vertices_) estimates.push_back(v->estimate());
-        return estimates;
-    }
+    double dt_;  // Add dt as a member variable
+    
+    // Helper method to extract optimized estimates from vertices
+    std::vector<Eigen::Vector4d> getEstimatesInternal() const;
     void setupOptimizer();
     void optimize();
-    std::unique_ptr<g2o::SparseOptimizer> optimizer_;
-    g2o::BlockSolver<g2o::BlockSolverTraits<4, 4>>* blockSolver_ = nullptr;
 }; 

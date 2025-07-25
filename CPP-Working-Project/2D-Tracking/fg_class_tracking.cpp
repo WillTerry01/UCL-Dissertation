@@ -217,22 +217,48 @@ Eigen::MatrixXd FactorGraph2DTrajectory::getFullHessianMatrix() const {
         std::cerr << "Hessian not available!" << std::endl;
         return Eigen::MatrixXd();
     }
-    const auto* hessian = blockSolver_->hessian();
     
     // Get the total dimension (number of vertices * vertex dimension)
     int total_dim = N_ * 4;  // Each vertex has dimension 4
+    
+    // Try to get the full Hessian directly from g2o
+    // First, let's try the block-wise approach but more carefully
+    const auto* hessian = blockSolver_->hessian();
     Eigen::MatrixXd fullHessian = Eigen::MatrixXd::Zero(total_dim, total_dim);
     
+    // Fill in the existing blocks
     for (size_t i = 0; i < hessian->blockCols().size(); ++i) {
         for (const auto& blockPair : hessian->blockCols()[i]) {
             int row = blockPair.first;
             const auto* block = blockPair.second;
-            if (block) {
+            if (block && row < N_ && i < N_) {  // Safety check
                 fullHessian.block(row * 4, i * 4, 4, 4) = *block;
             }
         }
     }
+    
+    // Ensure the matrix is symmetric by copying upper triangle to lower triangle
+    for (int i = 0; i < total_dim; ++i) {
+        for (int j = i + 1; j < total_dim; ++j) {
+            fullHessian(j, i) = fullHessian(i, j);
+        }
+    }
+    
+    // Add small diagonal regularization to ensure positive definiteness
+    double regularization = 1e-12;
+    for (int i = 0; i < total_dim; ++i) {
+        fullHessian(i, i) += regularization;
+    }
+    
     return fullHessian;
+}
+
+std::vector<Eigen::Vector4d> FactorGraph2DTrajectory::getEstimatesInternal() const {
+    std::vector<Eigen::Vector4d> estimates(N_);
+    for (int k = 0; k < N_; ++k) {
+        estimates[k] = vertices_[k]->estimate();
+    }
+    return estimates;
 }
 
 void FactorGraph2DTrajectory::setQFromProcessNoiseIntensity(double q_intensity, double dt) {

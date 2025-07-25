@@ -75,13 +75,14 @@ public:
             int T = all_states_[0].size();
             int nx = 4; // state dimension
             
-            // Step 1: Compute NEES for each run and time step
-            std::vector<std::vector<double>> nees(num_graphs, std::vector<double>(T, 0.0));
+            // Step 1: Compute NEES for each run using full system covariance
+            std::vector<double> nees_full_system(num_graphs, 0.0);
             #pragma omp parallel for
             for (int run = 0; run < num_graphs; ++run) {
                 FactorGraph2DTrajectory fg;
                 
                 // Use proper Q matrix structure for 2D linear tracking with theoretical structure
+                // V0 = std::max(V0, min_variance / dt); // Comment out this line temporarily:
                 fg.setQFromProcessNoiseIntensity(V0, dt_);  // Use actual dt from data generation
                 
                 // Use proper R matrix structure (2x2 diagonal matrix)
@@ -112,116 +113,81 @@ public:
                     continue;
                 }
                 
-
+                // Create full error vector by stacking all time step errors
+                Eigen::VectorXd full_error(T * 4);
                 for (int k = 0; k < T; ++k) {
                     Eigen::Vector4d err = true_states[k] - est_states[k];
-                    Eigen::Matrix4d P_k_inv = full_cov.block<4,4>(k*4, k*4);  // Marginal covariance
-                    // Check if P_k is positive definite before inverting
-                    Eigen::LLT<Eigen::Matrix4d> lltOfP(P_k_inv);
-                    if (lltOfP.info() != Eigen::Success) {
-                        std::cerr << "Warning: Marginal covariance at k=" << k << " is not positive definite. Skipping NEES." << std::endl;
-                        nees[run][k] = 0.0;  // Or handle appropriately
-                        continue;
-                    }
-                    double nees_k = err.transpose() * P_k_inv * err;
-                    nees[run][k] = nees_k;
-                    
-                    // Debug: Print detailed information for first few iterations
-                    if (eval_count <= 3 && run == 0 && k < 3) {
-                        std::cout << "DEBUG: Iteration " << eval_count << ", Run " << run << ", Time " << k << std::endl;
-                        std::cout << "  True state: " << true_states[k].transpose() << std::endl;
-                        std::cout << "  Est state:  " << est_states[k].transpose() << std::endl;
-                        std::cout << "  Error:      " << err.transpose() << std::endl;
-                        std::cout << "  Error norm: " << err.norm() << std::endl;
-                        std::cout << "  Info block:" << std::endl << P_k_inv << std::endl;
-                        std::cout << "  Info block trace: " << P_k_inv.trace() << std::endl;
-                        std::cout << "  Info block det:   " << P_k_inv.determinant() << std::endl;
-                        
-                        // Check if info block is positive definite
-                        Eigen::LLT<Eigen::Matrix4d> lltOfInfo(P_k_inv);
-                        bool is_pd = (lltOfInfo.info() == Eigen::Success);
-                        std::cout << "  Info block is PD: " << (is_pd ? "YES" : "NO") << std::endl;
-                        
-                        if (is_pd) {
-                            Eigen::Matrix4d cov_block = P_k_inv;
-                            std::cout << "  Cov block:" << std::endl << cov_block << std::endl;
-                            std::cout << "  Cov block trace: " << cov_block.trace() << std::endl;
-                        }
-                    }
-                    
-                    // Debug: Print NEES value for first few iterations
-                    if (eval_count <= 3 && run == 0 && k < 3) {
-                        std::cout << "  NEES: " << nees_k << std::endl;
-                        std::cout << "  ---" << std::endl;
-                    }
+                    full_error.segment<4>(k * 4) = err;
+                }
+                
+                // Check if full covariance matrix is positive definite
+                Eigen::LLT<Eigen::MatrixXd> lltOfCov(full_cov);
+                if (lltOfCov.info() != Eigen::Success) {
+                    std::cerr << "Warning: Full covariance matrix is not positive definite for run " << run << ". Skipping NEES." << std::endl;
+                    nees_full_system[run] = 0.0;
+                    continue;
+                }
+                
+                // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
+                // Since P = full_cov and P^(-1) = Hessian, we use: err^T * Hessian * err
+                double nees_full = full_error.transpose() * Hessian * full_error;
+                nees_full_system[run] = nees_full;
+                
+                // Debug: Print detailed information for first few iterations
+                if (eval_count <= 3 && run == 0) {
+                    std::cout << "DEBUG: Iteration " << eval_count << ", Run " << run << std::endl;
+                    std::cout << "  V0: " << V0 << ", dt: " << dt_ << std::endl;
+                    std::cout << "  Process noise intensity V0: " << V0 << std::endl;
+                    std::cout << "  Measurement noise std: " << meas_noise_std << std::endl;
+                    std::cout << "  Full error norm: " << full_error.norm() << std::endl;
+                    std::cout << "  Full covariance trace: " << full_cov.trace() << std::endl;
+                    std::cout << "  Full covariance det: " << full_cov.determinant() << std::endl;
+                    std::cout << "  Hessian trace: " << Hessian.trace() << std::endl;
+                    std::cout << "  Hessian condition number: " << Hessian.norm() * full_cov.norm() << std::endl;
+                    std::cout << "  Full NEES: " << nees_full << std::endl;
+                    std::cout << "  Expected NEES (full system): " << T * nx << std::endl;
+                    std::cout << "  NEES ratio (actual/expected): " << nees_full / (T * nx) << std::endl;
+                    std::cout << "  ---" << std::endl;
                 }
             }
             
-            // Step 2: For each time step, average NEES over all runs (Equation 20)
-            // ε̄_{x,k} = (1/N) Σ^N_{i=1} ε^i_{x,k}
-            std::vector<double> mean_nees_per_timestep(T, 0.0);
-            for (int k = 0; k < T; ++k) {
-                for (int run = 0; run < num_graphs; ++run) {
-                    mean_nees_per_timestep[k] += nees[run][k];
-                }
-                mean_nees_per_timestep[k] /= num_graphs;  // Average across runs
+            // Step 2: Calculate mean NEES across all runs (full system approach)
+            // Mean of full system NEES values
+            double mean_nees_full_system = 0.0;
+            for (int run = 0; run < num_graphs; ++run) {
+                mean_nees_full_system += nees_full_system[run];
             }
+            mean_nees_full_system /= num_graphs;  // Average across runs
             
-            // Step 3: Sum averaged NEES across time steps (Equation 36)
-            // Σ^T_{k=1} ε̄_{x,k}
-            double sum_of_mean_nees = 0.0;
-            for (int k = 0; k < T; ++k) {
-                sum_of_mean_nees += mean_nees_per_timestep[k];  // Sum across time steps
-            }
-            
-            // Step 4: Compute S_x (variance of normalized NEES across all runs and time steps)
-            double Sx = 0.0;
-            for (int k = 0; k < T; ++k) {
-                for (int run = 0; run < num_graphs; ++run) {
-                    double normed = nees[run][k] / nx;
-                    double normed_mean = mean_nees_per_timestep[k] / nx;
-                    Sx += (normed - normed_mean) * (normed - normed_mean);
-                }
+            // Step 3: Compute variance of full system NEES across runs
+            double variance_nees_full_system = 0.0;
+            for (int run = 0; run < num_graphs; ++run) {
+                double diff = nees_full_system[run] - mean_nees_full_system;
+                variance_nees_full_system += diff * diff;
             }
             if (num_graphs > 1) {
-                Sx = Sx / (T * (num_graphs - 1));
+                variance_nees_full_system /= (num_graphs - 1);
             } else {
-                Sx = 0.0; // Avoid division by zero if only one run
+                variance_nees_full_system = 0.0; // Avoid division by zero if only one run
             }
 
-            // Compute CNEES for reporting (using sum-based approach following paper)
-            double mean_nees_for_cnees = sum_of_mean_nees / T;  // Convert sum back to mean for CNEES calculation
-            double log_mean = std::log(mean_nees_for_cnees / nx);
-            double log_Sx = (Sx > 0) ? std::log(Sx / (2 * nx)) : 0.0; // Avoid log(0)
-            double CNEES = std::abs(log_mean) + std::abs(log_Sx);
-
-            // Calculate overall NEES statistics across all runs and time steps
-            std::vector<double> all_nees_values;
-            all_nees_values.reserve(num_graphs * T);
-            for (int run = 0; run < num_graphs; ++run) {
-                for (int k = 0; k < T; ++k) {
-                    all_nees_values.push_back(nees[run][k]);
-                }
-            }
+            // For full system NEES: expected mean is T*nx (total degrees of freedom)
+            int total_dof = T * nx;  // n_x in the formula = total degrees of freedom
             
-            // Calculate mean and variance of all NEES values
-            double overall_mean = 0.0;
-            for (const auto& val : all_nees_values) {
-                overall_mean += val;
-            }
-            overall_mean /= all_nees_values.size();
-            
-            double overall_variance = 0.0;
-            for (const auto& val : all_nees_values) {
-                overall_variance += (val - overall_mean) * (val - overall_mean);
-            }
-            overall_variance /= (all_nees_values.size() - 1);
+            // Compute CNEES exactly as in the provided formula:
+            // C_NEES = |log(ε̃_x / n_x)| + |log(S̃_x / (2*n_x))|
+            double log_mean = std::log(mean_nees_full_system / total_dof);
+            double log_variance = (variance_nees_full_system > 0) ? 
+                                 std::log(variance_nees_full_system / (2.0 * total_dof)) : 
+                                 0.0; // Avoid log(0)
+            double CNEES = std::abs(log_mean) + std::abs(log_variance);
 
             // Objective for BO: CNEES
             trials_.push_back({V0, meas_noise_var, CNEES});
             std::cout << "V0: " << V0 << ", meas_noise_var: " << meas_noise_var 
                       << ", CNEES: " << CNEES 
-                      << ", NEES_mean: " << overall_mean << ", NEES_var: " << overall_variance << std::endl;
+                      << ", ε̃_x: " << mean_nees_full_system << " (expected: " << total_dof << ")"
+                      << ", S̃_x: " << variance_nees_full_system << " (expected: " << 2*total_dof << ")" << std::endl;
             auto eval_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> eval_duration = eval_end - eval_start;
             std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;

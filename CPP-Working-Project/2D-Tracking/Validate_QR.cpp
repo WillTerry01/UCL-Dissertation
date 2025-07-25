@@ -273,23 +273,34 @@ int main(int argc, char* argv[]) {
             std::cout << Hessian.block<4,4>(10*4,11*4) << std::endl;
         }
         
+        // Create full error vector by stacking all time step errors
+        Eigen::VectorXd full_error(N * 4);
         for (int k = 0; k < N; ++k) {
             Eigen::Vector4d err = all_states[run][k] - est_states[k];
-            Eigen::Matrix4d P_k_inv = full_cov.block<4,4>(k*4, k*4);
-            
-            // NEES = err^T * P^(-1) * err = err^T * H * err (where H is the information matrix)
-            double nees_k = err.transpose() * P_k_inv * err;
-            
-            // Store NEES value for this run and time step
-            nees_per_run_per_time[run][k] = nees_k;
-            
-            // Debug: Track error magnitudes and info matrix traces for first run
-            if (run == 0) {
-                double err_magnitude = err.norm();
-                double P_ktrace = full_cov.block<4,4>(k*4, k*4).trace();
-                printf("k=%d: err_mag=%.3f, P_ktrace=%.3f, NEES=%.3f\n", 
-                       k, err_magnitude, P_ktrace, nees_k);
-            }
+            full_error.segment<4>(k * 4) = err;
+        }
+        
+        // Check if full covariance matrix is positive definite
+        Eigen::LLT<Eigen::MatrixXd> lltOfCov(full_cov);
+        if (lltOfCov.info() != Eigen::Success) {
+            std::cerr << "Warning: Full covariance matrix is not positive definite for run " << run << ". Skipping NEES." << std::endl;
+            nees_per_run_per_time[run][0] = 0.0; // Store as single value
+            continue;
+        }
+        
+        // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
+        // Since P = full_cov and P^(-1) = Hessian, we use: err^T * Hessian * err
+        double nees_full = full_error.transpose() * Hessian * full_error;
+        
+        // Store the full system NEES value (just in first position since we only have one value per run now)
+        nees_per_run_per_time[run][0] = nees_full;
+        
+        // Debug: Track full system properties for first run
+        if (run == 0) {
+            double full_error_magnitude = full_error.norm();
+            double full_cov_trace = full_cov.trace();
+            printf("Run %d: full_err_mag=%.3f, full_cov_trace=%.3f, full_NEES=%.3f\n", 
+                   run, full_error_magnitude, full_cov_trace, nees_full);
         }
     }
 
@@ -297,90 +308,69 @@ int main(int argc, char* argv[]) {
     
     std::cout << "\nValidation complete. Analyzing results..." << std::endl;
 
-    // Step 1: Average NEES across runs at each time step (Equation 20 from paper)
-    // ε̄_{x,k} = (1/N) Σ^N_{i=1} ε^i_{x,k}
-    std::vector<double> mean_nees_per_timestep(N, 0.0);
-    for (int k = 0; k < N; ++k) {
-        for (int run = 0; run < num_graphs; ++run) {
-            mean_nees_per_timestep[k] += nees_per_run_per_time[run][k];
-        }
-        mean_nees_per_timestep[k] /= num_graphs;  // Average across runs
-    }
-
-    // Step 2: Sum averaged NEES across all time steps (part of Equation 36 from paper)
-    // Σ^T_{k=1} ε̄_{x,k}
-    double sum_of_mean_nees = 0.0;
-    for (int k = 0; k < N; ++k) {
-        sum_of_mean_nees += mean_nees_per_timestep[k];
-    }
-
-    // Calculate overall statistics following the paper's approach
-    double sample_mean = sum_of_mean_nees / N;  // Average over time steps
-    
-    // Calculate variance of mean NEES per timestep
-    double sample_variance = 0.0;
-    for (int k = 0; k < N; ++k) {
-        sample_variance += (mean_nees_per_timestep[k] - sample_mean) * (mean_nees_per_timestep[k] - sample_mean);
-    }
-    sample_variance /= (N - 1);
-
-    // Also calculate traditional statistics for comparison
-    double total_sum = 0.0;
-    double total_sum_sq = 0.0;
-    int total_count = 0;
-    
+    // Step 1: Calculate statistics for full system NEES across runs
+    // We now have one NEES value per run (stored in position [run][0])
+    std::vector<double> full_system_nees_values;
     for (int run = 0; run < num_graphs; ++run) {
-        for (int k = 0; k < N; ++k) {
-            total_sum += nees_per_run_per_time[run][k];
-            total_sum_sq += nees_per_run_per_time[run][k] * nees_per_run_per_time[run][k];
-            total_count++;
-        }
+        full_system_nees_values.push_back(nees_per_run_per_time[run][0]);
     }
     
-    double traditional_mean = total_sum / total_count;
-    double traditional_variance = (total_sum_sq / total_count) - (traditional_mean * traditional_mean);
+    // Calculate mean of full system NEES values
+    double sample_mean = 0.0;
+    for (const auto& nees_val : full_system_nees_values) {
+        sample_mean += nees_val;
+    }
+    sample_mean /= num_graphs;  // Average across runs
+    
+    // Calculate variance of full system NEES values
+    double sample_variance = 0.0;
+    for (const auto& nees_val : full_system_nees_values) {
+        sample_variance += (nees_val - sample_mean) * (nees_val - sample_mean);
+    }
+    if (num_graphs > 1) {
+        sample_variance /= (num_graphs - 1);
+    } else {
+        sample_variance = 0.0;
+    }
 
-    // --- Theoretical Values for Chi-Squared with k=4 degrees of freedom ---
-    double theoretical_mean = nx;
-    double theoretical_variance = 2 * nx;
+    // For full system NEES: theoretical values for Chi-Squared with k=N*4 degrees of freedom
+    int total_dof = N * nx;  // Total degrees of freedom for full system
+    double theoretical_mean = total_dof;
+    double theoretical_variance = 2 * total_dof;
 
-    std::cout << "\n--- NEES Validation Results (Following Paper's Method) ---" << std::endl;
+    std::cout << "\n--- NEES Validation Results (Full System Method) ---" << std::endl;
     if (use_existing_data) {
         std::cout << "Data: Same as BO_Tracking_CNEES (consistency check)" << std::endl;
     } else {
         std::cout << "Data: New validation data (generalization test)" << std::endl;
     }
-    std::cout << "Total NEES samples calculated: " << total_count << std::endl;
-    std::cout << "Method: Average across runs first, then across time (Paper's Eq. 20 & 36)" << std::endl;
+    std::cout << "Total NEES samples calculated: " << num_graphs << " (one per run)" << std::endl;
+    std::cout << "Method: Full system covariance matrix (includes off-diagonal correlations)" << std::endl;
+    std::cout << "Total degrees of freedom: " << total_dof << std::endl;
     std::cout << "---------------------------------" << std::endl;
-    std::cout << "              |  Paper Method   |  Traditional    |  Theoretical (χ², k=4)" << std::endl;
+    std::cout << "              |  Full System    |  Theoretical (χ², k=" << total_dof << ")" << std::endl;
     std::cout << "---------------------------------" << std::endl;
-    printf("Mean          | %12.4f    | %12.4f    | %12.4f\n", sample_mean, traditional_mean, theoretical_mean);
-    printf("Variance      | %12.4f    | %12.4f    | %12.4f\n", sample_variance, traditional_variance, theoretical_variance);
+    printf("Mean          | %12.4f    | %12.4f\n", sample_mean, theoretical_mean);
+    printf("Variance      | %12.4f    | %12.4f\n", sample_variance, theoretical_variance);
     std::cout << "---------------------------------" << std::endl;
     
-    // Calculate Paper's cost function J_NEES (Equation 36)
-    // y(q) = J_NEES(q) = sqrt(log((Σ^T_{k=1} ε̄_{x,k})/n_x)^2)
-    double j_nees_cost = std::sqrt(std::pow(std::log(sum_of_mean_nees / nx), 2));
-    std::cout << "Paper's J_NEES cost function: " << j_nees_cost << std::endl;
+    // Calculate CNEES exactly as in the provided formula:
+    // C_NEES = |log(ε̃_x / n_x)| + |log(S̃_x / (2*n_x))|
+    double log_mean = std::log(sample_mean / total_dof);
+    double log_variance = (sample_variance > 0) ? 
+                         std::log(sample_variance / (2.0 * total_dof)) : 
+                         0.0; // Avoid log(0)
+    double CNEES = std::abs(log_mean) + std::abs(log_variance);
     
-    // Calculate NEES means and variances per Monte Carlo run for HDF5 output
-    std::vector<double> nees_means_per_run(num_graphs);
-    std::vector<double> nees_variances_per_run(num_graphs);
+    double normalized_mean_nees = sample_mean / total_dof;
+    std::cout << "Normalized mean NEES: " << normalized_mean_nees << " (should be ~1.0 for consistency)" << std::endl;
+    std::cout << "Full System CNEES: " << CNEES << std::endl;
     
+    // For full system NEES: each run has one NEES value, so "variance" per run is not applicable
+    // Instead, save the full system NEES values directly
+    std::vector<double> nees_values_per_run(num_graphs);
     for (int run = 0; run < num_graphs; ++run) {
-        double run_sum = 0.0;
-        for (int k = 0; k < N; ++k) {
-            run_sum += nees_per_run_per_time[run][k];
-        }
-        nees_means_per_run[run] = run_sum / N;
-        
-        double run_var = 0.0;
-        for (int k = 0; k < N; ++k) {
-            run_var += (nees_per_run_per_time[run][k] - nees_means_per_run[run]) * 
-                       (nees_per_run_per_time[run][k] - nees_means_per_run[run]);
-        }
-        nees_variances_per_run[run] = run_var / (N - 1);
+        nees_values_per_run[run] = nees_per_run_per_time[run][0];  // Full system NEES value
     }
     
     // Save NEES statistics to HDF5 file
@@ -404,13 +394,9 @@ int main(int argc, char* argv[]) {
         }
         run_dataset.write(run_numbers.data(), H5::PredType::NATIVE_DOUBLE);
         
-        // Save NEES means per Monte Carlo run
-        H5::DataSet mean_dataset = file.createDataSet("nees_means", H5::PredType::NATIVE_DOUBLE, run_dataspace);
-        mean_dataset.write(nees_means_per_run.data(), H5::PredType::NATIVE_DOUBLE);
-        
-        // Save NEES variances per Monte Carlo run
-        H5::DataSet variance_dataset = file.createDataSet("nees_variances", H5::PredType::NATIVE_DOUBLE, run_dataspace);
-        variance_dataset.write(nees_variances_per_run.data(), H5::PredType::NATIVE_DOUBLE);
+        // Save full system NEES values per Monte Carlo run
+        H5::DataSet nees_dataset = file.createDataSet("nees_full_system_values", H5::PredType::NATIVE_DOUBLE, run_dataspace);
+        nees_dataset.write(nees_values_per_run.data(), H5::PredType::NATIVE_DOUBLE);
         
         // Save overall statistics as attributes
         H5::DataSpace attr_dataspace(H5S_SCALAR);
@@ -421,6 +407,8 @@ int main(int argc, char* argv[]) {
         H5::Attribute V0_attr = file.createAttribute("V0", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
         H5::Attribute meas_noise_std_attr = file.createAttribute("meas_noise_std", H5::PredType::NATIVE_DOUBLE, attr_dataspace);
         H5::Attribute use_existing_data_attr = file.createAttribute("use_existing_data", H5::PredType::NATIVE_INT, attr_dataspace);
+        H5::Attribute total_dof_attr = file.createAttribute("total_degrees_of_freedom", H5::PredType::NATIVE_INT, attr_dataspace);
+        H5::Attribute method_attr = file.createAttribute("method", H5::PredType::C_S1, H5::DataSpace(H5S_SCALAR));
         
         overall_mean_attr.write(H5::PredType::NATIVE_DOUBLE, &sample_mean);
         overall_variance_attr.write(H5::PredType::NATIVE_DOUBLE, &sample_variance);
@@ -430,6 +418,9 @@ int main(int argc, char* argv[]) {
         meas_noise_std_attr.write(H5::PredType::NATIVE_DOUBLE, &best_meas_noise_std);
         int use_existing_flag = use_existing_data ? 1 : 0;
         use_existing_data_attr.write(H5::PredType::NATIVE_INT, &use_existing_flag);
+        total_dof_attr.write(H5::PredType::NATIVE_INT, &total_dof);
+        std::string method_str = "full_system_covariance";
+        method_attr.write(H5::PredType::C_S1, method_str.c_str());
         
         file.close();
         std::cout << "NEES validation results saved to " << h5_filename << std::endl;

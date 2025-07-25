@@ -1,11 +1,11 @@
 Data_Generation:
   dt: 0.1
-  meas_noise_var: 0.25
+  meas_noise_var: 0.5
   num_graphs: 100
   pos:
     x: 0.0
     y: 0.0
-  q: 0.1
+  q: 1.0
   seed: 42
   trajectory_length: 20
   use_process_noise: true
@@ -23,11 +23,11 @@ bayesopt:
 parameters:
   - lower_bound: 0.01
     name: q
-    upper_bound: 10000
+    upper_bound: 2.0
   - lower_bound: 0.01
     name: R
-    upper_bound: 5000
+    upper_bound: 2.0
 validate_filter:
-  R: 241.66294375999493
-  min_objective: 0.52062500634678766
-  q: 957.34899723086016
+  R: 1.3011753610321797
+  min_objective: 0.0035869356109693696
+  q: 0.93469646060651068
