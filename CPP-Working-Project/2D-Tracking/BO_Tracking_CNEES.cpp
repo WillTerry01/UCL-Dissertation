@@ -48,7 +48,7 @@ public:
                     double lower_bound_Q, double upper_bound_Q,
                     double lower_bound_R, double upper_bound_R,
                     double dt,
-                    const std::string &dof_method)
+                    const std::string &consistency_method)
         : bayesopt::ContinuousModel(2, params),
           all_states_(all_states),
           all_measurements_(all_measurements),
@@ -58,7 +58,7 @@ public:
           lower_bound_R_(lower_bound_R),
           upper_bound_R_(upper_bound_R),
           dt_(dt),
-          dof_method_(dof_method) {}
+          consistency_method_(consistency_method) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
         static int eval_count = 0;
@@ -70,7 +70,7 @@ public:
         double V1 = query(0);  // Process noise intensity for y-direction (same as V0 for now)
         double meas_noise_var = query(1);  // Measurement noise variance (R)
         double meas_noise_std = sqrt(meas_noise_var);  // Measurement noise standard deviation
-        double CNEES = 1e6;
+        double consistency_metric = 1e6;
         
         if (V0 >= lower_bound_Q_ && V0 <= upper_bound_Q_ && meas_noise_var >= lower_bound_R_ && meas_noise_var <= upper_bound_R_) {
             int num_graphs = all_states_.size();
@@ -78,155 +78,263 @@ public:
             int nx = 4; // state dimension
             int nz = 2; // measurement dimension
             
-            // Step 1: Compute NEES for each run using full system covariance
-            std::vector<double> nees_full_system(num_graphs, 0.0);
-            #pragma omp parallel for
-            for (int run = 0; run < num_graphs; ++run) {
-                FactorGraph2DTrajectory fg;
-                
-                // Use proper Q matrix structure for 2D linear tracking with theoretical structure
-                // V0 = std::max(V0, min_variance / dt); // Comment out this line temporarily:
-                fg.setQFromProcessNoiseIntensity(V0, dt_);  // Use actual dt from data generation
-                
-                // Use proper R matrix structure (2x2 diagonal matrix)
-                fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
-                
-                FactorGraph2DTrajectory::OutputOptions opts;
-                opts.output_estimated_state = true;
-                opts.output_true_state = true;
-                opts.output_information_matrix = true;
-                fg.setOutputOptions(opts);
-                fg.run(all_states_[run], &all_measurements_[run], false, dt_);
-                auto est_states = fg.getAllEstimates();
-                auto true_states = fg.getAllTrueStates();
-                Eigen::MatrixXd Hessian = fg.getFullHessianMatrix();
-                Eigen::MatrixXd full_cov = Hessian.inverse();
-                
-                // Check if information matrix is valid
-                if (Hessian.rows() == 0 || Hessian.cols() == 0) {
-                    std::cerr << "ERROR: Information matrix is empty for run " << run << std::endl;
-                    continue;
-                }
-                
-                // Check if information matrix has the expected size
-                if (Hessian.rows() != T * 4 || Hessian.cols() != T * 4) {
-                    std::cerr << "ERROR: Information matrix has wrong size: " 
-                              << Hessian.rows() << "x" << Hessian.cols() 
-                              << " (expected " << T * 4 << "x" << T * 4 << ")" << std::endl;
-                    continue;
-                }
-                
-                // Create full error vector by stacking all time step errors
-                Eigen::VectorXd full_error(T * 4);
-                for (int k = 0; k < T; ++k) {
-                    Eigen::Vector4d err = true_states[k] - est_states[k];
-                    full_error.segment<4>(k * 4) = err;
-                }
-                
-                // Check if full covariance matrix is positive definite
-                Eigen::LLT<Eigen::MatrixXd> lltOfCov(full_cov);
-                if (lltOfCov.info() != Eigen::Success) {
-                    std::cerr << "Warning: Full covariance matrix is not positive definite for run " << run << ". Skipping NEES." << std::endl;
-                    nees_full_system[run] = 0.0;
-                    continue;
-                }
-                
-                // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
-                // Since P = full_cov and P^(-1) = Hessian, we use: err^T * Hessian * err
-                double nees_full = full_error.transpose() * Hessian * full_error;
-                nees_full_system[run] = nees_full;
-                
-                // Debug: Print detailed information for first few iterations
-                if (eval_count <= 3 && run == 0) {
-                    std::cout << "DEBUG: Iteration " << eval_count << ", Run " << run << std::endl;
-                    std::cout << "  V0: " << V0 << ", dt: " << dt_ << std::endl;
-                    std::cout << "  Process noise intensity V0: " << V0 << std::endl;
-                    std::cout << "  Measurement noise std: " << meas_noise_std << std::endl;
-                    std::cout << "  Full error norm: " << full_error.norm() << std::endl;
-                    std::cout << "  Full covariance trace: " << full_cov.trace() << std::endl;
-                    std::cout << "  Full covariance det: " << full_cov.determinant() << std::endl;
-                    std::cout << "  Hessian trace: " << Hessian.trace() << std::endl;
-                    std::cout << "  Hessian condition number: " << Hessian.norm() * full_cov.norm() << std::endl;
-                    std::cout << "  Full NEES: " << nees_full << std::endl;
-                    std::cout << "  Expected NEES (full system): " << T * nx << std::endl;
-                    std::cout << "  NEES ratio (actual/expected): " << nees_full / (T * nx) << std::endl;
-                    std::cout << "  ---" << std::endl;
-                }
+            // Debug: Show DOF calculations for all methods (first few iterations only)
+            if (eval_count <= 3) {
+                int dof_nees = T * nx;
+                int Nz = T * nz + (T - 1) * nx;
+                int Nx = T * nx;
+                int dof_nis3 = Nz;
+                int dof_nis4 = Nz - Nx;
+                std::cout << "DOF Comparison for T=" << T << ": NEES=" << dof_nees 
+                          << ", NIS3=" << dof_nis3 << ", NIS4=" << dof_nis4 
+                          << ", Using: " << consistency_method_ << std::endl;
             }
             
-            // Step 2: Calculate mean NEES across all runs (full system approach)
-            // Mean of full system NEES values
-            double mean_nees_full_system = 0.0;
-            for (int run = 0; run < num_graphs; ++run) {
-                mean_nees_full_system += nees_full_system[run];
-            }
-            mean_nees_full_system /= num_graphs;  // Average across runs
-            
-            // Step 3: Compute variance of full system NEES across runs
-            double variance_nees_full_system = 0.0;
-            for (int run = 0; run < num_graphs; ++run) {
-                double diff = nees_full_system[run] - mean_nees_full_system;
-                variance_nees_full_system += diff * diff;
-            }
-            if (num_graphs > 1) {
-                variance_nees_full_system /= (num_graphs - 1);
+            if (consistency_method_ == "nis3" || consistency_method_ == "nis4") {
+                // Compute CNIS (Normalized Innovation Squared) with Khosoussi propositions
+                consistency_metric = computeCNIS(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count);
             } else {
-                variance_nees_full_system = 0.0; // Avoid division by zero if only one run
-            }
-
-            // DOF calculation for NEES (not NIS)
-            // Khosoussi et al. propositions are for NIS (measurement space), not NEES (state space)
-            // For full-trajectory NEES, DOF should be related to state parameters being estimated
-            
-            int total_dof_nees = T * nx;               // Correct for NEES: total state parameters
-            int total_dof_khosoussi_prop3 = T * nz + (T - 1) * nx;  // Khosoussi Prop 3 (for NIS)
-            int total_dof_khosoussi_prop4 = (T * nz + (T - 1) * nx) - (T * nx);  // Khosoussi Prop 4 (for NIS)
-            
-            // Choose DOF calculation method based on YAML configuration
-            int total_dof;
-            if (dof_method_ == "proposition_3") {
-                total_dof = total_dof_khosoussi_prop3;
-            } else if (dof_method_ == "proposition_4") {
-                total_dof = total_dof_khosoussi_prop4;
-            } else {
-                total_dof = total_dof_nees;  // Default to correct NEES formulation
+                // Compute CNEES (Normalized Estimation Error Squared)  
+                consistency_metric = computeCNEES(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count);
             }
             
-            // Debug output showing all DOF calculations for comparison
-            if (eval_count <= 3) {  // Only show for first few evaluations
-                std::cout << "DOF Comparison - NEES: " << total_dof_nees 
-                          << ", Khosoussi Prop 3: " << total_dof_khosoussi_prop3 
-                          << ", Khosoussi Prop 4: " << total_dof_khosoussi_prop4 
-                          << ", Using (" << dof_method_ << "): " << total_dof << std::endl;
-            }
-            
-            // Compute CNEES exactly as in the provided formula:
-            // C_NEES = |log(ε̃_x / n_x)| + |log(S̃_x / (2*n_x))|
-            double log_mean = std::log(mean_nees_full_system / total_dof);
-            double log_variance = (variance_nees_full_system > 0) ? 
-                                 std::log(variance_nees_full_system / (2.0 * total_dof)) : 
-                                 0.0; // Avoid log(0)
-            double CNEES = std::abs(log_mean) + std::abs(log_variance);
-
-            // Objective for BO: CNEES
-            trials_.push_back({V0, meas_noise_var, CNEES});
+            trials_.push_back({V0, meas_noise_var, consistency_metric});
             std::cout << "V0: " << V0 << ", meas_noise_var: " << meas_noise_var 
-                      << ", CNEES: " << CNEES 
-                      << ", ε̃_x: " << mean_nees_full_system << " (expected: " << total_dof << ")"
-                      << ", S̃_x: " << variance_nees_full_system << " (expected: " << 2*total_dof << ")" << std::endl;
+                      << ", " << consistency_method_ << ": " << consistency_metric << std::endl;
             auto eval_end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> eval_duration = eval_end - eval_start;
             std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
-            return CNEES;
+            return consistency_metric;
         }
-        trials_.push_back({V0, meas_noise_var, CNEES});
+        trials_.push_back({V0, meas_noise_var, consistency_metric});
         std::cout << "V0: " << V0 << ", meas_noise_var: " << meas_noise_var 
-                  << ", CNEES: " << CNEES 
-                  << ", NEES_mean: N/A, NEES_var: N/A (out of bounds)" << std::endl;
+                  << ", " << consistency_method_ << ": " << consistency_metric 
+                  << " (out of bounds)" << std::endl;
         auto eval_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> eval_duration = eval_end - eval_start;
         std::cout << "[Timing] evaluateSample took " << eval_duration.count() << " seconds." << std::endl;
+        return consistency_metric;
+    }
+
+    // Method to compute CNEES (Normalized Estimation Error Squared)
+    // NEES Formula: (x_true - x_est)^T * P_est^(-1) * (x_true - x_est)
+    // Tests how well estimated states match true states
+    double computeCNEES(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count) {
+        if (eval_count <= 1) {
+            std::cout << "Computing CNEES using NEES (state estimation error)..." << std::endl;
+        }
+        
+        // Step 1: Compute NEES for each run using full system covariance
+        std::vector<double> nees_full_system(num_graphs, 0.0);
+        #pragma omp parallel for
+        for (int run = 0; run < num_graphs; ++run) {
+            FactorGraph2DTrajectory fg;
+            
+            fg.setQFromProcessNoiseIntensity(V0, dt_);
+            fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
+                
+            FactorGraph2DTrajectory::OutputOptions opts;
+            opts.output_estimated_state = true;
+            opts.output_true_state = true;
+            opts.output_information_matrix = true;
+            fg.setOutputOptions(opts);
+            fg.run(all_states_[run], &all_measurements_[run], false, dt_);
+            auto est_states = fg.getAllEstimates();
+            auto true_states = fg.getAllTrueStates();
+            Eigen::MatrixXd Hessian = fg.getFullHessianMatrix();
+            Eigen::MatrixXd full_cov = Hessian.inverse();
+            
+            // Check if information matrix is valid
+            if (Hessian.rows() == 0 || Hessian.cols() == 0) {
+                std::cerr << "ERROR: Information matrix is empty for run " << run << std::endl;
+                continue;
+            }
+            
+            // Create full error vector by stacking all time step errors
+            Eigen::VectorXd full_error(T * 4);
+            for (int k = 0; k < T; ++k) {
+                Eigen::Vector4d err = true_states[k] - est_states[k];
+                full_error.segment<4>(k * 4) = err;
+            }
+            
+            // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
+            double nees_full = full_error.transpose() * Hessian * full_error;
+            nees_full_system[run] = nees_full;
+        }
+        
+        // Step 2: Calculate mean and variance across all runs
+        double mean_nees = 0.0;
+        for (int run = 0; run < num_graphs; ++run) {
+            mean_nees += nees_full_system[run];
+        }
+        mean_nees /= num_graphs;
+        
+        double variance_nees = 0.0;
+        for (int run = 0; run < num_graphs; ++run) {
+            double diff = nees_full_system[run] - mean_nees;
+            variance_nees += diff * diff;
+        }
+        if (num_graphs > 1) {
+            variance_nees /= (num_graphs - 1);
+        }
+
+        // Step 3: DOF calculation for NEES (always T*nx for NEES)
+        int total_dof = T * nx;
+        
+        // Step 4: Compute CNEES
+        double log_mean = std::log(mean_nees / total_dof);
+        double log_variance = (variance_nees > 0) ? std::log(variance_nees / (2.0 * total_dof)) : 0.0;
+        double CNEES = std::abs(log_mean) + std::abs(log_variance);
+
+        if (eval_count <= 3) {
+            std::cout << "CNEES Debug: mean=" << mean_nees << ", var=" << variance_nees 
+                      << ", DOF=" << total_dof << ", CNEES=" << CNEES << std::endl;
+        }
+        
         return CNEES;
+    }
+
+    // Method to compute CNIS (Normalized Innovation Squared) 
+    // NIS Formula: (z_actual - z_predicted)^T * S^(-1) * (z_actual - z_predicted)
+    // Where z_predicted = h(x_est), S = H*P*H^T + R
+    // Tests how well predicted measurements match actual measurements
+    double computeCNIS(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count) {
+        if (eval_count <= 1) {
+            std::cout << "Computing CNIS using NIS (measurement innovation) with method: " << consistency_method_ << std::endl;
+        }
+        
+        // Measurement Jacobian H for 2D position measurements: H = [I_2x2, 0_2x2]
+        Eigen::Matrix<double, 2, 4> H;
+        H << 1, 0, 0, 0,    // x_pos = state[0]
+             0, 1, 0, 0;    // y_pos = state[1]
+        
+        // Measurement noise covariance R (2x2)
+        Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * (meas_noise_std * meas_noise_std);
+        
+        // Step 1: Compute full-trajectory NIS for each run (similar to full-trajectory NEES)
+        std::vector<double> nis_full_system(num_graphs, 0.0);
+        
+        #pragma omp parallel for
+        for (int run = 0; run < num_graphs; ++run) {
+            FactorGraph2DTrajectory fg;
+            
+            fg.setQFromProcessNoiseIntensity(V0, dt_);
+            fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
+                
+            FactorGraph2DTrajectory::OutputOptions opts;
+            opts.output_estimated_state = true;
+            opts.output_true_state = true;
+            opts.output_information_matrix = true;
+            fg.setOutputOptions(opts);
+            fg.run(all_states_[run], &all_measurements_[run], false, dt_);
+            auto est_states = fg.getAllEstimates();
+            Eigen::MatrixXd Hessian = fg.getFullHessianMatrix();
+            Eigen::MatrixXd full_cov = Hessian.inverse();
+            
+            // Check if covariance matrix is valid
+            if (full_cov.rows() == 0) {
+                std::cerr << "ERROR: Covariance matrix is empty for run " << run << std::endl;
+                continue;
+            }
+            
+            // Create full innovation vector by stacking all timestep innovations
+            Eigen::VectorXd full_innovation(T * 2);
+            for (int k = 0; k < T; ++k) {
+                // Predicted measurement: z_pred = H * x_est
+                Eigen::Vector2d z_predicted = H * est_states[k];
+                
+                // Actual measurement
+                Eigen::Vector2d z_actual = all_measurements_[run][k];
+                
+                // Innovation: y = z_actual - z_predicted
+                Eigen::Vector2d innovation = z_actual - z_predicted;
+                
+                // Stack into full innovation vector
+                full_innovation.segment<2>(k * 2) = innovation;
+            }
+            
+            // Construct full measurement Jacobian H_full (T*2 x T*4)
+            Eigen::MatrixXd H_full = Eigen::MatrixXd::Zero(T * 2, T * 4);
+            for (int k = 0; k < T; ++k) {
+                H_full.block<2,4>(k * 2, k * 4) = H;  // Place H in diagonal blocks
+            }
+            
+            // Construct full measurement noise covariance R_full (T*2 x T*2, block diagonal)
+            Eigen::MatrixXd R_full = Eigen::MatrixXd::Zero(T * 2, T * 2);
+            for (int k = 0; k < T; ++k) {
+                R_full.block<2,2>(k * 2, k * 2) = R;  // Place R in diagonal blocks
+            }
+            
+            // Full innovation covariance: S_full = H_full * P_full * H_full^T + R_full
+            Eigen::MatrixXd S_full = H_full * full_cov * H_full.transpose() + R_full;
+            
+            // Check if S_full is invertible
+            Eigen::LLT<Eigen::MatrixXd> lltOfS(S_full);
+            if (lltOfS.info() != Eigen::Success) {
+                std::cerr << "Warning: Full innovation covariance is not positive definite for run " << run << std::endl;
+                nis_full_system[run] = 0.0;
+                continue;
+            }
+            
+            // Calculate full-trajectory NIS: innovation^T * S_full^(-1) * innovation
+            double nis_full = full_innovation.transpose() * S_full.inverse() * full_innovation;
+            nis_full_system[run] = nis_full;
+        }
+        
+        // Step 2: Calculate mean and variance across all full-trajectory NIS values  
+        double mean_nis = 0.0;
+        for (int run = 0; run < num_graphs; ++run) {
+            mean_nis += nis_full_system[run];
+        }
+        mean_nis /= num_graphs;
+        
+        double variance_nis = 0.0;
+        for (int run = 0; run < num_graphs; ++run) {
+            double diff = nis_full_system[run] - mean_nis;
+            variance_nis += diff * diff;
+        }
+        if (num_graphs > 1) {
+            variance_nis /= (num_graphs - 1);
+        }
+
+        // Step 3: DOF calculation for NIS using Khosoussi et al. propositions
+        int total_dof;
+        if (consistency_method_ == "nis3") {
+            // Proposition 3: DOF = Nz (total residuals)
+            // Nz = T * nz + (T-1) * nx (measurement + process residuals)
+            int Nz = T * nz + (T - 1) * nx;
+            total_dof = Nz;
+            if (eval_count <= 3) {
+                std::cout << "Using Khosoussi Proposition 3: DOF = Nz = " << total_dof << std::endl;
+            }
+        } else if (consistency_method_ == "nis4") {
+            // Proposition 4: DOF = Nz - Nx (total residuals - total state parameters)
+            int Nx = T * nx;  // Total state parameters
+            int Nz = T * nz + (T - 1) * nx;  // Total residuals
+            total_dof = Nz - Nx;
+            if (eval_count <= 3) {
+                std::cout << "Using Khosoussi Proposition 4: DOF = Nz - Nx = " << Nz << " - " << Nx << " = " << total_dof << std::endl;
+            }
+        } else {
+            // Fallback to simple nz per timestep
+            total_dof = nz;
+            if (eval_count <= 3) {
+                std::cout << "Using simple NIS: DOF = nz = " << total_dof << std::endl;
+            }
+        }
+        
+        // Step 4: Compute CNIS 
+        double log_mean = std::log(mean_nis / total_dof);
+        double log_variance = (variance_nis > 0) ? std::log(variance_nis / (2.0 * total_dof)) : 0.0;
+        double CNIS = std::abs(log_mean) + std::abs(log_variance);
+
+        if (eval_count <= 3) {
+            std::cout << "CNIS Debug: mean=" << mean_nis << ", var=" << variance_nis 
+                      << ", DOF=" << total_dof << ", num_runs=" << num_graphs 
+                      << ", CNIS=" << CNIS << std::endl;
+        }
+        
+        return CNIS;
     }
 private:
     const std::vector<std::vector<Eigen::Vector4d>> &all_states_;
@@ -234,7 +342,7 @@ private:
     std::vector<std::array<double, 3>> &trials_;
     double lower_bound_Q_, upper_bound_Q_, lower_bound_R_, upper_bound_R_;
     double dt_;
-    std::string dof_method_;
+    std::string consistency_method_;
 };
 
 int main() {
@@ -245,9 +353,9 @@ int main() {
     double dt = config["Data_Generation"]["dt"].as<double>();
     std::cout << "Using dt = " << dt << " from data generation config" << std::endl;
     
-    // Get DOF calculation method from YAML config
-    std::string dof_method = config["nees_analysis"]["dof_method"].as<std::string>("nees");
-    std::cout << "DOF calculation method: " << dof_method << std::endl;
+    // Get consistency method from YAML config
+    std::string consistency_method = config["bayesopt"]["consistency_method"].as<std::string>("nees");
+    std::cout << "Consistency method: " << consistency_method << std::endl;
 
     // Infer problem size from the noisy states HDF5
     int Trajectory_length = 0;
@@ -279,7 +387,7 @@ int main() {
 
     CMetricBayesOpt opt(
         params, all_states, all_measurements, trials,
-        lb(0), ub(0), lb(1), ub(1), dt, dof_method
+        lb(0), ub(0), lb(1), ub(1), dt, consistency_method
     );
     opt.setBoundingBox(lb, ub);
     boost::numeric::ublas::vector<double> result(2);

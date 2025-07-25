@@ -14,6 +14,7 @@ Data_Generation:
     y: 1.0
 bayesopt:
   crit_name: cLCB
+  consistency_method: nis4
   lcb_alpha: 2.0
   n_init_samples: 50
   n_iterations: 500
@@ -28,12 +29,6 @@ parameters:
     name: R
     upper_bound: 10.0
 validate_filter:
-  R: 8.3956157805190923
-  min_objective: 0.31170534348700657
-  q: 0.74129148497972386
-nees_analysis:
-  # DOF calculation method for NEES consistency tests
-  # "nees": DOF = T × nx (correct for NEES - state estimation error)  
-  # "proposition_3": DOF = Nz (Khosoussi et al. - for NIS measurement innovation)
-  # "proposition_4": DOF = Nz - Nx (Khosoussi et al. - for NIS with constraints)
-  dof_method: "nees"  # Options: "nees", "proposition_3", "proposition_4"
+  R: 0.94392465239623569
+  min_objective: 0.09288801493837652
+  q: 1.833819493735209

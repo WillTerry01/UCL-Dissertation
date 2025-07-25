@@ -6,7 +6,6 @@
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles/tracking_gen_data.dir
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles/1D_main.dir
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles/1D_single_run.dir
-/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles/bayesopt_example.dir
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/_deps/yaml-cpp-build/CMakeFiles/rebuild_cache.dir
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/_deps/yaml-cpp-build/CMakeFiles/uninstall.dir
 /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/_deps/yaml-cpp-build/CMakeFiles/edit_cache.dir

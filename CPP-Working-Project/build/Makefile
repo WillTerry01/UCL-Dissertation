@@ -190,19 +190,6 @@ tracking_gen_data/fast:
 .PHONY : 1D_single_run/fast
 
 #=============================================================================
-# Target rules for targets named bayesopt_example
-
-# Build rule for target.
-bayesopt_example: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 bayesopt_example
-.PHONY : bayesopt_example
-
-# fast build rule for target.
-bayesopt_example/fast:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
-.PHONY : bayesopt_example/fast
-
-#=============================================================================
 # Target rules for targets named uninstall
 
 # Build rule for target.
@@ -856,33 +843,6 @@ yaml-cpp-sandbox/fast:
 	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/2D-Tracking/tracking_gen_data.cpp.s
 .PHONY : 2D-Tracking/tracking_gen_data.cpp.s
 
-bayesopt_example.o: bayesopt_example.cpp.o
-
-.PHONY : bayesopt_example.o
-
-# target to build an object file
-bayesopt_example.cpp.o:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.o
-.PHONY : bayesopt_example.cpp.o
-
-bayesopt_example.i: bayesopt_example.cpp.i
-
-.PHONY : bayesopt_example.i
-
-# target to preprocess a source file
-bayesopt_example.cpp.i:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.i
-.PHONY : bayesopt_example.cpp.i
-
-bayesopt_example.s: bayesopt_example.cpp.s
-
-.PHONY : bayesopt_example.s
-
-# target to generate assembly for a file
-bayesopt_example.cpp.s:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/bayesopt_example.cpp.s
-.PHONY : bayesopt_example.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -897,7 +857,6 @@ help:
 	@echo "... tracking_gen_data"
 	@echo "... 1D_main"
 	@echo "... 1D_single_run"
-	@echo "... bayesopt_example"
 	@echo "... uninstall"
 	@echo "... NightlyMemCheck"
 	@echo "... NightlyTest"
@@ -955,9 +914,6 @@ help:
 	@echo "... 2D-Tracking/tracking_gen_data.o"
 	@echo "... 2D-Tracking/tracking_gen_data.i"
 	@echo "... 2D-Tracking/tracking_gen_data.s"
-	@echo "... bayesopt_example.o"
-	@echo "... bayesopt_example.i"
-	@echo "... bayesopt_example.s"
 .PHONY : help
 
 

@@ -69,9 +69,9 @@ int main(int argc, char* argv[]) {
     double dt = config["Data_Generation"]["dt"].as<double>();
     std::cout << "Using dt = " << dt << " from data generation config" << std::endl;
     
-    // Get DOF calculation method from YAML config
-    std::string dof_method = config["nees_analysis"]["dof_method"].as<std::string>("nees");
-    std::cout << "DOF calculation method: " << dof_method << std::endl;
+    // Get consistency method from YAML config
+    std::string consistency_method = config["bayesopt"]["consistency_method"].as<std::string>("nees");
+    std::cout << "Consistency method: " << consistency_method << std::endl;
 
     std::vector<std::vector<Eigen::Vector4d>> all_states;
     std::vector<std::vector<Eigen::Vector2d>> all_measurements;
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Using V0 = " << best_V0 << ", meas_noise_std = " << best_meas_noise_std << ", dt = " << dt << std::endl;
 
-    // --- PART 2: RUN FILTER AND CALCULATE NEES ---
+    // --- PART 2: RUN FILTER AND CALCULATE CONSISTENCY METRICS ---
 
     if (use_existing_data) {
         std::cout << "\nRunning filter with V0=" << best_V0 << " and meas_noise_std=" << best_meas_noise_std << " on SAME data as BO..." << std::endl;
@@ -237,9 +237,11 @@ int main(int argc, char* argv[]) {
         std::cout << "\nRunning filter with V0=" << best_V0 << " and meas_noise_std=" << best_meas_noise_std << " on NEW validation data..." << std::endl;
     }
 
-    // Initialize accumulators for NEES statistics - following paper's approach
-    // Store NEES values for each run and time step: nees[run][time_step]
-    std::vector<std::vector<double>> nees_per_run_per_time(num_graphs, std::vector<double>(N, 0.0));
+    std::cout << "Computing " << consistency_method << " consistency metrics..." << std::endl;
+
+    // Initialize accumulators for consistency statistics  
+    // Store one consistency value per run: consistency_values[run]
+    std::vector<double> consistency_values(num_graphs, 0.0);
 
     #pragma omp parallel for
     for (int run = 0; run < num_graphs; ++run) {
@@ -258,78 +260,111 @@ int main(int argc, char* argv[]) {
         Eigen::MatrixXd Hessian = fg.getFullHessianMatrix();
         Eigen::MatrixXd full_cov = Hessian.inverse();
         
-        // Debug: Check if information matrix looks reasonable
-        if (run == 0) {
-            std::cout << "Debug: Hessian matrix size: " << Hessian.rows() << "x" << Hessian.cols() << std::endl;
-            std::cout << "Debug: First 4x4 block of Hessian matrix:" << std::endl;
-            std::cout << Hessian.block<4,4>(0,0) << std::endl;
-            
-            // Check a few more blocks to see the pattern
-            std::cout << "Debug: Middle 4x4 block (k=10):" << std::endl;
-            std::cout << Hessian.block<4,4>(10*4,10*4) << std::endl;
-            std::cout << "Debug: Last 4x4 block (k=19):" << std::endl;
-            std::cout << Hessian.block<4,4>(19*4,19*4) << std::endl;
-            
-            // Check process model contribution by looking at off-diagonal blocks
-            std::cout << "Debug: Process model blocks (k=0,1):" << std::endl;
-            std::cout << Hessian.block<4,4>(0*4,1*4) << std::endl;
-            std::cout << "Debug: Process model blocks (k=10,11):" << std::endl;
-            std::cout << Hessian.block<4,4>(10*4,11*4) << std::endl;
-        }
-        
-        // Create full error vector by stacking all time step errors
-        Eigen::VectorXd full_error(N * 4);
-        for (int k = 0; k < N; ++k) {
-            Eigen::Vector4d err = all_states[run][k] - est_states[k];
-            full_error.segment<4>(k * 4) = err;
-        }
-        
-        // Check if full covariance matrix is positive definite
-        Eigen::LLT<Eigen::MatrixXd> lltOfCov(full_cov);
-        if (lltOfCov.info() != Eigen::Success) {
-            std::cerr << "Warning: Full covariance matrix is not positive definite for run " << run << ". Skipping NEES." << std::endl;
-            nees_per_run_per_time[run][0] = 0.0; // Store as single value
+        // Check if covariance matrix is valid
+        if (full_cov.rows() == 0) {
+            std::cerr << "ERROR: Covariance matrix is empty for run " << run << std::endl;
+            consistency_values[run] = 0.0;
             continue;
         }
         
-        // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
-        // Since P = full_cov and P^(-1) = Hessian, we use: err^T * Hessian * err
-        double nees_full = full_error.transpose() * Hessian * full_error;
+        double consistency_value = 0.0;
         
-        // Store the full system NEES value (just in first position since we only have one value per run now)
-        nees_per_run_per_time[run][0] = nees_full;
+        if (consistency_method == "nis3" || consistency_method == "nis4") {
+            // CNIS calculation using full trajectory approach
+            
+            // Measurement Jacobian H for 2D position measurements: H = [I_2x2, 0_2x2]
+            Eigen::Matrix<double, 2, 4> H;
+            H << 1, 0, 0, 0,    // x_pos = state[0]
+                 0, 1, 0, 0;    // y_pos = state[1]
+            
+            // Measurement noise covariance R (2x2)
+            Eigen::Matrix2d R = Eigen::Matrix2d::Identity() * (best_meas_noise_std * best_meas_noise_std);
+            
+            // Create full innovation vector by stacking all timestep innovations
+            Eigen::VectorXd full_innovation(N * 2);
+            for (int k = 0; k < N; ++k) {
+                // Predicted measurement: z_pred = H * x_est
+                Eigen::Vector2d z_predicted = H * est_states[k];
+                
+                // Actual measurement
+                Eigen::Vector2d z_actual = all_measurements[run][k];
+                
+                // Innovation: y = z_actual - z_predicted
+                Eigen::Vector2d innovation = z_actual - z_predicted;
+                
+                // Stack into full innovation vector
+                full_innovation.segment<2>(k * 2) = innovation;
+            }
+            
+            // Construct full measurement Jacobian H_full (N*2 x N*4)
+            Eigen::MatrixXd H_full = Eigen::MatrixXd::Zero(N * 2, N * 4);
+            for (int k = 0; k < N; ++k) {
+                H_full.block<2,4>(k * 2, k * 4) = H;  // Place H in diagonal blocks
+            }
+            
+            // Construct full measurement noise covariance R_full (N*2 x N*2, block diagonal)
+            Eigen::MatrixXd R_full = Eigen::MatrixXd::Zero(N * 2, N * 2);
+            for (int k = 0; k < N; ++k) {
+                R_full.block<2,2>(k * 2, k * 2) = R;  // Place R in diagonal blocks
+            }
+            
+            // Full innovation covariance: S_full = H_full * P_full * H_full^T + R_full
+            Eigen::MatrixXd S_full = H_full * full_cov * H_full.transpose() + R_full;
+            
+            // Check if S_full is invertible
+            Eigen::LLT<Eigen::MatrixXd> lltOfS(S_full);
+            if (lltOfS.info() != Eigen::Success) {
+                std::cerr << "Warning: Full innovation covariance is not positive definite for run " << run << std::endl;
+                consistency_values[run] = 0.0;
+                continue;
+            }
+            
+            // Calculate full-trajectory NIS: innovation^T * S_full^(-1) * innovation
+            consistency_value = full_innovation.transpose() * S_full.inverse() * full_innovation;
+        } else {
+            // CNEES calculation using full trajectory approach
+            
+            // Create full error vector by stacking all time step errors
+            Eigen::VectorXd full_error(N * 4);
+            for (int k = 0; k < N; ++k) {
+                Eigen::Vector4d err = all_states[run][k] - est_states[k];
+                full_error.segment<4>(k * 4) = err;
+            }
+            
+            // Check if full covariance matrix is positive definite
+            Eigen::LLT<Eigen::MatrixXd> lltOfCov(full_cov);
+            if (lltOfCov.info() != Eigen::Success) {
+                std::cerr << "Warning: Full covariance matrix is not positive definite for run " << run << std::endl;
+                consistency_values[run] = 0.0;
+                continue;
+            }
+            
+            // Calculate NEES using full system: err^T * P^(-1) * err = err^T * H * err
+            consistency_value = full_error.transpose() * Hessian * full_error;
+        }
         
-        // Debug: Track full system properties for first run
+        consistency_values[run] = consistency_value;
+        
+        // Debug: Track properties for first run
         if (run == 0) {
-            double full_error_magnitude = full_error.norm();
-            double full_cov_trace = full_cov.trace();
-            printf("Run %d: full_err_mag=%.3f, full_cov_trace=%.3f, full_NEES=%.3f\n", 
-                   run, full_error_magnitude, full_cov_trace, nees_full);
+            std::cout << "Run 0 " << consistency_method << " value: " << consistency_value << std::endl;
         }
     }
 
-    // --- PART 3: ANALYZE AND REPORT RESULTS (Following Paper's Approach) ---
+    // --- PART 3: ANALYZE AND REPORT RESULTS ---
     
     std::cout << "\nValidation complete. Analyzing results..." << std::endl;
 
-    // Step 1: Calculate statistics for full system NEES across runs
-    // We now have one NEES value per run (stored in position [run][0])
-    std::vector<double> full_system_nees_values;
-    for (int run = 0; run < num_graphs; ++run) {
-        full_system_nees_values.push_back(nees_per_run_per_time[run][0]);
-    }
-    
-    // Calculate mean of full system NEES values
+    // Calculate mean and variance of consistency values across runs
     double sample_mean = 0.0;
-    for (const auto& nees_val : full_system_nees_values) {
-        sample_mean += nees_val;
+    for (int run = 0; run < num_graphs; ++run) {
+        sample_mean += consistency_values[run];
     }
     sample_mean /= num_graphs;  // Average across runs
     
-    // Calculate variance of full system NEES values
     double sample_variance = 0.0;
-    for (const auto& nees_val : full_system_nees_values) {
-        sample_variance += (nees_val - sample_mean) * (nees_val - sample_mean);
+    for (int run = 0; run < num_graphs; ++run) {
+        sample_variance += (consistency_values[run] - sample_mean) * (consistency_values[run] - sample_mean);
     }
     if (num_graphs > 1) {
         sample_variance /= (num_graphs - 1);
@@ -337,41 +372,47 @@ int main(int argc, char* argv[]) {
         sample_variance = 0.0;
     }
 
-    // DOF calculation for NEES (not NIS)
-    // Khosoussi et al. propositions are for NIS (measurement space), not NEES (state space)
-    // For full-trajectory NEES, DOF should be related to state parameters being estimated
+    // DOF calculation based on consistency method
     int nz = 2; // measurement dimension for 2D position measurements
-    
-    int total_dof_nees = N * nx;               // Correct for NEES: total state parameters
-    int total_dof_khosoussi_prop3 = N * nz + (N - 1) * nx;  // Khosoussi Prop 3 (for NIS)
-    int total_dof_khosoussi_prop4 = (N * nz + (N - 1) * nx) - (N * nx);  // Khosoussi Prop 4 (for NIS)
-    
-    // Choose DOF calculation method based on YAML configuration
     int total_dof;
-    if (dof_method == "proposition_3") {
-        total_dof = total_dof_khosoussi_prop3;
-        std::cout << "Using Khosoussi Proposition 3 (for NIS): DOF = " << total_dof << std::endl;
-    } else if (dof_method == "proposition_4") {
-        total_dof = total_dof_khosoussi_prop4;
-        std::cout << "Using Khosoussi Proposition 4 (for NIS): DOF = " << total_dof << std::endl;
+    
+    if (consistency_method == "nis3") {
+        // Proposition 3: DOF = Nz (total residuals)
+        int Nz = N * nz + (N - 1) * nx;
+        total_dof = Nz;
+        std::cout << "Using Khosoussi Proposition 3: DOF = Nz = " << total_dof << std::endl;
+    } else if (consistency_method == "nis4") {
+        // Proposition 4: DOF = Nz - Nx (total residuals - total state parameters)
+        int Nx = N * nx;
+        int Nz = N * nz + (N - 1) * nx;
+        total_dof = Nz - Nx;
+        std::cout << "Using Khosoussi Proposition 4: DOF = Nz - Nx = " << Nz << " - " << Nx << " = " << total_dof << std::endl;
     } else {
-        total_dof = total_dof_nees;  // Default to correct NEES formulation
+        // NEES: DOF = total state parameters
+        total_dof = N * nx;
         std::cout << "Using NEES formulation: DOF = T × nx = " << total_dof << std::endl;
     }
     double theoretical_mean = total_dof;
     double theoretical_variance = 2 * total_dof;
 
-    std::cout << "\n--- NEES Validation Results (Full System Method) ---" << std::endl;
+    std::cout << "\n--- " << consistency_method << " Validation Results (Full System Method) ---" << std::endl;
     if (use_existing_data) {
         std::cout << "Data: Same as BO_Tracking_CNEES (consistency check)" << std::endl;
     } else {
         std::cout << "Data: New validation data (generalization test)" << std::endl;
     }
-    std::cout << "Total NEES samples calculated: " << num_graphs << " (one per run)" << std::endl;
+    std::cout << "Total " << consistency_method << " samples calculated: " << num_graphs << " (one per run)" << std::endl;
     std::cout << "Method: Full system covariance matrix (includes off-diagonal correlations)" << std::endl;
-    std::cout << "DOF Values - NEES: " << total_dof_nees 
-              << ", Khosoussi Prop 3: " << total_dof_khosoussi_prop3 
-              << ", Khosoussi Prop 4: " << total_dof_khosoussi_prop4 
+    
+    // Show DOF comparison for different methods
+    int dof_nees = N * nx;
+    int Nz = N * nz + (N - 1) * nx;
+    int Nx = N * nx;
+    int dof_nis3 = Nz;
+    int dof_nis4 = Nz - Nx;
+    std::cout << "DOF Values - NEES: " << dof_nees 
+              << ", NIS3: " << dof_nis3 
+              << ", NIS4: " << dof_nis4 
               << ", Using: " << total_dof << std::endl;
     std::cout << "---------------------------------" << std::endl;
     std::cout << "              |  Full System    |  Theoretical (χ², k=" << total_dof << ")" << std::endl;
@@ -380,32 +421,25 @@ int main(int argc, char* argv[]) {
     printf("Variance      | %12.4f    | %12.4f\n", sample_variance, theoretical_variance);
     std::cout << "---------------------------------" << std::endl;
     
-    // Calculate CNEES exactly as in the provided formula:
-    // C_NEES = |log(ε̃_x / n_x)| + |log(S̃_x / (2*n_x))|
+    // Calculate consistency metric using the formula:
+    // C = |log(ε̃ / n)| + |log(S̃ / (2*n))|
     double log_mean = std::log(sample_mean / total_dof);
     double log_variance = (sample_variance > 0) ? 
                          std::log(sample_variance / (2.0 * total_dof)) : 
                          0.0; // Avoid log(0)
-    double CNEES = std::abs(log_mean) + std::abs(log_variance);
+    double consistency_metric = std::abs(log_mean) + std::abs(log_variance);
     
-    double normalized_mean_nees = sample_mean / total_dof;
-    std::cout << "Normalized mean NEES: " << normalized_mean_nees << " (should be ~1.0 for consistency)" << std::endl;
-    std::cout << "Full System CNEES: " << CNEES << std::endl;
+    double normalized_mean = sample_mean / total_dof;
+    std::cout << "Normalized mean " << consistency_method << ": " << normalized_mean << " (should be ~1.0 for consistency)" << std::endl;
+    std::cout << "Full System " << consistency_method << " metric: " << consistency_metric << std::endl;
     
-    // For full system NEES: each run has one NEES value, so "variance" per run is not applicable
-    // Instead, save the full system NEES values directly
-    std::vector<double> nees_values_per_run(num_graphs);
-    for (int run = 0; run < num_graphs; ++run) {
-        nees_values_per_run[run] = nees_per_run_per_time[run][0];  // Full system NEES value
-    }
-    
-    // Save NEES statistics to HDF5 file
+    // Save consistency statistics to HDF5 file
     try {
         std::string h5_filename;
         if (use_existing_data) {
-            h5_filename = "../2D-Tracking/Saved_Data/2D_nees_validation_same_data.h5";
+            h5_filename = "../2D-Tracking/Saved_Data/2D_" + consistency_method + "_validation_same_data.h5";
         } else {
-            h5_filename = "../2D-Tracking/Saved_Data/2D_nees_validation_new_data.h5";
+            h5_filename = "../2D-Tracking/Saved_Data/2D_" + consistency_method + "_validation_new_data.h5";
         }
         
         H5::H5File file(h5_filename, H5F_ACC_TRUNC);
@@ -420,9 +454,10 @@ int main(int argc, char* argv[]) {
         }
         run_dataset.write(run_numbers.data(), H5::PredType::NATIVE_DOUBLE);
         
-        // Save full system NEES values per Monte Carlo run
-        H5::DataSet nees_dataset = file.createDataSet("nees_full_system_values", H5::PredType::NATIVE_DOUBLE, run_dataspace);
-        nees_dataset.write(nees_values_per_run.data(), H5::PredType::NATIVE_DOUBLE);
+        // Save full system consistency values per Monte Carlo run
+        std::string dataset_name = consistency_method + "_full_system_values";
+        H5::DataSet consistency_dataset = file.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, run_dataspace);
+        consistency_dataset.write(consistency_values.data(), H5::PredType::NATIVE_DOUBLE);
         
         // Save overall statistics as attributes
         H5::DataSpace attr_dataspace(H5S_SCALAR);
@@ -449,7 +484,7 @@ int main(int argc, char* argv[]) {
         method_attr.write(H5::PredType::C_S1, method_str.c_str());
         
         file.close();
-        std::cout << "NEES validation results saved to " << h5_filename << std::endl;
+        std::cout << consistency_method << " validation results saved to " << h5_filename << std::endl;
         
     } catch (H5::Exception& e) {
         std::cerr << "Error saving to HDF5: " << e.getDetailMsg() << std::endl;

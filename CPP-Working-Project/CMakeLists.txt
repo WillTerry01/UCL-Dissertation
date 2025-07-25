@@ -31,23 +31,6 @@ set(BAYESOPT_LIBRARIES
     "${CMAKE_SOURCE_DIR}/../bayesopt/lib/libnlopt.a"
 )
 
-# Add the executable
-add_executable(bayesopt_example bayesopt_example.cpp)
-
-# Link against required libraries
-target_link_libraries(bayesopt_example
-    PRIVATE
-    ${BAYESOPT_LIBRARIES}
-    Eigen3::Eigen
-)
-
-# Include directories
-target_include_directories(bayesopt_example
-    PRIVATE
-    ${BAYESOPT_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
-)
-
 
 # Executable for 1D single run demo
 add_executable(1D_single_run 1D/1D_single_run.cpp 1D/1D_factor_graph_trajectory.cpp)

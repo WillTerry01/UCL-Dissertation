@@ -59,7 +59,6 @@ all: CMakeFiles/BO_Tracking_CNEES.dir/all
 all: CMakeFiles/tracking_gen_data.dir/all
 all: CMakeFiles/1D_main.dir/all
 all: CMakeFiles/1D_single_run.dir/all
-all: CMakeFiles/bayesopt_example.dir/all
 all: _deps/yaml-cpp-build/all
 
 .PHONY : all
@@ -76,7 +75,6 @@ clean: CMakeFiles/BO_Tracking_CNEES.dir/clean
 clean: CMakeFiles/tracking_gen_data.dir/clean
 clean: CMakeFiles/1D_main.dir/clean
 clean: CMakeFiles/1D_single_run.dir/clean
-clean: CMakeFiles/bayesopt_example.dir/clean
 clean: _deps/yaml-cpp-build/clean
 
 .PHONY : clean
@@ -159,7 +157,7 @@ _deps/yaml-cpp-build/util/clean: _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-s
 CMakeFiles/demo_tuned_parameters.dir/all: _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/depend
 	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=15,16,17 "Built target demo_tuned_parameters"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=13,14,15 "Built target demo_tuned_parameters"
 .PHONY : CMakeFiles/demo_tuned_parameters.dir/all
 
 # Build rule for subdir invocation for target.
@@ -240,7 +238,7 @@ CMakeFiles/BO_Tracking_CNEES.dir/clean:
 CMakeFiles/tracking_gen_data.dir/all: _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/depend
 	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=18,19 "Built target tracking_gen_data"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=16,17 "Built target tracking_gen_data"
 .PHONY : CMakeFiles/tracking_gen_data.dir/all
 
 # Build rule for subdir invocation for target.
@@ -313,33 +311,6 @@ CMakeFiles/1D_single_run.dir/rule: cmake_check_build_system
 CMakeFiles/1D_single_run.dir/clean:
 	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/clean
 .PHONY : CMakeFiles/1D_single_run.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/bayesopt_example.dir
-
-# All Build rule for target.
-CMakeFiles/bayesopt_example.dir/all:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/depend
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=13,14 "Built target bayesopt_example"
-.PHONY : CMakeFiles/bayesopt_example.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/bayesopt_example.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/bayesopt_example.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles 0
-.PHONY : CMakeFiles/bayesopt_example.dir/rule
-
-# Convenience name for target.
-bayesopt_example: CMakeFiles/bayesopt_example.dir/rule
-
-.PHONY : bayesopt_example
-
-# clean rule for target.
-CMakeFiles/bayesopt_example.dir/clean:
-	$(MAKE) -f CMakeFiles/bayesopt_example.dir/build.make CMakeFiles/bayesopt_example.dir/clean
-.PHONY : CMakeFiles/bayesopt_example.dir/clean
 
 #=============================================================================
 # Target rules for target _deps/yaml-cpp-build/CMakeFiles/uninstall.dir
@@ -1131,7 +1102,7 @@ _deps/yaml-cpp-build/CMakeFiles/ContinuousSubmit.dir/clean:
 _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all:
 	$(MAKE) -f _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/build.make _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/depend
 	$(MAKE) -f _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/build.make _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51 "Built target yaml-cpp"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49 "Built target yaml-cpp"
 .PHONY : _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 
 # Build rule for subdir invocation for target.
@@ -1158,7 +1129,7 @@ _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/clean:
 _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/all: _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/depend
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=54,55 "Built target yaml-cpp-read"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=52,53 "Built target yaml-cpp-read"
 .PHONY : _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/all
 
 # Build rule for subdir invocation for target.
@@ -1185,7 +1156,7 @@ _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-read.dir/clean:
 _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/all: _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/depend
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=52,53 "Built target yaml-cpp-parse"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=50,51 "Built target yaml-cpp-parse"
 .PHONY : _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/all
 
 # Build rule for subdir invocation for target.
@@ -1212,7 +1183,7 @@ _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-parse.dir/clean:
 _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/all: _deps/yaml-cpp-build/CMakeFiles/yaml-cpp.dir/all
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/depend
 	$(MAKE) -f _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/build.make _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=56,57 "Built target yaml-cpp-sandbox"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/build/CMakeFiles --progress-num=54,55 "Built target yaml-cpp-sandbox"
 .PHONY : _deps/yaml-cpp-build/util/CMakeFiles/yaml-cpp-sandbox.dir/all
 
 # Build rule for subdir invocation for target.
