@@ -61,7 +61,7 @@ int main() {
         fg.setOutputOptions(opts);
         
         // Run optimization
-        fg.run(all_states[run], &all_measurements[run], false, dt);
+        fg.run(all_states[run], &all_measurements[run], dt);
         
         // Get results
         auto est_states = fg.getAllEstimates();

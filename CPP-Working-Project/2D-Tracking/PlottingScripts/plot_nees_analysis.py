@@ -10,6 +10,29 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
 import os
+import yaml
+
+def calculate_correct_dof(method, trajectory_length=50):
+    """Calculate correct degrees of freedom based on consistency method."""
+    nx = 4  # state dimension (x, y, vx, vy)
+    nz = 2  # measurement dimension (x, y positions)
+    T = trajectory_length
+    
+    if method in ['cnees', 'nees']:
+        # NEES: DOF = total state parameters
+        return T * nx
+    elif method == 'nis3':
+        # Proposition 3: DOF = Nz (total residuals)
+        Nz = T * nz + (T - 1) * nx
+        return Nz
+    elif method == 'nis4':
+        # Proposition 4: DOF = Nz - Nx (total residuals - total state parameters)  
+        Nx = T * nx
+        Nz = T * nz + (T - 1) * nx
+        return Nz - Nx
+    else:
+        print(f"Warning: Unknown method '{method}', using NEES default")
+        return T * nx
 
 def load_nees_results(filename):
     """Load NEES validation results from HDF5 file."""
@@ -29,17 +52,38 @@ def load_nees_results(filename):
             # Load metadata
             overall_mean = f.attrs['overall_mean']
             overall_variance = f.attrs['overall_variance']
-            theoretical_mean = f.attrs['theoretical_mean']
-            theoretical_variance = f.attrs['theoretical_variance']
             V0 = f.attrs['V0']
             meas_noise_std = f.attrs['meas_noise_std']
-            total_dof = f.attrs['total_degrees_of_freedom']
+            stored_dof = f.attrs['total_degrees_of_freedom']
             use_existing_data = bool(f.attrs['use_existing_data'])
             method = f.attrs['method'].decode('utf-8') if 'method' in f.attrs else 'unknown'
             
+            # Calculate correct DoF based on method
+            # Try to get trajectory length from YAML config first, then fall back to heuristics
+            trajectory_length = 50  # Default
+            try:
+                with open('../BO_Parameters.yaml', 'r') as yaml_file:
+                    config = yaml.safe_load(yaml_file)
+                    trajectory_length = config['Data_Generation']['trajectory_length']
+                    print(f"Trajectory length from config: {trajectory_length}")
+            except:
+                # Fallback heuristics based on typical run counts
+                if len(nees_values) >= 500:
+                    trajectory_length = 50  # Typical for 500+ runs
+                elif len(nees_values) >= 100:
+                    trajectory_length = 25  # Shorter trajectories
+                print(f"Using heuristic trajectory length: {trajectory_length}")
+            
+            correct_dof = calculate_correct_dof(method, trajectory_length)
+            
+            # Recalculate theoretical values with correct DoF
+            theoretical_mean = correct_dof
+            theoretical_variance = 2 * correct_dof
+            
             print(f"Loaded {len(nees_values)} NEES values")
             print(f"Parameters: V0={V0:.4f}, meas_noise_std={meas_noise_std:.4f}")
-            print(f"Method: {method}, Total DOF: {total_dof}")
+            print(f"Method: {method}")
+            print(f"Stored DOF: {stored_dof} -> Corrected DOF: {correct_dof}")
             print(f"Data source: {'Existing data' if use_existing_data else 'New data'}")
             
             return {
@@ -51,9 +95,11 @@ def load_nees_results(filename):
                 'theoretical_variance': theoretical_variance,
                 'V0': V0,
                 'meas_noise_std': meas_noise_std,
-                'total_dof': total_dof,
+                'total_dof': correct_dof,
+                'stored_dof': stored_dof,
                 'use_existing_data': use_existing_data,
-                'method': method
+                'method': method,
+                'trajectory_length': trajectory_length
             }
     except Exception as e:
         print(f"Error loading file: {e}")
@@ -285,15 +331,34 @@ def plot_parameter_summary(data):
     """Create a summary plot with key statistics."""
     fig, ax = plt.subplots(1, 1, figsize=(12, 8))
     
+    # Calculate DoF-related details for different methods
+    nx, nz, T = 4, 2, data.get('trajectory_length', 50)
+    dof_explanation = ""
+    if data['method'] in ['cnees', 'nees']:
+        dof_explanation = f"NEES: T × nx = {T} × {nx} = {data['total_dof']}"
+    elif data['method'] == 'nis3':
+        Nz = T * nz + (T - 1) * nx
+        dof_explanation = f"NIS3: Nz = T×nz + (T-1)×nx = {T}×{nz} + {T-1}×{nx} = {data['total_dof']}"
+    elif data['method'] == 'nis4':
+        Nx = T * nx
+        Nz = T * nz + (T - 1) * nx
+        dof_explanation = f"NIS4: Nz-Nx = {Nz} - {Nx} = {data['total_dof']}"
+    
     # Create a text summary
     summary_text = f"""NEES Validation Summary
     
 Parameters:
 • Process noise intensity (V0): {data['V0']:.4f}
 • Measurement noise std (σ): {data['meas_noise_std']:.4f}
-• Total degrees of freedom: {data['total_dof']}
+• Trajectory length (T): {T}
+• State dimension (nx): {nx}, Measurement dimension (nz): {nz}
 • Method: {data['method']}
 • Data source: {'Existing data' if data['use_existing_data'] else 'New data'}
+
+Degrees of Freedom:
+• Stored DoF: {data.get('stored_dof', 'N/A')}
+• Corrected DoF: {data['total_dof']}
+• Calculation: {dof_explanation}
 
 Results:
 • Number of Monte Carlo runs: {len(data['nees_values'])}

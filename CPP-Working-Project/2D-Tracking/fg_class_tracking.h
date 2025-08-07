@@ -118,8 +118,8 @@ public:
     // Get the full information matrix (Hessian)
     Eigen::MatrixXd getFullHessianMatrix() const;
     // Run the factor graph optimization with user-provided true states and optional measurements.
-    // If add_process_noise is true, process noise will be added to the true states inside the function.
-    void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, bool add_process_noise = false, double dt = 1.0);
+    // If do_optimization is false, graph is built but not optimized (for Proposition 3)
+    void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, double dt = 1.0, bool do_optimization = true);
     void writeCSV(const std::string& filename = "../H5_Files/2d_trajectory_estimate.csv") const;
     void writeHDF5(const std::string& filename = "../H5_Files/2d_trajectory_estimate.h5") const;
     double getChi2() const;
@@ -130,6 +130,11 @@ public:
     // Add these new methods
     void setQFromProcessNoiseIntensity(double q_intensity, double dt = 1.0);
     void setRFromMeasurementNoise(double sigma_x, double sigma_y);
+    
+    // New methods to calculate actual graph dimensions (like MATLAB student implementation)
+    int getActualGraphDimZ() const;  // Sum of all edge dimensions
+    int getActualGraphDimX() const;  // Sum of all vertex dimensions
+    std::pair<int, int> getActualGraphDimensions() const;  // Returns {dimZ, dimX}
 
 private:
     std::vector<Vertex4D*> vertices_;

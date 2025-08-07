@@ -93,8 +93,8 @@ target_include_directories(tracking_gen_data
 )
 
 # Executable for BayesOpt tracking with CNEES
-add_executable(BO_Tracking_CNEES 2D-Tracking/BO_Tracking_CNEES.cpp 2D-Tracking/fg_class_tracking.cpp)
-target_link_libraries(BO_Tracking_CNEES
+add_executable(BO_Tracking_Test 2D-Tracking/BO_Tracking_Test.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(BO_Tracking_Test
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
@@ -107,7 +107,7 @@ target_link_libraries(BO_Tracking_CNEES
     ${HDF5_LIBRARIES}
     yaml-cpp
 )
-target_include_directories(BO_Tracking_CNEES
+target_include_directories(BO_Tracking_Test
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -162,3 +162,113 @@ target_include_directories(demo_tuned_parameters
     /usr/local/include
     ${HDF5_INCLUDE_DIRS}
 )
+
+# Executable for testing system matrices and Proposition 3
+add_executable(test_system_matrices 2D-Tracking/Testing/test_system_matrices.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(test_system_matrices
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+)
+
+target_include_directories(test_system_matrices
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for zero noise validation using existing pipeline (Option B)
+add_executable(test_zero_noise_validation_v2 2D-Tracking/Testing/test_zero_noise_validation_v2.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(test_zero_noise_validation_v2
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+)
+
+target_include_directories(test_zero_noise_validation_v2
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+
+# Executable for testing tuned parameters performance
+add_executable(test_tuned_parameters_performance 2D-Tracking/Testing/test_tuned_parameters_performance.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(test_tuned_parameters_performance
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(test_tuned_parameters_performance
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for extreme parameter validation test
+add_executable(test_extreme_parameter_validation 2D-Tracking/Testing/test_extreme_parameter_validation.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(test_extreme_parameter_validation
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(test_extreme_parameter_validation
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for generating trajectory comparison data for visualization
+add_executable(generate_trajectory_comparison_data 2D-Tracking/Testing/generate_trajectory_comparison_data.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(generate_trajectory_comparison_data
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(generate_trajectory_comparison_data
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+

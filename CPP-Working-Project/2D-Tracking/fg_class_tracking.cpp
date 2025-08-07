@@ -1,3 +1,54 @@
+/*
+ * 2D Factor Graph Trajectory Estimation
+ * =====================================
+ * 
+ * PURPOSE:
+ * This class implements a factor graph-based estimator for 2D tracking problems.
+ * It tests propositions 3 and 4 from factor graph theory using g2o optimization
+ * framework to validate normalized innovation squared (NIS) distributions.
+ * 
+ * INPUT DATA:
+ * - true_states: Noisy trajectory data from tracking_gen_data.cpp [x, y, vx, vy]
+ * - measurements: Noisy position observations [x_obs, y_obs] 
+ * - Q matrix: Process noise covariance (set via setQFromProcessNoiseIntensity())
+ * - R matrix: Measurement noise covariance (set via setRFromMeasurementNoise())
+ * 
+ * FACTOR GRAPH STRUCTURE:
+ * - Vertices: State estimates at each timestep [x, y, vx, vy]
+ * - Process Edges: Connect consecutive states using constant velocity model
+ * - Measurement Edges: Connect states to position observations
+ * - Information matrices: Q^{-1} for process edges, R^{-1} for measurement edges
+ * 
+ * TESTING MODES (following MATLAB research implementation):
+ * 
+ * NIS3 (Proposition 3): do_optimization = false
+ * - Initialize: Exactly at noisy ground truth from data generation
+ * - Optimization: DISABLED - no optimization performed
+ * - Purpose: Test graph structure validity with perfect initialization
+ * - Chi-squared: Measures residual errors with ideal state estimates
+ * 
+ * NIS4 (Proposition 4): do_optimization = true  
+ * - Initialize: At ZERO (challenging starting point, matches MATLAB approach)
+ * - Optimization: ENABLED - Levenberg-Marquardt optimization
+ * - Purpose: Test optimization robustness and convergence from poor initialization
+ * - Chi-squared: Measures final estimation errors after optimization
+ * 
+ * OUTPUTS:
+ * - Chi-squared values for statistical analysis
+ * - Final state estimates after optimization (if enabled)
+ * - CSV/HDF5 files with trajectory comparison data
+ * - Full Hessian matrix for uncertainty analysis
+ * 
+ * KEY DESIGN DECISIONS:
+ * - NO process noise addition: Input states already contain realistic noise
+ * - Zero initialization for NIS4: Matches validated MATLAB implementation  
+ * - Positive definite enforcement: Throws errors for invalid Q/R matrices
+ * - Mandatory measurements: No synthetic measurement generation
+ * 
+ * This implementation eliminates double noise application and follows the exact
+ * approach from published factor graph research for robust statistical validation.
+ */
+
 #include "fg_class_tracking.h"
 #include <iostream>
 #include <fstream>
@@ -14,7 +65,7 @@ FactorGraph2DTrajectory::FactorGraph2DTrajectory() : N_(0), chi2_(0.0) {
     // No need to initialize with legacy values
 }
 
-void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, bool add_process_noise, double dt) {
+void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, double dt, bool do_optimization) {
     // Check if Q and R matrices are properly initialized
     if (Q_.isZero()) {
         throw std::runtime_error("Q matrix is not initialized. Please call setQFromProcessNoiseIntensity() or set Q_ directly before calling run().");
@@ -38,65 +89,29 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
     true_states_ = true_states;
     dt_ = dt;  // Store the dt parameter
     
+    // Check if measurements are provided
     if (measurements) {
         measurements_ = *measurements;
     } else {
-        // Generate measurements from true states if not provided
-        measurements_.resize(N_);
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::normal_distribution<> noise_r(0.0, 0.1);
-        for (int k = 0; k < N_; ++k) {
-            measurements_[k][0] = true_states_[k][0] + noise_r(gen);
-            measurements_[k][1] = true_states_[k][1] + noise_r(gen);
-        }
-    }
-    
-    if (add_process_noise) {
-        // Add process noise to true states
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::normal_distribution<> noise_q(0.0, 0.1);
-        for (int k = 1; k < N_; ++k) {
-            true_states_[k] += Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen));
-        }
+        throw std::runtime_error("Measurements are required. Please provide a valid measurements vector.");
     }
     
     setupOptimizer();
     
-    // Initialize vertices with noisy true states
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    
-    // Use proper multivariate initialization noise based on full Q matrix
-    // Check if Q matrix is positive definite for Cholesky decomposition
-    if (lltOfQ.info() == Eigen::Success) {
-        // Use Cholesky decomposition to sample from full Q covariance structure
-        Eigen::Matrix4d L = lltOfQ.matrixL();
-        std::normal_distribution<> standard_normal(0.0, 1.0);
-        
+    // Initialization strategy based on MATLAB student approach
+    if (!do_optimization) {
+        // Proposition 3 (NIS3): Initialize exactly at ground truth (no noise)
         for (int k = 0; k < N_; ++k) {
-            // Generate uncorrelated standard normal noise
-            Eigen::Vector4d uncorrelated_noise;
-            for (int i = 0; i < 4; ++i) {
-                uncorrelated_noise[i] = standard_normal(gen);
-            }
-            
-            // Transform to correlated noise using Q = L*L^T
-            Eigen::Vector4d correlated_noise = L * uncorrelated_noise;
-            
             vertices_[k]->setId(k);
-            vertices_[k]->setEstimate(true_states_[k] + correlated_noise);
+            vertices_[k]->setEstimate(true_states_[k]);  // Exact ground truth
             optimizer_->addVertex(vertices_[k]);
         }
     } else {
-        std::cout << "Q matrix is not positive definite. Using fallback initialization." << std::endl;
-        // Fallback to diagonal initialization if Q is not positive definite
-        double init_noise_std = std::max(0.01, std::sqrt(std::max(Q_(0,0), Q_(1,1)) + std::max(Q_(2,2), Q_(3,3))));
-        std::normal_distribution<> noise_q(0.0, init_noise_std);
+        // Proposition 4 (NIS4): Initialize at zero (matching MATLAB approach)
+        // MATLAB uses: v{n}.setEstimate(0*trueX(:, n))
         for (int k = 0; k < N_; ++k) {
             vertices_[k]->setId(k);
-            vertices_[k]->setEstimate(true_states_[k] + Eigen::Vector4d(noise_q(gen), noise_q(gen), noise_q(gen), noise_q(gen)));
+            vertices_[k]->setEstimate(Eigen::Vector4d::Zero());  // Initialize at zero
             optimizer_->addVertex(vertices_[k]);
         }
     }
@@ -118,7 +133,26 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
         optimizer_->addEdge(e);
     }
     
-    optimize();
+        // Only optimize if requested (Proposition 4), skip for Proposition 3
+    if (do_optimization) {
+        optimize();
+    } else {
+        // For Proposition 3, calculate chi2 WITHOUT optimization (per MATLAB reference)
+        // Since g2o's chi2() requires optimization, we manually calculate chi2 from residuals
+        optimizer_->initializeOptimization();
+        
+        // Manually compute chi2 by iterating through all edges and summing their contributions
+        chi2_ = 0.0;
+        for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) {
+            g2o::OptimizableGraph::Edge* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it);
+            edge->computeError();  // Compute error vector for this edge
+            
+            // Use g2o's built-in chi2() method for individual edges
+            // This avoids direct access to error vectors and information matrices
+            double edge_chi2 = edge->chi2();
+            chi2_ += edge_chi2;
+        }
+    }
 }
 
 void FactorGraph2DTrajectory::setupOptimizer() {
@@ -300,6 +334,41 @@ void FactorGraph2DTrajectory::setRFromMeasurementNoise(double sigma_x, double si
     R_ = Eigen::Matrix2d::Zero();
     R_(0, 0) = sigma_x * sigma_x;  // x measurement variance
     R_(1, 1) = sigma_y * sigma_y;  // y measurement variance
+}
+
+// New methods to calculate actual graph dimensions (like MATLAB student implementation)
+int FactorGraph2DTrajectory::getActualGraphDimZ() const {
+    if (!optimizer_) {
+        std::cerr << "Error: Optimizer not initialized" << std::endl;
+        return 0;
+    }
+    
+    int dimZ = 0;
+    // Sum dimensions of all edges (both process and measurement edges)
+    for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) {
+        g2o::OptimizableGraph::Edge* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it);
+        dimZ += edge->dimension();
+    }
+    return dimZ;
+}
+
+int FactorGraph2DTrajectory::getActualGraphDimX() const {
+    if (!optimizer_) {
+        std::cerr << "Error: Optimizer not initialized" << std::endl;
+        return 0;
+    }
+    
+    int dimX = 0;
+    // Sum dimensions of all vertices
+    for (auto it = optimizer_->vertices().begin(); it != optimizer_->vertices().end(); ++it) {
+        g2o::OptimizableGraph::Vertex* vertex = static_cast<g2o::OptimizableGraph::Vertex*>(it->second);
+        dimX += vertex->dimension();
+    }
+    return dimX;
+}
+
+std::pair<int, int> FactorGraph2DTrajectory::getActualGraphDimensions() const {
+    return std::make_pair(getActualGraphDimZ(), getActualGraphDimX());
 }
 
  

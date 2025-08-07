@@ -449,6 +449,12 @@ OpenMP_pthread_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libpthread.so
 //Path to a program.
 P4COMMAND:FILEPATH=P4COMMAND-NOTFOUND
 
+//Value Computed by CMake
+Project_BINARY_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/build
+
+//Value Computed by CMake
+Project_SOURCE_DIR:STATIC=/home/will/Dissertation/UCL-Dissertation/CPP-Working-Project
+
 //Name of the computer/site where compile is being run
 SITE:STRING=willsLinux
 

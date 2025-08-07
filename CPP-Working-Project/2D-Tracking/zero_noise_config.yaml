@@ -1,0 +1,14 @@
+Data_Generation:
+  dt: 1.0
+  meas_noise_var: 1e-8            # Near-zero measurement noise variance
+  num_graphs: 20                   # Small number for testing
+  pos:
+    x: 0.0
+    y: 0.0
+  q: 1e-8                         # Near-zero process noise intensity
+  seed: 42
+  trajectory_length: 20
+  use_process_noise: true         # Enable with minimal noise for numerical stability
+  vel:
+    x: 1.0
+    y: 1.0 

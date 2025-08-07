@@ -1,3 +1,44 @@
+/*
+ * 2D Tracking Data Generation
+ * ===========================
+ * 
+ * PURPOSE:
+ * This script generates synthetic 2D tracking data for testing factor graph
+ * optimization algorithms. It creates realistic trajectories with process noise
+ * and corresponding noisy measurements for Monte Carlo analysis.
+ * 
+ * WORKFLOW:
+ * 1. Load parameters from YAML config file (initial conditions, noise levels, etc.)
+ * 2. Generate clean initial state from YAML parameters [x, y, vx, vy]
+ * 3. For each Monte Carlo run:
+ *    - Create trajectory using constant velocity model: x_{k+1} = F*x_k + process_noise
+ *    - Apply process noise (if enabled) using proper multivariate sampling from Q matrix
+ *    - Generate noisy position measurements: z_k = H*x_k + measurement_noise
+ * 
+ * OUTPUTS (HDF5 format):
+ * 
+ * File: "2D_noisy_states.h5"
+ * - Dataset: "states" 
+ * - Dimensions: [num_graphs, trajectory_length, 4]
+ * - Content: Full state trajectories [x, y, vx, vy] WITH process noise applied
+ * - Purpose: Represents the "ground truth reality" that the factor graph tries to estimate
+ * 
+ * File: "2D_noisy_measurements.h5"
+ * - Dataset: "measurements"
+ * - Dimensions: [num_graphs, trajectory_length, 2] 
+ * - Content: Position observations [x_obs, y_obs] WITH measurement noise applied
+ * - Purpose: The noisy observations that the factor graph uses for estimation
+ * 
+ * FACTOR GRAPH USAGE:
+ * - The states file provides the "true_states" parameter (noisy reality to compare against)
+ * - The measurements file provides the "measurements" parameter (observations for optimization)
+ * - NIS3: Initialize exactly at noisy states, no optimization (tests graph structure)
+ * - NIS4: Initialize at zero, optimize using measurements (tests convergence robustness)
+ * 
+ * This approach follows the validated MATLAB research implementation and avoids 
+ * double application of process noise.
+ */
+
 #include <Eigen/Dense>
 #include <vector>
 #include <random>

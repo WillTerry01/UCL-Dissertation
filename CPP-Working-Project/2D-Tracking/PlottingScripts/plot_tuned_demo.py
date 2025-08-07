@@ -257,7 +257,7 @@ def main():
     print(f"\nGenerating plots for {data['true_states'].shape[0]} trajectories...")
     
     # Create output directory for plots
-    os.makedirs("plots", exist_ok=True)
+    os.makedirs("../2D-Tracking/plots", exist_ok=True)
     
     # Plot 1: Trajectory comparison for first run
     print("Creating trajectory comparison plot...")
