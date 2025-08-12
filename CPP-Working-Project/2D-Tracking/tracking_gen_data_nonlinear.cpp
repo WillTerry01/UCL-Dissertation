@@ -1,0 +1,243 @@
+/*
+ * 2D Nonlinear Tracking Data Generation
+ * =====================================
+ * 
+ * PURPOSE:
+ * This script generates synthetic 2D nonlinear tracking data for testing factor graph
+ * optimization algorithms with nonlinear motion and measurement models.
+ * 
+ * NONLINEAR MODELS:
+ * 1. Motion Model: Constant Turn Rate (CT) model
+ *    - x_{k+1} = f(x_k, u_k) where f is nonlinear
+ *    - Handles curved trajectories with constant angular velocity
+ * 
+ * 2. Measurement Model: Range and Bearing (RB) measurements
+ *    - z_k = h(x_k) where h is nonlinear
+ *    - Range: distance from sensor to target
+ *    - Bearing: angle from sensor to target
+ * 
+ * WORKFLOW:
+ * 1. Load parameters from YAML config file
+ * 2. Generate clean initial state [x, y, vx, vy]
+ * 3. For each Monte Carlo run:
+ *    - Create trajectory using constant turn rate model
+ *    - Apply process noise using proper multivariate sampling
+ *    - Generate range-bearing measurements from sensor position
+ * 
+ * OUTPUTS (HDF5 format):
+ * - Nonlinear states and measurements for testing nonlinear factor graphs
+ */
+
+#include <Eigen/Dense>
+#include <vector>
+#include <random>
+#include <iostream>
+#include <string>
+#include "H5Cpp.h"
+#include <yaml-cpp/yaml.h>
+#include <cmath>
+
+// Function declarations
+Eigen::Vector4d predictStateCT(const Eigen::Vector4d& x, double dt, double turn_rate);
+
+int main() {
+    // Load configuration from YAML file
+    YAML::Node config = YAML::LoadFile("../scenario_nonlinear.yaml");
+
+    // Parameters
+    int N = config["Data_Generation"]["trajectory_length"].as<int>();
+    int num_graphs = config["Data_Generation"]["num_graphs"].as<int>();
+    double dt = config["Data_Generation"]["dt"].as<double>();
+    Eigen::Vector2d pos(config["Data_Generation"]["pos"]["x"].as<double>(), config["Data_Generation"]["pos"]["y"].as<double>());
+    Eigen::Vector2d vel(config["Data_Generation"]["vel"]["x"].as<double>(), config["Data_Generation"]["vel"]["y"].as<double>());
+    unsigned int base_seed = config["Data_Generation"]["seed"].as<unsigned int>();
+    
+    // Noise parameters
+    double V0 = config["Data_Generation"]["q"].as<double>();
+    double V1 = config["Data_Generation"]["q"].as<double>();
+    double meas_noise_var = config["Data_Generation"]["meas_noise_var"].as<double>();
+    double meas_noise_std = sqrt(meas_noise_var);
+    
+    bool use_process_noise = config["Data_Generation"]["use_process_noise"].as<bool>(true);
+    
+    // Nonlinear parameters
+    double turn_rate = config["Data_Generation"]["turn_rate"].as<double>(0.1);  // rad/s
+    // Removed sensor_pos - not needed for GPS tracking
+    
+    // Debug output to show loaded parameters
+    std::cout << "=== Nonlinear Data Generation Parameters ===" << std::endl;
+    std::cout << "Config file: scenario_nonlinear.yaml" << std::endl;
+    std::cout << "Trajectory length: " << N << std::endl;
+    std::cout << "Number of graphs: " << num_graphs << std::endl;
+    std::cout << "Time step (dt): " << dt << std::endl;
+    std::cout << "Initial position: [" << pos[0] << ", " << pos[1] << "]" << std::endl;
+    std::cout << "Initial velocity: [" << vel[0] << ", " << vel[1] << "]" << std::endl;
+    std::cout << "Turn rate: " << turn_rate << " rad/s" << std::endl;
+    std::cout << "Process noise (q): " << V0 << std::endl;
+    std::cout << "Measurement noise variance: " << meas_noise_var << std::endl;
+    std::cout << "Use process noise: " << (use_process_noise ? "true" : "false") << std::endl;
+    std::cout << "=============================================" << std::endl;
+
+    // Construct the process noise covariance matrix Q for 2D nonlinear tracking
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    
+    // Position-position covariance (diagonal)
+    Q(0, 0) = dt3 / 3.0 * V0;
+    Q(1, 1) = dt3 / 3.0 * V1;
+    
+    // Velocity-velocity covariance (diagonal)
+    Q(2, 2) = dt * V0;
+    Q(3, 3) = dt * V1;
+    
+    // Position-velocity cross covariance
+    Q(0, 2) = dt2 / 2.0 * V0;
+    Q(2, 0) = Q(0, 2);
+    Q(1, 3) = dt2 / 2.0 * V1;
+    Q(3, 1) = Q(1, 3);
+
+    // Construct the measurement noise covariance matrix R for Cartesian measurements
+    // R = [x_variance    0        ]
+    //     [0            y_variance]
+    Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
+    R(0, 0) = meas_noise_var;  // X position variance
+    R(1, 1) = meas_noise_var;  // Y position variance
+
+    // Validate that Q and R are positive semi-definite
+    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q);
+    if (lltOfQ.info() != Eigen::Success) {
+        std::cerr << "ERROR: Q matrix is not positive semi-definite!" << std::endl;
+        return -1;
+    }
+
+    Eigen::LLT<Eigen::Matrix2d> lltOfR(R);
+    if (lltOfR.info() != Eigen::Success) {
+        std::cerr << "ERROR: R matrix is not positive semi-definite!" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Nonlinear system parameters:" << std::endl;
+    std::cout << "  Turn rate: " << turn_rate << " rad/s" << std::endl;
+    std::cout << "  Q matrix:" << std::endl << Q << std::endl;
+    std::cout << "  R matrix:" << std::endl << R << std::endl;
+
+    // Prepare output arrays
+    std::vector<double> states(num_graphs * N * 4);
+    std::vector<double> measurements(num_graphs * N * 2);
+
+    for (int run = 0; run < num_graphs; ++run) {
+        // True trajectory
+        std::vector<Eigen::Vector4d> true_states(N);
+        true_states[0] << pos.x(), pos.y(), vel.x(), vel.y();
+        
+        std::mt19937 gen(base_seed + run);
+        std::vector<Eigen::Vector4d> noisy_states = true_states;
+        
+        // Generate correlated process noise using Cholesky decomposition
+        Eigen::Matrix4d L = lltOfQ.matrixL();
+        
+        for (int k = 1; k < N; ++k) {
+            // Nonlinear state prediction using constant turn rate model
+            true_states[k] = predictStateCT(true_states[k-1], dt, turn_rate);
+            
+            // Apply process noise only if enabled
+            if (use_process_noise) {
+                // Generate uncorrelated standard normal noise
+                Eigen::Vector4d uncorrelated_noise;
+                std::normal_distribution<> normal_dist(0.0, 1.0);
+                for (int i = 0; i < 4; ++i) {
+                    uncorrelated_noise[i] = normal_dist(gen);
+                }
+                
+                // Transform to correlated noise using Q = L*L^T
+                Eigen::Vector4d process_noise = L * uncorrelated_noise;
+                true_states[k] += process_noise;
+            }
+            
+            noisy_states[k] = true_states[k];
+        }
+
+        // Generate GPS measurements (Cartesian position x, y)
+        Eigen::Matrix2d L_R = lltOfR.matrixL();
+        std::vector<Eigen::Vector2d> noisy_measurements(N);
+        for (int k = 0; k < N; ++k) {
+            // Generate uncorrelated standard normal measurement noise
+            Eigen::Vector2d uncorrelated_meas_noise;
+            std::normal_distribution<> normal_dist(0.0, 1.0);
+            for (int i = 0; i < 2; ++i) {
+                uncorrelated_meas_noise[i] = normal_dist(gen);
+            }
+            
+            // Transform to correlated measurement noise
+            Eigen::Vector2d measurement_noise = L_R * uncorrelated_meas_noise;
+            
+            // Generate GPS Cartesian position measurement (x, y)
+            Eigen::Vector2d true_measurement = noisy_states[k].head<2>();  // Extract x, y position
+            noisy_measurements[k] = true_measurement + measurement_noise;
+        }
+
+        // Store in output arrays
+        for (int k = 0; k < N; ++k) {
+            int state_idx = run * N * 4 + k * 4;
+            states[state_idx + 0] = noisy_states[k][0];
+            states[state_idx + 1] = noisy_states[k][1];
+            states[state_idx + 2] = noisy_states[k][2];
+            states[state_idx + 3] = noisy_states[k][3];
+            int meas_idx = run * N * 2 + k * 2;
+            measurements[meas_idx + 0] = noisy_measurements[k][0];
+            measurements[meas_idx + 1] = noisy_measurements[k][1];
+        }
+    }
+
+    // Save to HDF5
+    const std::string states_h5 = "../2D-Tracking/Saved_Data/2D_nonlinear_states.h5";
+    const std::string meas_h5 = "../2D-Tracking/Saved_Data/2D_nonlinear_measurements.h5";
+    hsize_t states_dims[3] = {static_cast<hsize_t>(num_graphs), static_cast<hsize_t>(N), 4};
+    hsize_t meas_dims[3] = {static_cast<hsize_t>(num_graphs), static_cast<hsize_t>(N), 2};
+
+    // States
+    H5::H5File states_file(states_h5, H5F_ACC_TRUNC);
+    H5::DataSpace states_space(3, states_dims);
+    H5::DataSet states_dataset = states_file.createDataSet("states", H5::PredType::NATIVE_DOUBLE, states_space);
+    states_dataset.write(states.data(), H5::PredType::NATIVE_DOUBLE);
+
+    // Measurements
+    H5::H5File meas_file(meas_h5, H5F_ACC_TRUNC);
+    H5::DataSpace meas_space(3, meas_dims);
+    H5::DataSet meas_dataset = meas_file.createDataSet("measurements", H5::PredType::NATIVE_DOUBLE, meas_space);
+    meas_dataset.write(measurements.data(), H5::PredType::NATIVE_DOUBLE);
+
+    std::cout << "\nNonlinear data generation complete!" << std::endl;
+    std::cout << "Saved nonlinear states to " << states_h5 << std::endl;
+    std::cout << "Saved nonlinear measurements to " << meas_h5 << std::endl;
+    std::cout << "Motion model: Constant Turn Rate (ω = " << turn_rate << " rad/s)" << std::endl;
+    std::cout << "Measurement model: GPS Cartesian position (x, y)" << std::endl;
+    
+    return 0;
+}
+
+// Nonlinear state prediction for constant turn rate model
+Eigen::Vector4d predictStateCT(const Eigen::Vector4d& x, double dt, double turn_rate) {
+    double x_pos = x[0], y_pos = x[1], vx = x[2], vy = x[3];
+    double v = std::sqrt(vx*vx + vy*vy);  // Speed
+    double heading = std::atan2(vy, vx);  // Current heading
+    
+    if (std::abs(turn_rate) < 1e-6) {
+        // Straight line motion (constant velocity)
+        return Eigen::Vector4d(x_pos + vx * dt, y_pos + vy * dt, vx, vy);
+    } else {
+        // Constant turn rate motion
+        double new_heading = heading + turn_rate * dt;
+        double new_vx = v * std::cos(new_heading);
+        double new_vy = v * std::sin(new_heading);
+        
+        // Position update (integrate velocity)
+        double new_x_pos = x_pos + (v / turn_rate) * (std::sin(new_heading) - std::sin(heading));
+        double new_y_pos = y_pos - (v / turn_rate) * (std::cos(new_heading) - std::cos(heading));
+        
+        return Eigen::Vector4d(new_x_pos, new_y_pos, new_vx, new_vy);
+    }
+}
+
+ 

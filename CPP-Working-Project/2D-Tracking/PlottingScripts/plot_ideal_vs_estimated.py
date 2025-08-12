@@ -51,7 +51,7 @@ def load_demo_results(filename):
         print(f"Error loading file: {e}")
         return None
 
-def plot_ideal_vs_estimated(data, run_idx=0, save_path="../2D-Tracking/plots"):
+def plot_ideal_vs_estimated(data, run_idx=0, save_path="../plots"):
     """Create a focused plot comparing ideal vs estimated trajectory."""
     
     # Extract data for the specified run
@@ -137,7 +137,7 @@ def plot_ideal_vs_estimated(data, run_idx=0, save_path="../2D-Tracking/plots"):
     print(f"Saved plot: {filename}")
     return fig
 
-def plot_multiple_runs_comparison(data, num_runs=3, save_path="../2D-Tracking/plots"):
+def plot_multiple_runs_comparison(data, num_runs=3, save_path="../plots"):
     """Create a comparison plot showing multiple runs."""
     
     fig, axes = plt.subplots(1, num_runs, figsize=(6*num_runs, 5))
@@ -198,7 +198,7 @@ def main():
     print("=== Ideal vs Estimated Trajectory Comparison ===")
     
     # Load data
-    data_file = "../2D-Tracking/Saved_Data/2D_tuned_demo_results.h5"
+    data_file = "../Saved_Data/2D_tuned_demo_results.h5"
     data = load_demo_results(data_file)
     
     if data is None:

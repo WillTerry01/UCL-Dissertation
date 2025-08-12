@@ -56,17 +56,6 @@ CMAKE_BINARY_DIR = /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target edit_cache
-edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : edit_cache
-
-# Special rule for the target edit_cache
-edit_cache/fast: edit_cache
-
-.PHONY : edit_cache/fast
-
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -77,6 +66,17 @@ rebuild_cache:
 rebuild_cache/fast: rebuild_cache
 
 .PHONY : rebuild_cache/fast
+
+# Special rule for the target edit_cache
+edit_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : edit_cache
+
+# Special rule for the target edit_cache
+edit_cache/fast: edit_cache
+
+.PHONY : edit_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -112,6 +112,175 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named test_extreme_parameter_validation
+
+# Build rule for target.
+test_extreme_parameter_validation: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_extreme_parameter_validation
+.PHONY : test_extreme_parameter_validation
+
+# fast build rule for target.
+test_extreme_parameter_validation/fast:
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/build
+.PHONY : test_extreme_parameter_validation/fast
+
+#=============================================================================
+# Target rules for targets named 1D_main
+
+# Build rule for target.
+1D_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_main
+.PHONY : 1D_main
+
+# fast build rule for target.
+1D_main/fast:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/build
+.PHONY : 1D_main/fast
+
+#=============================================================================
+# Target rules for targets named BO_Tracking_Test_linear
+
+# Build rule for target.
+BO_Tracking_Test_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_linear
+.PHONY : BO_Tracking_Test_linear
+
+# fast build rule for target.
+BO_Tracking_Test_linear/fast:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/build
+.PHONY : BO_Tracking_Test_linear/fast
+
+#=============================================================================
+# Target rules for targets named tracking_gen_data_linear
+
+# Build rule for target.
+tracking_gen_data_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_linear
+.PHONY : tracking_gen_data_linear
+
+# fast build rule for target.
+tracking_gen_data_linear/fast:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/build
+.PHONY : tracking_gen_data_linear/fast
+
+#=============================================================================
+# Target rules for targets named Validate_QR
+
+# Build rule for target.
+Validate_QR: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Validate_QR
+.PHONY : Validate_QR
+
+# fast build rule for target.
+Validate_QR/fast:
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/build
+.PHONY : Validate_QR/fast
+
+#=============================================================================
+# Target rules for targets named tracking_gen_data_nonlinear
+
+# Build rule for target.
+tracking_gen_data_nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_nonlinear
+.PHONY : tracking_gen_data_nonlinear
+
+# fast build rule for target.
+tracking_gen_data_nonlinear/fast:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/build
+.PHONY : tracking_gen_data_nonlinear/fast
+
+#=============================================================================
+# Target rules for targets named demo_nonlinear_tracking
+
+# Build rule for target.
+demo_nonlinear_tracking: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 demo_nonlinear_tracking
+.PHONY : demo_nonlinear_tracking
+
+# fast build rule for target.
+demo_nonlinear_tracking/fast:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/build
+.PHONY : demo_nonlinear_tracking/fast
+
+#=============================================================================
+# Target rules for targets named demo_nonlinear_pure_measurement
+
+# Build rule for target.
+demo_nonlinear_pure_measurement: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 demo_nonlinear_pure_measurement
+.PHONY : demo_nonlinear_pure_measurement
+
+# fast build rule for target.
+demo_nonlinear_pure_measurement/fast:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/build
+.PHONY : demo_nonlinear_pure_measurement/fast
+
+#=============================================================================
+# Target rules for targets named test_system_matrices
+
+# Build rule for target.
+test_system_matrices: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_system_matrices
+.PHONY : test_system_matrices
+
+# fast build rule for target.
+test_system_matrices/fast:
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/build
+.PHONY : test_system_matrices/fast
+
+#=============================================================================
+# Target rules for targets named BO_Tracking_Test_Nonlinear
+
+# Build rule for target.
+BO_Tracking_Test_Nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_Nonlinear
+.PHONY : BO_Tracking_Test_Nonlinear
+
+# fast build rule for target.
+BO_Tracking_Test_Nonlinear/fast:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build
+.PHONY : BO_Tracking_Test_Nonlinear/fast
+
+#=============================================================================
+# Target rules for targets named 1D_single_run
+
+# Build rule for target.
+1D_single_run: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_single_run
+.PHONY : 1D_single_run
+
+# fast build rule for target.
+1D_single_run/fast:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/build
+.PHONY : 1D_single_run/fast
+
+#=============================================================================
+# Target rules for targets named demo_linear_tracking
+
+# Build rule for target.
+demo_linear_tracking: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 demo_linear_tracking
+.PHONY : demo_linear_tracking
+
+# fast build rule for target.
+demo_linear_tracking/fast:
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/build
+.PHONY : demo_linear_tracking/fast
+
+#=============================================================================
+# Target rules for targets named test_zero_noise_validation_v2
+
+# Build rule for target.
+test_zero_noise_validation_v2: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_zero_noise_validation_v2
+.PHONY : test_zero_noise_validation_v2
+
+# fast build rule for target.
+test_zero_noise_validation_v2/fast:
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/build
+.PHONY : test_zero_noise_validation_v2/fast
+
+#=============================================================================
 # Target rules for targets named generate_trajectory_comparison_data
 
 # Build rule for target.
@@ -136,123 +305,6 @@ test_tuned_parameters_performance: cmake_check_build_system
 test_tuned_parameters_performance/fast:
 	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/build
 .PHONY : test_tuned_parameters_performance/fast
-
-#=============================================================================
-# Target rules for targets named test_zero_noise_validation_v2
-
-# Build rule for target.
-test_zero_noise_validation_v2: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_zero_noise_validation_v2
-.PHONY : test_zero_noise_validation_v2
-
-# fast build rule for target.
-test_zero_noise_validation_v2/fast:
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/build
-.PHONY : test_zero_noise_validation_v2/fast
-
-#=============================================================================
-# Target rules for targets named test_extreme_parameter_validation
-
-# Build rule for target.
-test_extreme_parameter_validation: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_extreme_parameter_validation
-.PHONY : test_extreme_parameter_validation
-
-# fast build rule for target.
-test_extreme_parameter_validation/fast:
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/build
-.PHONY : test_extreme_parameter_validation/fast
-
-#=============================================================================
-# Target rules for targets named test_system_matrices
-
-# Build rule for target.
-test_system_matrices: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_system_matrices
-.PHONY : test_system_matrices
-
-# fast build rule for target.
-test_system_matrices/fast:
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/build
-.PHONY : test_system_matrices/fast
-
-#=============================================================================
-# Target rules for targets named demo_tuned_parameters
-
-# Build rule for target.
-demo_tuned_parameters: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 demo_tuned_parameters
-.PHONY : demo_tuned_parameters
-
-# fast build rule for target.
-demo_tuned_parameters/fast:
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/build
-.PHONY : demo_tuned_parameters/fast
-
-#=============================================================================
-# Target rules for targets named Validate_QR
-
-# Build rule for target.
-Validate_QR: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Validate_QR
-.PHONY : Validate_QR
-
-# fast build rule for target.
-Validate_QR/fast:
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/build
-.PHONY : Validate_QR/fast
-
-#=============================================================================
-# Target rules for targets named BO_Tracking_Test
-
-# Build rule for target.
-BO_Tracking_Test: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test
-.PHONY : BO_Tracking_Test
-
-# fast build rule for target.
-BO_Tracking_Test/fast:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/build
-.PHONY : BO_Tracking_Test/fast
-
-#=============================================================================
-# Target rules for targets named tracking_gen_data
-
-# Build rule for target.
-tracking_gen_data: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data
-.PHONY : tracking_gen_data
-
-# fast build rule for target.
-tracking_gen_data/fast:
-	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/build
-.PHONY : tracking_gen_data/fast
-
-#=============================================================================
-# Target rules for targets named 1D_main
-
-# Build rule for target.
-1D_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 1D_main
-.PHONY : 1D_main
-
-# fast build rule for target.
-1D_main/fast:
-	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/build
-.PHONY : 1D_main/fast
-
-#=============================================================================
-# Target rules for targets named 1D_single_run
-
-# Build rule for target.
-1D_single_run: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 1D_single_run
-.PHONY : 1D_single_run
-
-# fast build rule for target.
-1D_single_run/fast:
-	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/build
-.PHONY : 1D_single_run/fast
 
 #=============================================================================
 # Target rules for targets named uninstall
@@ -767,32 +819,59 @@ yaml-cpp-sandbox/fast:
 	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_single_run.cpp.s
 .PHONY : 1D/1D_single_run.cpp.s
 
-2D-Tracking/BO_Tracking_Test.o: 2D-Tracking/BO_Tracking_Test.cpp.o
+2D-Tracking/BO_Tracking_Test_Nonlinear.o: 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.o
 
-.PHONY : 2D-Tracking/BO_Tracking_Test.o
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.o
 
 # target to build an object file
-2D-Tracking/BO_Tracking_Test.cpp.o:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/BO_Tracking_Test.cpp.o
-.PHONY : 2D-Tracking/BO_Tracking_Test.cpp.o
+2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.o:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.o
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.o
 
-2D-Tracking/BO_Tracking_Test.i: 2D-Tracking/BO_Tracking_Test.cpp.i
+2D-Tracking/BO_Tracking_Test_Nonlinear.i: 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.i
 
-.PHONY : 2D-Tracking/BO_Tracking_Test.i
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.i
 
 # target to preprocess a source file
-2D-Tracking/BO_Tracking_Test.cpp.i:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/BO_Tracking_Test.cpp.i
-.PHONY : 2D-Tracking/BO_Tracking_Test.cpp.i
+2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.i:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.i
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.i
 
-2D-Tracking/BO_Tracking_Test.s: 2D-Tracking/BO_Tracking_Test.cpp.s
+2D-Tracking/BO_Tracking_Test_Nonlinear.s: 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.s
 
-.PHONY : 2D-Tracking/BO_Tracking_Test.s
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.s
 
 # target to generate assembly for a file
-2D-Tracking/BO_Tracking_Test.cpp.s:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/BO_Tracking_Test.cpp.s
-.PHONY : 2D-Tracking/BO_Tracking_Test.cpp.s
+2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.s:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.s
+.PHONY : 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp.s
+
+2D-Tracking/BO_Tracking_Test_linear.o: 2D-Tracking/BO_Tracking_Test_linear.cpp.o
+
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.o
+
+# target to build an object file
+2D-Tracking/BO_Tracking_Test_linear.cpp.o:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/BO_Tracking_Test_linear.cpp.o
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.cpp.o
+
+2D-Tracking/BO_Tracking_Test_linear.i: 2D-Tracking/BO_Tracking_Test_linear.cpp.i
+
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.i
+
+# target to preprocess a source file
+2D-Tracking/BO_Tracking_Test_linear.cpp.i:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/BO_Tracking_Test_linear.cpp.i
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.cpp.i
+
+2D-Tracking/BO_Tracking_Test_linear.s: 2D-Tracking/BO_Tracking_Test_linear.cpp.s
+
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.s
+
+# target to generate assembly for a file
+2D-Tracking/BO_Tracking_Test_linear.cpp.s:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/BO_Tracking_Test_linear.cpp.s
+.PHONY : 2D-Tracking/BO_Tracking_Test_linear.cpp.s
 
 2D-Tracking/Testing/generate_trajectory_comparison_data.o: 2D-Tracking/Testing/generate_trajectory_comparison_data.cpp.o
 
@@ -956,32 +1035,86 @@ yaml-cpp-sandbox/fast:
 	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/Validate_QR.cpp.s
 .PHONY : 2D-Tracking/Validate_QR.cpp.s
 
-2D-Tracking/demo_tuned_parameters.o: 2D-Tracking/demo_tuned_parameters.cpp.o
+2D-Tracking/demo_linear_tracking.o: 2D-Tracking/demo_linear_tracking.cpp.o
 
-.PHONY : 2D-Tracking/demo_tuned_parameters.o
+.PHONY : 2D-Tracking/demo_linear_tracking.o
 
 # target to build an object file
-2D-Tracking/demo_tuned_parameters.cpp.o:
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/demo_tuned_parameters.cpp.o
-.PHONY : 2D-Tracking/demo_tuned_parameters.cpp.o
+2D-Tracking/demo_linear_tracking.cpp.o:
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/demo_linear_tracking.cpp.o
+.PHONY : 2D-Tracking/demo_linear_tracking.cpp.o
 
-2D-Tracking/demo_tuned_parameters.i: 2D-Tracking/demo_tuned_parameters.cpp.i
+2D-Tracking/demo_linear_tracking.i: 2D-Tracking/demo_linear_tracking.cpp.i
 
-.PHONY : 2D-Tracking/demo_tuned_parameters.i
+.PHONY : 2D-Tracking/demo_linear_tracking.i
 
 # target to preprocess a source file
-2D-Tracking/demo_tuned_parameters.cpp.i:
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/demo_tuned_parameters.cpp.i
-.PHONY : 2D-Tracking/demo_tuned_parameters.cpp.i
+2D-Tracking/demo_linear_tracking.cpp.i:
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/demo_linear_tracking.cpp.i
+.PHONY : 2D-Tracking/demo_linear_tracking.cpp.i
 
-2D-Tracking/demo_tuned_parameters.s: 2D-Tracking/demo_tuned_parameters.cpp.s
+2D-Tracking/demo_linear_tracking.s: 2D-Tracking/demo_linear_tracking.cpp.s
 
-.PHONY : 2D-Tracking/demo_tuned_parameters.s
+.PHONY : 2D-Tracking/demo_linear_tracking.s
 
 # target to generate assembly for a file
-2D-Tracking/demo_tuned_parameters.cpp.s:
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/demo_tuned_parameters.cpp.s
-.PHONY : 2D-Tracking/demo_tuned_parameters.cpp.s
+2D-Tracking/demo_linear_tracking.cpp.s:
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/demo_linear_tracking.cpp.s
+.PHONY : 2D-Tracking/demo_linear_tracking.cpp.s
+
+2D-Tracking/demo_nonlinear_pure_measurement.o: 2D-Tracking/demo_nonlinear_pure_measurement.cpp.o
+
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.o
+
+# target to build an object file
+2D-Tracking/demo_nonlinear_pure_measurement.cpp.o:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/demo_nonlinear_pure_measurement.cpp.o
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.cpp.o
+
+2D-Tracking/demo_nonlinear_pure_measurement.i: 2D-Tracking/demo_nonlinear_pure_measurement.cpp.i
+
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.i
+
+# target to preprocess a source file
+2D-Tracking/demo_nonlinear_pure_measurement.cpp.i:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/demo_nonlinear_pure_measurement.cpp.i
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.cpp.i
+
+2D-Tracking/demo_nonlinear_pure_measurement.s: 2D-Tracking/demo_nonlinear_pure_measurement.cpp.s
+
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.s
+
+# target to generate assembly for a file
+2D-Tracking/demo_nonlinear_pure_measurement.cpp.s:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/demo_nonlinear_pure_measurement.cpp.s
+.PHONY : 2D-Tracking/demo_nonlinear_pure_measurement.cpp.s
+
+2D-Tracking/demo_nonlinear_tracking.o: 2D-Tracking/demo_nonlinear_tracking.cpp.o
+
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.o
+
+# target to build an object file
+2D-Tracking/demo_nonlinear_tracking.cpp.o:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/demo_nonlinear_tracking.cpp.o
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.cpp.o
+
+2D-Tracking/demo_nonlinear_tracking.i: 2D-Tracking/demo_nonlinear_tracking.cpp.i
+
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.i
+
+# target to preprocess a source file
+2D-Tracking/demo_nonlinear_tracking.cpp.i:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/demo_nonlinear_tracking.cpp.i
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.cpp.i
+
+2D-Tracking/demo_nonlinear_tracking.s: 2D-Tracking/demo_nonlinear_tracking.cpp.s
+
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.s
+
+# target to generate assembly for a file
+2D-Tracking/demo_nonlinear_tracking.cpp.s:
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/demo_nonlinear_tracking.cpp.s
+.PHONY : 2D-Tracking/demo_nonlinear_tracking.cpp.s
 
 2D-Tracking/fg_class_tracking.o: 2D-Tracking/fg_class_tracking.cpp.o
 
@@ -989,14 +1122,17 @@ yaml-cpp-sandbox/fast:
 
 # target to build an object file
 2D-Tracking/fg_class_tracking.cpp.o:
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.o
 	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.o
 	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/fg_class_tracking.cpp.o
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.o
 
 2D-Tracking/fg_class_tracking.i: 2D-Tracking/fg_class_tracking.cpp.i
@@ -1005,14 +1141,17 @@ yaml-cpp-sandbox/fast:
 
 # target to preprocess a source file
 2D-Tracking/fg_class_tracking.cpp.i:
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.i
 	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.i
 	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/fg_class_tracking.cpp.i
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.i
 
 2D-Tracking/fg_class_tracking.s: 2D-Tracking/fg_class_tracking.cpp.s
@@ -1021,42 +1160,72 @@ yaml-cpp-sandbox/fast:
 
 # target to generate assembly for a file
 2D-Tracking/fg_class_tracking.cpp.s:
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/demo_tuned_parameters.dir/build.make CMakeFiles/demo_tuned_parameters.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test.dir/build.make CMakeFiles/BO_Tracking_Test.dir/2D-Tracking/fg_class_tracking.cpp.s
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.s
 
-2D-Tracking/tracking_gen_data.o: 2D-Tracking/tracking_gen_data.cpp.o
+2D-Tracking/tracking_gen_data_linear.o: 2D-Tracking/tracking_gen_data_linear.cpp.o
 
-.PHONY : 2D-Tracking/tracking_gen_data.o
+.PHONY : 2D-Tracking/tracking_gen_data_linear.o
 
 # target to build an object file
-2D-Tracking/tracking_gen_data.cpp.o:
-	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/2D-Tracking/tracking_gen_data.cpp.o
-.PHONY : 2D-Tracking/tracking_gen_data.cpp.o
+2D-Tracking/tracking_gen_data_linear.cpp.o:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/2D-Tracking/tracking_gen_data_linear.cpp.o
+.PHONY : 2D-Tracking/tracking_gen_data_linear.cpp.o
 
-2D-Tracking/tracking_gen_data.i: 2D-Tracking/tracking_gen_data.cpp.i
+2D-Tracking/tracking_gen_data_linear.i: 2D-Tracking/tracking_gen_data_linear.cpp.i
 
-.PHONY : 2D-Tracking/tracking_gen_data.i
+.PHONY : 2D-Tracking/tracking_gen_data_linear.i
 
 # target to preprocess a source file
-2D-Tracking/tracking_gen_data.cpp.i:
-	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/2D-Tracking/tracking_gen_data.cpp.i
-.PHONY : 2D-Tracking/tracking_gen_data.cpp.i
+2D-Tracking/tracking_gen_data_linear.cpp.i:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/2D-Tracking/tracking_gen_data_linear.cpp.i
+.PHONY : 2D-Tracking/tracking_gen_data_linear.cpp.i
 
-2D-Tracking/tracking_gen_data.s: 2D-Tracking/tracking_gen_data.cpp.s
+2D-Tracking/tracking_gen_data_linear.s: 2D-Tracking/tracking_gen_data_linear.cpp.s
 
-.PHONY : 2D-Tracking/tracking_gen_data.s
+.PHONY : 2D-Tracking/tracking_gen_data_linear.s
 
 # target to generate assembly for a file
-2D-Tracking/tracking_gen_data.cpp.s:
-	$(MAKE) -f CMakeFiles/tracking_gen_data.dir/build.make CMakeFiles/tracking_gen_data.dir/2D-Tracking/tracking_gen_data.cpp.s
-.PHONY : 2D-Tracking/tracking_gen_data.cpp.s
+2D-Tracking/tracking_gen_data_linear.cpp.s:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/2D-Tracking/tracking_gen_data_linear.cpp.s
+.PHONY : 2D-Tracking/tracking_gen_data_linear.cpp.s
+
+2D-Tracking/tracking_gen_data_nonlinear.o: 2D-Tracking/tracking_gen_data_nonlinear.cpp.o
+
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.o
+
+# target to build an object file
+2D-Tracking/tracking_gen_data_nonlinear.cpp.o:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/2D-Tracking/tracking_gen_data_nonlinear.cpp.o
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.cpp.o
+
+2D-Tracking/tracking_gen_data_nonlinear.i: 2D-Tracking/tracking_gen_data_nonlinear.cpp.i
+
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.i
+
+# target to preprocess a source file
+2D-Tracking/tracking_gen_data_nonlinear.cpp.i:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/2D-Tracking/tracking_gen_data_nonlinear.cpp.i
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.cpp.i
+
+2D-Tracking/tracking_gen_data_nonlinear.s: 2D-Tracking/tracking_gen_data_nonlinear.cpp.s
+
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.s
+
+# target to generate assembly for a file
+2D-Tracking/tracking_gen_data_nonlinear.cpp.s:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/2D-Tracking/tracking_gen_data_nonlinear.cpp.s
+.PHONY : 2D-Tracking/tracking_gen_data_nonlinear.cpp.s
 
 # Help Target
 help:
@@ -1064,19 +1233,23 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... edit_cache"
+	@echo "... test_extreme_parameter_validation"
+	@echo "... 1D_main"
+	@echo "... BO_Tracking_Test_linear"
+	@echo "... tracking_gen_data_linear"
+	@echo "... Validate_QR"
+	@echo "... tracking_gen_data_nonlinear"
+	@echo "... demo_nonlinear_tracking"
+	@echo "... demo_nonlinear_pure_measurement"
+	@echo "... test_system_matrices"
+	@echo "... BO_Tracking_Test_Nonlinear"
+	@echo "... 1D_single_run"
+	@echo "... demo_linear_tracking"
+	@echo "... test_zero_noise_validation_v2"
 	@echo "... generate_trajectory_comparison_data"
 	@echo "... test_tuned_parameters_performance"
-	@echo "... test_zero_noise_validation_v2"
-	@echo "... test_extreme_parameter_validation"
-	@echo "... test_system_matrices"
-	@echo "... demo_tuned_parameters"
-	@echo "... Validate_QR"
-	@echo "... BO_Tracking_Test"
-	@echo "... tracking_gen_data"
-	@echo "... 1D_main"
-	@echo "... 1D_single_run"
 	@echo "... uninstall"
 	@echo "... NightlyMemCheck"
 	@echo "... NightlyTest"
@@ -1119,9 +1292,12 @@ help:
 	@echo "... 1D/1D_single_run.o"
 	@echo "... 1D/1D_single_run.i"
 	@echo "... 1D/1D_single_run.s"
-	@echo "... 2D-Tracking/BO_Tracking_Test.o"
-	@echo "... 2D-Tracking/BO_Tracking_Test.i"
-	@echo "... 2D-Tracking/BO_Tracking_Test.s"
+	@echo "... 2D-Tracking/BO_Tracking_Test_Nonlinear.o"
+	@echo "... 2D-Tracking/BO_Tracking_Test_Nonlinear.i"
+	@echo "... 2D-Tracking/BO_Tracking_Test_Nonlinear.s"
+	@echo "... 2D-Tracking/BO_Tracking_Test_linear.o"
+	@echo "... 2D-Tracking/BO_Tracking_Test_linear.i"
+	@echo "... 2D-Tracking/BO_Tracking_Test_linear.s"
 	@echo "... 2D-Tracking/Testing/generate_trajectory_comparison_data.o"
 	@echo "... 2D-Tracking/Testing/generate_trajectory_comparison_data.i"
 	@echo "... 2D-Tracking/Testing/generate_trajectory_comparison_data.s"
@@ -1140,15 +1316,24 @@ help:
 	@echo "... 2D-Tracking/Validate_QR.o"
 	@echo "... 2D-Tracking/Validate_QR.i"
 	@echo "... 2D-Tracking/Validate_QR.s"
-	@echo "... 2D-Tracking/demo_tuned_parameters.o"
-	@echo "... 2D-Tracking/demo_tuned_parameters.i"
-	@echo "... 2D-Tracking/demo_tuned_parameters.s"
+	@echo "... 2D-Tracking/demo_linear_tracking.o"
+	@echo "... 2D-Tracking/demo_linear_tracking.i"
+	@echo "... 2D-Tracking/demo_linear_tracking.s"
+	@echo "... 2D-Tracking/demo_nonlinear_pure_measurement.o"
+	@echo "... 2D-Tracking/demo_nonlinear_pure_measurement.i"
+	@echo "... 2D-Tracking/demo_nonlinear_pure_measurement.s"
+	@echo "... 2D-Tracking/demo_nonlinear_tracking.o"
+	@echo "... 2D-Tracking/demo_nonlinear_tracking.i"
+	@echo "... 2D-Tracking/demo_nonlinear_tracking.s"
 	@echo "... 2D-Tracking/fg_class_tracking.o"
 	@echo "... 2D-Tracking/fg_class_tracking.i"
 	@echo "... 2D-Tracking/fg_class_tracking.s"
-	@echo "... 2D-Tracking/tracking_gen_data.o"
-	@echo "... 2D-Tracking/tracking_gen_data.i"
-	@echo "... 2D-Tracking/tracking_gen_data.s"
+	@echo "... 2D-Tracking/tracking_gen_data_linear.o"
+	@echo "... 2D-Tracking/tracking_gen_data_linear.i"
+	@echo "... 2D-Tracking/tracking_gen_data_linear.s"
+	@echo "... 2D-Tracking/tracking_gen_data_nonlinear.o"
+	@echo "... 2D-Tracking/tracking_gen_data_nonlinear.i"
+	@echo "... 2D-Tracking/tracking_gen_data_nonlinear.s"
 .PHONY : help
 
 

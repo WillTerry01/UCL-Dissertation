@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""
+Visualize the first 2 nonlinear trajectories from HDF5 files
+Shows states and range-bearing measurements for the first 2 Monte Carlo runs
+"""
+
+import h5py
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
+import os
+
+def load_h5_trajectories(states_file, measurements_file, num_trajectories=2):
+    """
+    Load the first num_trajectories from HDF5 files
+    """
+    with h5py.File(states_file, 'r') as f:
+        states = f['states'][:num_trajectories, :, :]  # Shape: (num_traj, N, 4)
+    
+    with h5py.File(measurements_file, 'r') as f:
+        measurements = f['measurements'][:num_trajectories, :, :]  # Shape: (num_traj, N, 2)
+    
+    return states, measurements
+
+def plot_trajectories(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np.array([-10.0, 0.0]), save_plots=True):
+    """
+    Plot the first 2 nonlinear trajectories with states and range-bearing measurements
+    """
+    num_trajectories = states.shape[0]
+    N = states.shape[1]
+    time = np.arange(N) * dt
+    
+    # Create figure with subplots
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+    fig.suptitle(f'First 2 Nonlinear Trajectories: Constant Turn Rate (ω={turn_rate} rad/s)', fontsize=16)
+    
+    colors = ['blue', 'red']
+    labels = ['Trajectory 1', 'Trajectory 2']
+    
+    for traj_idx in range(num_trajectories):
+        color = colors[traj_idx]
+        label = labels[traj_idx]
+        
+        # Extract state components
+        x_pos = states[traj_idx, :, 0]  # x position
+        y_pos = states[traj_idx, :, 1]  # y position
+        x_vel = states[traj_idx, :, 2]  # x velocity
+        y_vel = states[traj_idx, :, 3]  # y velocity
+        
+        # Extract range-bearing measurements
+        ranges = measurements[traj_idx, :, 0]  # range measurements
+        bearings = measurements[traj_idx, :, 1]  # bearing measurements
+        
+        # Convert range-bearing to Cartesian for visualization
+        x_meas = sensor_pos[0] + ranges * np.cos(bearings)
+        y_meas = sensor_pos[1] + ranges * np.sin(bearings)
+        
+        # Plot 1: Position trajectory (x vs y)
+        axes[0, 0].plot(x_pos, y_pos, color=color, linewidth=2, label=f'{label} - True')
+        axes[0, 0].scatter(x_meas, y_meas, color=color, alpha=0.6, s=20, 
+                          label=f'{label} - Measurements', marker='o')
+        axes[0, 0].scatter(x_pos[0], y_pos[0], color=color, s=100, marker='s', 
+                          label=f'{label} - Start', zorder=5)
+        axes[0, 0].scatter(x_pos[-1], y_pos[-1], color=color, s=100, marker='^', 
+                          label=f'{label} - End', zorder=5)
+        
+        # Plot sensor position
+        axes[0, 0].scatter(sensor_pos[0], sensor_pos[1], color='black', s=200, marker='*', 
+                          label='Sensor', zorder=6)
+        
+        # Plot 2: Position vs time
+        axes[0, 1].plot(time, x_pos, color=color, linewidth=2, label=f'{label} - x pos')
+        axes[0, 1].plot(time, y_pos, color=color, linewidth=2, linestyle='--', 
+                       label=f'{label} - y pos')
+        axes[0, 1].scatter(time, x_meas, color=color, alpha=0.6, s=15, marker='o')
+        axes[0, 1].scatter(time, y_meas, color=color, alpha=0.6, s=15, marker='s')
+        
+        # Plot 3: Velocity vs time
+        axes[0, 2].plot(time, x_vel, color=color, linewidth=2, label=f'{label} - x vel')
+        axes[0, 2].plot(time, y_vel, color=color, linewidth=2, linestyle='--', 
+                       label=f'{label} - y vel')
+        
+        # Plot 4: Speed vs time
+        speed = np.sqrt(x_vel**2 + y_vel**2)
+        axes[1, 0].plot(time, speed, color=color, linewidth=2, label=f'{label} - Speed')
+        
+        # Plot 5: Range measurements vs time
+        axes[1, 1].plot(time, ranges, color=color, linewidth=2, label=f'{label} - Range')
+        
+        # Plot 6: Bearing measurements vs time
+        axes[1, 2].plot(time, np.rad2deg(bearings), color=color, linewidth=2, label=f'{label} - Bearing')
+    
+    # Customize plots
+    axes[0, 0].set_xlabel('X Position')
+    axes[0, 0].set_ylabel('Y Position')
+    axes[0, 0].set_title('Position Trajectory (X vs Y)')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+    axes[0, 0].axis('equal')
+    
+    axes[0, 1].set_xlabel('Time (s)')
+    axes[0, 1].set_ylabel('Position')
+    axes[0, 1].set_title('Position vs Time')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+    
+    axes[0, 2].set_xlabel('Time (s)')
+    axes[0, 2].set_ylabel('Velocity')
+    axes[0, 2].set_title('Velocity vs Time')
+    axes[0, 2].legend()
+    axes[0, 2].grid(True, alpha=0.3)
+    
+    axes[1, 0].set_xlabel('Time (s)')
+    axes[1, 0].set_ylabel('Speed')
+    axes[1, 0].set_title('Speed vs Time')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+    
+    axes[1, 1].set_xlabel('Time (s)')
+    axes[1, 1].set_ylabel('Range')
+    axes[1, 1].set_title('Range Measurements vs Time')
+    axes[1, 1].legend()
+    axes[1, 1].grid(True, alpha=0.3)
+    
+    axes[1, 2].set_xlabel('Time (s)')
+    axes[1, 2].set_ylabel('Bearing (degrees)')
+    axes[1, 2].set_title('Bearing Measurements vs Time')
+    axes[1, 2].legend()
+    axes[1, 2].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    if save_plots:
+        plt.savefig('../2D-Tracking/plots/nonlinear_trajectories_visualization.png', dpi=300, bbox_inches='tight')
+        print("Plot saved as '../2D-Tracking/plots/nonlinear_trajectories_visualization.png'")
+    
+    plt.show()
+
+def print_trajectory_stats(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np.array([-10.0, 0.0])):
+    """
+    Print statistics about the trajectories
+    """
+    print("\n=== Nonlinear Trajectory Statistics ===")
+    print(f"Number of trajectories: {states.shape[0]}")
+    print(f"Trajectory length: {states.shape[1]} time steps")
+    print(f"Time step (dt): {dt} seconds")
+    print(f"Turn rate: {turn_rate} rad/s")
+    print(f"Sensor position: [{sensor_pos[0]}, {sensor_pos[1]}]")
+    
+    for traj_idx in range(min(2, states.shape[0])):
+        print(f"\n--- Trajectory {traj_idx + 1} ---")
+        
+        # State statistics
+        x_pos = states[traj_idx, :, 0]
+        y_pos = states[traj_idx, :, 1]
+        x_vel = states[traj_idx, :, 2]
+        y_vel = states[traj_idx, :, 3]
+        
+        # Measurement statistics
+        ranges = measurements[traj_idx, :, 0]
+        bearings = measurements[traj_idx, :, 1]
+        
+        # Calculate statistics
+        total_distance = np.sum(np.sqrt(np.diff(x_pos)**2 + np.diff(y_pos)**2))
+        avg_speed = np.mean(np.sqrt(x_vel**2 + y_vel**2))
+        max_speed = np.max(np.sqrt(x_vel**2 + y_vel**2))
+        min_speed = np.min(np.sqrt(x_vel**2 + y_vel**2))
+        
+        avg_range = np.mean(ranges)
+        max_range = np.max(ranges)
+        min_range = np.min(ranges)
+        
+        avg_bearing = np.mean(bearings)
+        bearing_span = np.max(bearings) - np.min(bearings)
+        
+        print(f"Total distance traveled: {total_distance:.2f} units")
+        print(f"Average speed: {avg_speed:.2f} units/s")
+        print(f"Speed range: {min_speed:.2f} - {max_speed:.2f} units/s")
+        print(f"Average range: {avg_range:.2f} units")
+        print(f"Range range: {min_range:.2f} - {max_range:.2f} units")
+        print(f"Average bearing: {np.rad2deg(avg_bearing):.1f}°")
+        print(f"Bearing span: {np.rad2deg(bearing_span):.1f}°")
+        
+        # Calculate curvature (approximate)
+        if len(x_pos) > 2:
+            # Simple curvature approximation
+            dx = np.gradient(x_pos, dt)
+            dy = np.gradient(y_pos, dt)
+            ddx = np.gradient(dx, dt)
+            ddy = np.gradient(dy, dt)
+            curvature = np.abs(dx * ddy - dy * ddx) / (dx**2 + dy**2)**1.5
+            avg_curvature = np.mean(curvature[1:-1])  # Exclude endpoints
+            print(f"Average curvature: {avg_curvature:.4f}")
+
+def main():
+    """
+    Main function to load and visualize nonlinear trajectories
+    """
+    # File paths for nonlinear data
+    states_file = "../2D-Tracking/Saved_Data/2D_nonlinear_states.h5"
+    measurements_file = "../2D-Tracking/Saved_Data/2D_nonlinear_measurements.h5"
+    
+    # Check if files exist
+    if not os.path.exists(states_file):
+        print(f"Error: States file not found: {states_file}")
+        print("Please run tracking_gen_data_nonlinear first to generate nonlinear data.")
+        return
+    
+    if not os.path.exists(measurements_file):
+        print(f"Error: Measurements file not found: {measurements_file}")
+        print("Please run tracking_gen_data_nonlinear first to generate nonlinear data.")
+        return
+    
+    # Load trajectories
+    print("Loading nonlinear trajectories...")
+    states, measurements = load_h5_trajectories(states_file, measurements_file, num_trajectories=2)
+    
+    # Print statistics
+    print_trajectory_stats(states, measurements)
+    
+    # Plot trajectories
+    print("\nPlotting nonlinear trajectories...")
+    plot_trajectories(states, measurements, save_plots=True)
+
+if __name__ == "__main__":
+    main() 

@@ -60,7 +60,7 @@
 using namespace std;
 using namespace g2o;
 
-FactorGraph2DTrajectory::FactorGraph2DTrajectory() : N_(0), chi2_(0.0) {
+FactorGraph2DTrajectory::FactorGraph2DTrajectory() : N_(0), chi2_(0.0), motion_model_type_("linear"), measurement_model_type_("linear"), turn_rate_(0.0) {
     // Q_ and R_ will be set by setQFromProcessNoiseIntensity() and setRFromMeasurementNoise()
     // No need to initialize with legacy values
 }
@@ -125,8 +125,9 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
         e->setInformation(Q_.inverse());
         optimizer_->addEdge(e);
     }
+    // Add measurement edges - both linear and nonlinear use GPS measurements
     for (int k = 0; k < N_; ++k) {
-        EdgeMeasurement* e = new EdgeMeasurement();
+        EdgeGPSMeasurement* e = new EdgeGPSMeasurement();
         e->setVertex(0, vertices_[k]);
         e->setMeasurement(measurements_[k]);
         e->setInformation(R_.inverse());
@@ -369,6 +370,121 @@ int FactorGraph2DTrajectory::getActualGraphDimX() const {
 
 std::pair<int, int> FactorGraph2DTrajectory::getActualGraphDimensions() const {
     return std::make_pair(getActualGraphDimZ(), getActualGraphDimX());
+}
+
+// Nonlinear system method implementations
+void FactorGraph2DTrajectory::setMotionModelType(const std::string& model_type, double turn_rate) {
+    motion_model_type_ = model_type;
+    turn_rate_ = turn_rate;
+}
+
+void FactorGraph2DTrajectory::setMeasurementModelType(const std::string& model_type) {
+    measurement_model_type_ = model_type;
+}
+
+void FactorGraph2DTrajectory::runNonlinear(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, double dt, bool do_optimization) {
+    // Check if Q and R matrices are properly initialized
+    if (Q_.isZero()) {
+        throw std::runtime_error("Q matrix is not initialized. Please call setQFromProcessNoiseIntensity() or set Q_ directly before calling runNonlinear().");
+    }
+    if (R_.isZero()) {
+        throw std::runtime_error("R matrix is not initialized. Please call setRFromMeasurementNoise() or set R_ directly before calling runNonlinear().");
+    }
+    
+    // Check if matrices are positive definite (required for inverse)
+    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q_);
+    if (lltOfQ.info() != Eigen::Success) {
+        throw std::runtime_error("Q matrix is not positive definite. Cannot compute inverse for factor graph.");
+    }
+    
+    Eigen::LLT<Eigen::Matrix2d> lltOfR(R_);
+    if (lltOfR.info() != Eigen::Success) {
+        throw std::runtime_error("R matrix is not positive definite. Cannot compute inverse for factor graph.");
+    }
+    
+    N_ = true_states.size();
+    true_states_ = true_states;
+    dt_ = dt;
+    
+    // Check if measurements are provided
+    if (measurements) {
+        measurements_ = *measurements;
+    } else {
+        throw std::runtime_error("Measurements are required. Please provide a valid measurements vector.");
+    }
+    
+    setupOptimizer();
+    
+    // Initialization strategy based on MATLAB student approach
+    if (!do_optimization) {
+        // Proposition 3 (NIS3): Initialize exactly at ground truth (no noise)
+        for (int k = 0; k < N_; ++k) {
+            vertices_[k]->setId(k);
+            vertices_[k]->setEstimate(true_states_[k]);  // Exact ground truth
+            optimizer_->addVertex(vertices_[k]);
+        }
+    } else {
+        // Proposition 4 (NIS4): Initialize at zero (matching MATLAB approach)
+        for (int k = 0; k < N_; ++k) {
+            vertices_[k]->setId(k);
+            vertices_[k]->setEstimate(Eigen::Vector4d::Zero());  // Initialize at zero
+            optimizer_->addVertex(vertices_[k]);
+        }
+    }
+    
+    // Add motion model edges based on selected model type
+    for (int k = 1; k < N_; ++k) {
+        if (motion_model_type_ == "linear") {
+            EdgeProcessModel* e = new EdgeProcessModel(dt_);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Q_.inverse());
+            optimizer_->addEdge(e);
+        } else if (motion_model_type_ == "constant_turn_rate") {
+            EdgeNonlinearMotionCT* e = new EdgeNonlinearMotionCT(dt_, turn_rate_);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Q_.inverse());
+            optimizer_->addEdge(e);
+        } else {
+            throw std::runtime_error("Unsupported motion model type: " + motion_model_type_);
+        }
+    }
+    
+    // Add measurement edges based on selected model type
+    for (int k = 0; k < N_; ++k) {
+        if (measurement_model_type_ == "linear" || measurement_model_type_ == "gps") {
+            // Both linear and GPS models use Cartesian position measurements (x, y)
+            EdgeGPSMeasurement* e = new EdgeGPSMeasurement();
+            e->setVertex(0, vertices_[k]);
+            e->setMeasurement(measurements_[k]);
+            e->setInformation(R_.inverse());
+            optimizer_->addEdge(e);
+        } else {
+            throw std::runtime_error("Unsupported measurement model type: " + measurement_model_type_);
+        }
+    }
+    
+    // Only optimize if requested (Proposition 4), skip for Proposition 3
+    if (do_optimization) {
+        optimize();
+    } else {
+        // For Proposition 3, calculate chi2 WITHOUT optimization (per MATLAB reference)
+        optimizer_->initializeOptimization();
+        
+        // Manually compute chi2 by iterating through all edges and summing their contributions
+        chi2_ = 0.0;
+        for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) {
+            g2o::OptimizableGraph::Edge* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it);
+            edge->computeError();  // Compute error vector for this edge
+            
+            // Use g2o's built-in chi2() method for individual edges
+            double edge_chi2 = edge->chi2();
+            chi2_ += edge_chi2;
+        }
+    }
 }
 
  

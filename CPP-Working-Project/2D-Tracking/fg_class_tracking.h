@@ -100,6 +100,69 @@ public:
     bool write(std::ostream&) const override { return false; }
 };
 
+// Nonlinear motion model edge: constant turn rate model
+class EdgeNonlinearMotionCT : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, Vertex4D, Vertex4D> {
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    
+    // Constructor to set dt and turn rate
+    EdgeNonlinearMotionCT(double dt = 1.0, double turn_rate = 0.0) : dt_(dt), turn_rate_(turn_rate) {}
+    
+    void computeError() override {
+        const Vertex4D* v1 = static_cast<const Vertex4D*>(_vertices[0]);
+        const Vertex4D* v2 = static_cast<const Vertex4D*>(_vertices[1]);
+        
+        // Nonlinear constant turn rate prediction
+        Eigen::Vector4d pred = predictState(v1->estimate());
+        
+        // Error: e = xₖ₊₁ - f(xₖ, uₖ)
+        _error = v2->estimate() - pred;
+    }
+    
+    bool read(std::istream&) override { return false; }
+    bool write(std::ostream&) const override { return false; }
+    
+private:
+    double dt_;
+    double turn_rate_;
+    
+    // Nonlinear state prediction for constant turn rate model
+    Eigen::Vector4d predictState(const Eigen::Vector4d& x) const {
+        double x_pos = x[0], y_pos = x[1], vx = x[2], vy = x[3];
+        double v = std::sqrt(vx*vx + vy*vy);  // Speed
+        double heading = std::atan2(vy, vx);  // Current heading
+        
+        if (std::abs(turn_rate_) < 1e-6) {
+            // Straight line motion (constant velocity)
+            return Eigen::Vector4d(x_pos + vx * dt_, y_pos + vy * dt_, vx, vy);
+        } else {
+            // Constant turn rate motion
+            double new_heading = heading + turn_rate_ * dt_;
+            double new_vx = v * std::cos(new_heading);
+            double new_vy = v * std::sin(new_heading);
+            
+            // Position update (integrate velocity)
+            double new_x_pos = x_pos + (v / turn_rate_) * (std::sin(new_heading) - std::sin(heading));
+            double new_y_pos = y_pos - (v / turn_rate_) * (std::cos(new_heading) - std::cos(heading));
+            
+            return Eigen::Vector4d(new_x_pos, new_y_pos, new_vx, new_vy);
+        }
+    }
+};
+
+// GPS measurement edge: Cartesian position measurements (x, y) - same for both linear and nonlinear
+class EdgeGPSMeasurement : public g2o::BaseUnaryEdge<2, Eigen::Vector2d, Vertex4D> {
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    void computeError() override {
+        const Vertex4D* v = static_cast<const Vertex4D*>(_vertices[0]);
+        // GPS measurement: direct position [x, y] - same for both linear and nonlinear systems
+        _error = _measurement - v->estimate().head<2>();
+    }
+    bool read(std::istream&) override { return false; }
+    bool write(std::ostream&) const override { return false; }
+};
+
 class FactorGraph2DTrajectory {
 public:
     struct OutputOptions {
@@ -135,6 +198,11 @@ public:
     int getActualGraphDimZ() const;  // Sum of all edge dimensions
     int getActualGraphDimX() const;  // Sum of all vertex dimensions
     std::pair<int, int> getActualGraphDimensions() const;  // Returns {dimZ, dimX}
+    
+    // Nonlinear system methods
+    void setMotionModelType(const std::string& model_type, double turn_rate = 0.0);
+    void setMeasurementModelType(const std::string& model_type);  // Removed sensor_pos parameter
+    void runNonlinear(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, double dt = 1.0, bool do_optimization = true);
 
 private:
     std::vector<Vertex4D*> vertices_;
@@ -148,6 +216,12 @@ private:
     Eigen::Matrix2d R_;
     OutputOptions output_options_;
     double dt_;  // Add dt as a member variable
+    
+    // Nonlinear system parameters
+    std::string motion_model_type_;  // "linear", "constant_turn_rate", "dubins"
+    std::string measurement_model_type_;  // "linear", "gps" (both use Cartesian measurements)
+    double turn_rate_;  // For constant turn rate model
+    // Removed sensor_pos_ - not needed for GPS tracking
     
     // Helper method to extract optimized estimates from vertices
     std::vector<Eigen::Vector4d> getEstimatesInternal() const;

@@ -79,22 +79,57 @@ target_include_directories(1D_main
 # 2D-Tracking folder ##########################################################
 
 # Executable for generating tracking data (clean trajectory + noisy measurements)
-add_executable(tracking_gen_data 2D-Tracking/tracking_gen_data.cpp)
-target_link_libraries(tracking_gen_data
+add_executable(tracking_gen_data_linear 2D-Tracking/tracking_gen_data_linear.cpp)
+target_link_libraries(tracking_gen_data_linear
     PRIVATE
     Eigen3::Eigen
     ${HDF5_LIBRARIES}
     yaml-cpp
 )
-target_include_directories(tracking_gen_data
+target_include_directories(tracking_gen_data_linear
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIRS}
 )
 
-# Executable for BayesOpt tracking with CNEES
-add_executable(BO_Tracking_Test 2D-Tracking/BO_Tracking_Test.cpp 2D-Tracking/fg_class_tracking.cpp)
-target_link_libraries(BO_Tracking_Test
+# Executable for generating nonlinear tracking data (constant turn rate + range-bearing)
+add_executable(tracking_gen_data_nonlinear 2D-Tracking/tracking_gen_data_nonlinear.cpp)
+target_link_libraries(tracking_gen_data_nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(tracking_gen_data_nonlinear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for nonlinear factor graph tracking demo
+add_executable(demo_nonlinear_tracking 2D-Tracking/demo_nonlinear_tracking.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(demo_nonlinear_tracking
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(demo_nonlinear_tracking
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for nonlinear Bayesian Optimization
+add_executable(BO_Tracking_Test_Nonlinear 2D-Tracking/BO_Tracking_Test_Nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(BO_Tracking_Test_Nonlinear
     PRIVATE
     ${BAYESOPT_LIBRARIES}
     Eigen3::Eigen
@@ -107,7 +142,31 @@ target_link_libraries(BO_Tracking_Test
     ${HDF5_LIBRARIES}
     yaml-cpp
 )
-target_include_directories(BO_Tracking_Test
+target_include_directories(BO_Tracking_Test_Nonlinear
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for BayesOpt tracking with CNEES
+add_executable(BO_Tracking_Test_linear 2D-Tracking/BO_Tracking_Test_linear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(BO_Tracking_Test_linear
+    PRIVATE
+    ${BAYESOPT_LIBRARIES}
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(BO_Tracking_Test_linear
     PRIVATE
     ${BAYESOPT_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -142,8 +201,8 @@ target_include_directories(Validate_QR
 )
 
 # Executable for demonstrating tuned parameters
-add_executable(demo_tuned_parameters 2D-Tracking/demo_tuned_parameters.cpp 2D-Tracking/fg_class_tracking.cpp)
-target_link_libraries(demo_tuned_parameters
+add_executable(demo_linear_tracking 2D-Tracking/demo_linear_tracking.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(demo_linear_tracking
     PRIVATE
     Eigen3::Eigen
     g2o_solver_csparse
@@ -155,7 +214,29 @@ target_link_libraries(demo_tuned_parameters
     yaml-cpp
 )
 
-target_include_directories(demo_tuned_parameters
+target_include_directories(demo_linear_tracking
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for pure measurement nonlinear tracking demo (no true state initialization)
+add_executable(demo_nonlinear_pure_measurement 2D-Tracking/demo_nonlinear_pure_measurement.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(demo_nonlinear_pure_measurement
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(demo_nonlinear_pure_measurement
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
@@ -272,3 +353,85 @@ target_include_directories(generate_trajectory_comparison_data
     ${HDF5_INCLUDE_DIRS}
 )
 
+
+# Flexible-Tracking folder ####################################################
+# NOTE: Flexible-Tracking directory does not exist - commenting out build targets
+
+# # Executable for generating flexible tracking data (all motion models)
+# add_executable(flexible_data_generator Flexible-Tracking/flexible_data_generator.cpp)
+# target_link_libraries(flexible_data_generator
+#     PRIVATE
+#     Eigen3::Eigen
+#     ${HDF5_LIBRARIES}
+#     yaml-cpp
+# )
+# target_include_directories(flexible_data_generator
+#     PRIVATE
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${HDF5_INCLUDE_DIRS}
+# )
+
+# # Executable for flexible Bayesian Optimization tracking
+# add_executable(flexible_bo_tracking Flexible-Tracking/flexible_bo_tracking.cpp Flexible-Tracking/fg_flexible_tracking.cpp)
+# target_link_libraries(flexible_bo_tracking
+#     PRIVATE
+#     ${BAYESOPT_LIBRARIES}
+#     Eigen3::Eigen
+#     OpenMP::OpenMP_CXX
+#     g2o_solver_csparse
+#     g2o_csparse_extension
+#     g2o_core
+#     g2o_stuff
+#     g2o_solver_dense
+#     ${HDF5_LIBRARIES}
+#     yaml-cpp
+# )
+# target_include_directories(flexible_bo_tracking
+#     PRIVATE
+#     ${BAYESOPT_INCLUDE_DIRS}
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${G2O_INCLUDE_DIRS}
+#     /usr/local/include
+#     ${HDF5_INCLUDE_DIRS}
+# )
+
+# # Executable for flexible tracking demo with optimal parameters
+# add_executable(flexible_demo Flexible-Tracking/flexible_demo.cpp Flexible-Tracking/fg_flexible_tracking.cpp)
+# target_link_libraries(flexible_demo
+#     PRIVATE
+#     Eigen3::Eigen
+#     g2o_solver_csparse
+#     g2o_csparse_extension
+#     g2o_core
+#     g2o_stuff
+#     g2o_solver_dense
+#     ${HDF5_LIBRARIES}
+#     yaml-cpp
+# )
+# target_include_directories(flexible_demo
+#     PRIVATE
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${G2O_INCLUDE_DIRS}
+#     /usr/local/include
+#     ${HDF5_INCLUDE_DIRS}
+# )
+
+# # Executable for testing flexible factor graph
+# add_executable(test_flexible_fg Flexible-Tracking/test_flexible_fg.cpp Flexible-Tracking/fg_flexible_tracking.cpp)
+# target_link_libraries(test_flexible_fg
+#     PRIVATE
+#     Eigen3::Eigen
+#     g2o_solver_csparse
+#     g2o_csparse_extension
+#     g2o_core
+#     g2o_stuff
+#     g2o_solver_dense
+#     ${HDF5_LIBRARIES}
+# )
+# target_include_directories(test_flexible_fg
+#     PRIVATE
+#     ${EIGEN3_INCLUDE_DIR}
+#     ${G2O_INCLUDE_DIRS}
+#     /usr/local/include
+#     ${HDF5_INCLUDE_DIRS}
+# )
