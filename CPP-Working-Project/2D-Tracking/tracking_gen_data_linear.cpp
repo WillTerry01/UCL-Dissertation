@@ -50,6 +50,27 @@
 // Function declaration for control input generation
 Eigen::Vector2d generateControlInput(int time_step, double dt);
 
+static Eigen::Matrix4d buildQ(double q_intensity, double dt) {
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    double V0 = q_intensity;
+    double V1 = q_intensity;
+    double min_variance = 1e-8;
+    double dt_safe = std::max(dt, 1e-9);
+    V0 = std::max(V0, min_variance / dt_safe);
+    V1 = std::max(V1, min_variance / dt_safe);
+    Q(0, 0) = dt3 / 3.0 * V0;
+    Q(1, 1) = dt3 / 3.0 * V1;
+    Q(2, 2) = dt * V0;
+    Q(3, 3) = dt * V1;
+    Q(0, 2) = dt2 / 2.0 * V0;
+    Q(2, 0) = Q(0, 2);
+    Q(1, 3) = dt2 / 2.0 * V1;
+    Q(3, 1) = Q(1, 3);
+    return Q;
+}
+
 int main() {
     // Load configuration from YAML file
     YAML::Node config = YAML::LoadFile("../scenario_linear.yaml");
@@ -57,10 +78,25 @@ int main() {
     // Parameters
     int N = config["Data_Generation"]["trajectory_length"].as<int>(); // Trajectory length
     int num_graphs = config["Data_Generation"]["num_graphs"].as<int>(); // Number of Monte Carlo samples
-    double dt = config["Data_Generation"]["dt"].as<double>();
+    double dt_default = config["Data_Generation"]["dt"].as<double>();
     Eigen::Vector2d pos(config["Data_Generation"]["pos"]["x"].as<double>(), config["Data_Generation"]["pos"]["y"].as<double>());
     Eigen::Vector2d vel(config["Data_Generation"]["vel"]["x"].as<double>(), config["Data_Generation"]["vel"]["y"].as<double>());
     unsigned int base_seed = config["Data_Generation"]["seed"].as<unsigned int>();
+    
+    // Build per-step dt schedule (length N-1). If not provided, use uniform dt.
+    std::vector<double> dt_vec(std::max(0, N - 1), dt_default);
+    if (config["Data_Generation"]["dt_pieces"]) {
+        for (const auto& piece : config["Data_Generation"]["dt_pieces"]) {
+            int from = piece["from"].as<int>();
+            int to = piece["to"].as<int>();
+            double dt_piece = piece["dt"].as<double>();
+            from = std::max(0, from);
+            to = std::min(N - 2, to);
+            for (int k = from; k <= to; ++k) {
+                dt_vec[k] = dt_piece;
+            }
+        }
+    }
     
     // Noise parameters - V₀ and V₁ are the continuous-time white noise intensities for acceleration
     double V0 = config["Data_Generation"]["q"].as<double>();  // x-direction acceleration noise intensity
@@ -78,48 +114,8 @@ int main() {
         std::cout << "Process noise enabled - tracking with motion uncertainty" << std::endl;
     }
 
-    // State transition matrix F (constant velocity model)
-    // F = [1  0  dt  0]
-    //     [0  1  0   dt]
-    //     [0  0  1   0]
-    //     [0  0  0   1]
-    Eigen::Matrix4d F = Eigen::Matrix4d::Identity();
-    F(0, 2) = dt;  // x position += x velocity * dt
-    F(1, 3) = dt;  // y position += y velocity * dt
-
-    // Control input matrix B (for future acceleration control)
-    // B = [0.5 * dt^2  0        ]
-    //     [0           0.5 * dt^2]
-    //     [dt          0        ]
-    //     [0           dt       ]
-    Eigen::Matrix<double, 4, 2> B;
-    double dt2 = dt * dt;
-    B << 0.5 * dt2, 0.0,
-         0.0, 0.5 * dt2,
-         dt, 0.0,
-         0.0, dt;
-
-    // Construct the process noise covariance matrix Q for 2D linear tracking
-    // Q = [dt^3/3 * V₀    0           dt^2/2 * V₀    0        ]
-    //     [0               dt^3/3 * V₁ 0               dt^2/2 * V₁]
-    //     [dt^2/2 * V₀    0           dt * V₀         0        ]
-    //     [0               dt^2/2 * V₁ 0               dt * V₁  ]
-    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-    double dt3 = dt2 * dt;
-    
-    // Position-position covariance (diagonal)
-    Q(0, 0) = dt3 / 3.0 * V0;  // x position variance
-    Q(1, 1) = dt3 / 3.0 * V1;  // y position variance
-    
-    // Velocity-velocity covariance (diagonal)
-    Q(2, 2) = dt * V0;         // x velocity variance
-    Q(3, 3) = dt * V1;         // y velocity variance
-    
-    // Position-velocity cross covariance
-    Q(0, 2) = dt2 / 2.0 * V0;  // x position - x velocity covariance
-    Q(2, 0) = Q(0, 2);         // symmetric
-    Q(1, 3) = dt2 / 2.0 * V1;  // y position - y velocity covariance
-    Q(3, 1) = Q(1, 3);         // symmetric
+    std::cout << "Linear data gen: default dt = " << dt_default << ", variable schedule: "
+              << (config["Data_Generation"]["dt_pieces"] ? "yes" : "no") << std::endl;
 
     // Construct the measurement noise covariance matrix R
     // R = [meas_noise_std^2    0              ]
@@ -128,33 +124,12 @@ int main() {
     R(0, 0) = meas_noise_var;  // x measurement variance
     R(1, 1) = meas_noise_var;  // y measurement variance
 
-    // Validate that Q and R are positive semi-definite
-    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q);
-    if (lltOfQ.info() != Eigen::Success) {
-        std::cerr << "ERROR: Q matrix is not positive semi-definite!" << std::endl;
-        std::cerr << "Q matrix:" << std::endl << Q << std::endl;
-        std::cerr << "V0 = " << V0 << ", V1 = " << V1 << ", dt = " << dt << std::endl;
-        return -1;
-    }
-
     Eigen::LLT<Eigen::Matrix2d> lltOfR(R);
     if (lltOfR.info() != Eigen::Success) {
         std::cerr << "ERROR: R matrix is not positive semi-definite!" << std::endl;
         std::cerr << "R matrix:" << std::endl << R << std::endl;
         std::cerr << "meas_noise_var = " << meas_noise_var << ", meas_noise_std = " << meas_noise_std << std::endl;
         return -1;
-    }
-
-    std::cout << "Q and R matrices are positive semi-definite ✓" << std::endl;
-    std::cout << "State transition matrix F:" << std::endl << F << std::endl;
-    std::cout << "Control input matrix B:" << std::endl << B << std::endl;
-    std::cout << "Q matrix:" << std::endl << Q << std::endl;
-    std::cout << "R matrix:" << std::endl << R << std::endl;
-    
-    // Debug: Show the Cholesky factor L when process noise is disabled
-    if (!use_process_noise) {
-        Eigen::Matrix4d L = lltOfQ.matrixL();
-        std::cout << "Cholesky factor L (should be zero matrix):" << std::endl << L << std::endl;
     }
 
     // Prepare output arrays
@@ -166,37 +141,50 @@ int main() {
         std::vector<Eigen::Vector4d> true_states(N);
         true_states[0] << pos.x(), pos.y(), vel.x(), vel.y();
         
-        // Add process noise using Q matrix
+        // Add process noise using per-step Q matrix
         std::mt19937 gen(base_seed + run); // Different seed for each run
+        std::normal_distribution<> normal_dist(0.0, 1.0);
         std::vector<Eigen::Vector4d> noisy_states = true_states;
         
-        // Generate correlated process noise using Cholesky decomposition
-        Eigen::Matrix4d L = lltOfQ.matrixL();
-        
         for (int k = 1; k < N; ++k) {
-            // Generate control input (acceleration) - set to zero for constant velocity
-            // TODO: Change this function to generate non-zero acceleration for controlled motion
-            Eigen::Vector2d acceleration = generateControlInput(k, dt);  // Currently returns zero
+            const double dt_k = dt_vec[k-1];
+            // State transition matrix F_k (constant velocity model)
+            Eigen::Matrix4d Fk = Eigen::Matrix4d::Identity();
+            Fk(0, 2) = dt_k;
+            Fk(1, 3) = dt_k;
             
-            // State equation: xₖ₊₁ = Fxₖ + Buₖ + vₖ
-            Eigen::Vector4d control_effect = B * acceleration;
-            true_states[k] = F * true_states[k-1] + control_effect;
+            // Control input matrix B_k
+            Eigen::Matrix<double, 4, 2> Bk;
+            double dt2 = dt_k * dt_k;
+            Bk << 0.5 * dt2, 0.0,
+                  0.0, 0.5 * dt2,
+                  dt_k, 0.0,
+                  0.0, dt_k;
+            
+            // Generate control input (acceleration) - currently zero
+            Eigen::Vector2d acceleration = generateControlInput(k, dt_k);
+            
+            // State equation: xₖ₊₁ = F_k xₖ + B_k uₖ + vₖ
+            Eigen::Vector4d control_effect = Bk * acceleration;
+            true_states[k] = Fk * true_states[k-1] + control_effect;
             
             // Apply process noise only if enabled
             if (use_process_noise) {
-                // Generate uncorrelated standard normal noise
+                Eigen::Matrix4d Qk = buildQ(V0, dt_k);
+                Eigen::LLT<Eigen::Matrix4d> lltQk(Qk);
+                if (lltQk.info() != Eigen::Success) {
+                    std::cerr << "ERROR: Q(dt_k) is not positive semi-definite at step " << k << std::endl;
+                    return -1;
+                }
+                Eigen::Matrix4d L = lltQk.matrixL();
                 Eigen::Vector4d uncorrelated_noise;
-                std::normal_distribution<> normal_dist(0.0, 1.0);
                 for (int i = 0; i < 4; ++i) {
                     uncorrelated_noise[i] = normal_dist(gen);
                 }
-                
-                // Transform to correlated noise using Q = L*L^T
                 Eigen::Vector4d process_noise = L * uncorrelated_noise;
                 true_states[k] += process_noise;
             }
             
-            // Copy to noisy states (for consistency with existing code)
             noisy_states[k] = true_states[k];
         }
 
@@ -204,17 +192,11 @@ int main() {
         Eigen::Matrix2d L_R = lltOfR.matrixL();
         std::vector<Eigen::Vector2d> noisy_measurements(N);
         for (int k = 0; k < N; ++k) {
-            // Generate uncorrelated standard normal measurement noise
             Eigen::Vector2d uncorrelated_meas_noise;
-            std::normal_distribution<> normal_dist(0.0, 1.0);
             for (int i = 0; i < 2; ++i) {
                 uncorrelated_meas_noise[i] = normal_dist(gen);
             }
-            
-            // Transform to correlated measurement noise using R = L_R*L_R^T
             Eigen::Vector2d measurement_noise = L_R * uncorrelated_meas_noise;
-            
-            // Add measurement noise to position measurements
             noisy_measurements[k] = noisy_states[k].head<2>() + measurement_noise;
         }
 
@@ -249,19 +231,9 @@ int main() {
     H5::DataSet meas_dataset = meas_file.createDataSet("measurements", H5::PredType::NATIVE_DOUBLE, meas_space);
     meas_dataset.write(measurements.data(), H5::PredType::NATIVE_DOUBLE);
 
-    std::cout << "\nFinal system matrices used for all runs:" << std::endl;
-    std::cout << "F matrix:" << std::endl << F << std::endl;
-    std::cout << "B matrix:" << std::endl << B << std::endl;
-    std::cout << "Q matrix:" << std::endl << Q << std::endl;
-    std::cout << "R matrix:" << std::endl << R << std::endl;
     std::cout << "\nSaved all noisy states to " << states_h5 << " and all measurements to " << meas_h5 << std::endl;
-    if (use_process_noise) {
-        std::cout << "Using state-space model: xₖ₊₁ = Fxₖ + Buₖ + vₖ with uₖ = 0 (constant velocity + process noise)" << std::endl;
-    } else {
-        std::cout << "Using state-space model: xₖ₊₁ = Fxₖ + Buₖ (constant velocity, no process noise)" << std::endl;
-    }
     std::cout << "Using measurement model: zₖ = Hxₖ + wₖ" << std::endl;
-    std::cout << "V0 = " << V0 << ", V1 = " << V1 << ", dt = " << dt << std::endl;
+    std::cout << "V0 = " << V0 << ", V1 = " << V1 << ", default dt = " << dt_default << std::endl;
     return 0;
 }
 

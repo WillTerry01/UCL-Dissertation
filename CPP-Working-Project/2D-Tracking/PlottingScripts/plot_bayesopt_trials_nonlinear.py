@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import h5py
 import os
+import yaml
 
 def load_nonlinear_bo_trials(h5_path):
     """
@@ -250,6 +251,34 @@ def print_bo_statistics(Q, R, C):
     print(f"  Absolute improvement: {improvement:.4f}")
     print(f"  Percentage improvement: {improvement_pct:.2f}%")
 
+def plot_filtered_qr(Q, R, C, yaml_path='../scenario_nonlinear.yaml'):
+    try:
+        with open(yaml_path, 'r') as yf:
+            cfg = yaml.safe_load(yf)
+        q_true = float(cfg['Data_Generation']['q'])
+        R_true = float(cfg['Data_Generation']['meas_noise_var'])
+        abs_tol = float(os.environ.get('BO_FILTER_ABS_TOL', '0.01'))  # absolute window, default 0.01
+        q_min, q_max = q_true - abs_tol, q_true + abs_tol
+        R_min, R_max = R_true - abs_tol, R_true + abs_tol
+
+        valid = np.isfinite(C) & (C < 1e5)
+        Qv = Q[valid]; Rv = R[valid]; Cv = C[valid]
+        mask = (Qv >= q_min) & (Qv <= q_max) & (Rv >= R_min) & (Rv <= R_max)
+
+        plt.figure(figsize=(8, 6))
+        sc = plt.scatter(Qv[mask], Rv[mask], c=Cv[mask], cmap='viridis', s=60, edgecolor='k')
+        plt.colorbar(sc, label='C (Consistency Metric)')
+        plt.scatter([q_true], [R_true], color='red', s=120, marker='*', label='True (q, R)')
+        plt.xlabel('Q (Process Noise Intensity)')
+        plt.ylabel('R (Measurement Noise Variance)')
+        plt.title(f'Filtered Q–R near true values (±{abs_tol})')
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+    except Exception as e:
+        print(f"Skipped filtered 2D plot: {e}")
+
 def main():
     """
     Main function to load and plot nonlinear BO trials
@@ -273,6 +302,9 @@ def main():
     
     print("\nCreating 2D analysis plots...")
     plot_2d_analysis(Q, R, C, save_plots=True)
+
+    print("\nCreating filtered 2D Q–R plot near ground truth...")
+    plot_filtered_qr(Q, R, C)
     
     print("\nCreating convergence analysis...")
     plot_convergence_analysis(Q, R, C, save_plots=True)

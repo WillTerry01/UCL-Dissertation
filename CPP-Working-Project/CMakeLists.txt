@@ -353,6 +353,29 @@ target_include_directories(generate_trajectory_comparison_data
     ${HDF5_INCLUDE_DIRS}
 )
 
+# Debug executable for testing optimal parameters
+add_executable(debug_optimal_parameters 2D-Tracking/debug_optimal_parameters.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(debug_optimal_parameters
+    PRIVATE
+    Eigen3::Eigen
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(debug_optimal_parameters
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+
 
 # Flexible-Tracking folder ####################################################
 # NOTE: Flexible-Tracking directory does not exist - commenting out build targets
@@ -435,3 +458,17 @@ target_include_directories(generate_trajectory_comparison_data
 #     /usr/local/include
 #     ${HDF5_INCLUDE_DIRS}
 # )
+
+# Executable for nonlinear sanity checks (RMSE and dt schedule)
+add_executable(nonlinear_sanity_checks 2D-Tracking/nonlinear_sanity_checks.cpp)
+target_link_libraries(nonlinear_sanity_checks
+    PRIVATE
+    Eigen3::Eigen
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(nonlinear_sanity_checks
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
+)

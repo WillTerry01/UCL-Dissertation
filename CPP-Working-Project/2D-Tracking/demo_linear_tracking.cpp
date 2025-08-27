@@ -90,6 +90,16 @@ int main() {
         if (consistency_method == "nis3") {
             fg.run(all_states[run], &all_measurements[run], dt, false);  // No optimization for NIS3
         } else {
+            // Read optimizer settings
+            int max_iters = config["optimizer"]["max_iterations"].as<int>(100);
+            bool verbose = config["optimizer"]["verbose"].as<bool>(false);
+            std::string init_mode = config["optimizer"]["init_mode"].as<std::string>("measurement");
+            double pos_std = config["optimizer"]["init_jitter"]["pos_std"].as<double>(0.05);
+            double vel_std = config["optimizer"]["init_jitter"]["vel_std"].as<double>(0.2);
+            fg.setMaxIterations(max_iters);
+            fg.setVerbose(verbose);
+            fg.setInitMode(init_mode);
+            fg.setInitJitter(pos_std, vel_std);
             fg.run(all_states[run], &all_measurements[run], dt, true);   // Optimization for NIS4
         }
         
@@ -97,6 +107,15 @@ int main() {
         auto est_states = fg.getAllEstimates();
         auto true_states = fg.getAllTrueStates();
         double chi2 = fg.getChi2();
+        
+        {
+            int breakdown_runs = config["logging"]["breakdown_runs"].as<int>(0);
+            if (run < breakdown_runs) {
+                auto br = fg.computeChi2Breakdown();
+                std::cout << "Demo run chi2 breakdown: process=" << br.processChi2
+                          << ", meas=" << br.measurementChi2 << ", total=" << br.totalChi2 << std::endl;
+            }
+        }
         
         // Calculate consistency metric (same as used in BO optimization)
         double consistency_metric = 0.0;

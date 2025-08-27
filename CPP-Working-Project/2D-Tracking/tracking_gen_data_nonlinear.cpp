@@ -40,6 +40,27 @@
 // Function declarations
 Eigen::Vector4d predictStateCT(const Eigen::Vector4d& x, double dt, double turn_rate);
 
+static Eigen::Matrix4d buildQ(double q_intensity, double dt) {
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    double V0 = q_intensity;
+    double V1 = q_intensity;
+    double min_variance = 1e-8;
+    double dt_safe = std::max(dt, 1e-9);
+    V0 = std::max(V0, min_variance / dt_safe);
+    V1 = std::max(V1, min_variance / dt_safe);
+    Q(0, 0) = dt3 / 3.0 * V0;
+    Q(1, 1) = dt3 / 3.0 * V1;
+    Q(2, 2) = dt * V0;
+    Q(3, 3) = dt * V1;
+    Q(0, 2) = dt2 / 2.0 * V0;
+    Q(2, 0) = Q(0, 2);
+    Q(1, 3) = dt2 / 2.0 * V1;
+    Q(3, 1) = Q(1, 3);
+    return Q;
+}
+
 int main() {
     // Load configuration from YAML file
     YAML::Node config = YAML::LoadFile("../scenario_nonlinear.yaml");
@@ -47,10 +68,26 @@ int main() {
     // Parameters
     int N = config["Data_Generation"]["trajectory_length"].as<int>();
     int num_graphs = config["Data_Generation"]["num_graphs"].as<int>();
-    double dt = config["Data_Generation"]["dt"].as<double>();
+    double dt_default = config["Data_Generation"]["dt"].as<double>();
     Eigen::Vector2d pos(config["Data_Generation"]["pos"]["x"].as<double>(), config["Data_Generation"]["pos"]["y"].as<double>());
     Eigen::Vector2d vel(config["Data_Generation"]["vel"]["x"].as<double>(), config["Data_Generation"]["vel"]["y"].as<double>());
     unsigned int base_seed = config["Data_Generation"]["seed"].as<unsigned int>();
+    
+    // Build per-step dt schedule (length N-1). If not provided, use uniform dt.
+    std::vector<double> dt_vec(std::max(0, N - 1), dt_default);
+    if (config["Data_Generation"]["dt_pieces"]) {
+        for (const auto& piece : config["Data_Generation"]["dt_pieces"]) {
+            int from = piece["from"].as<int>();
+            int to = piece["to"].as<int>();
+            double dt_piece = piece["dt"].as<double>();
+            // clamp ranges
+            from = std::max(0, from);
+            to = std::min(N - 2, to);
+            for (int k = from; k <= to; ++k) {
+                dt_vec[k] = dt_piece;
+            }
+        }
+    }
     
     // Noise parameters
     double V0 = config["Data_Generation"]["q"].as<double>();
@@ -69,7 +106,7 @@ int main() {
     std::cout << "Config file: scenario_nonlinear.yaml" << std::endl;
     std::cout << "Trajectory length: " << N << std::endl;
     std::cout << "Number of graphs: " << num_graphs << std::endl;
-    std::cout << "Time step (dt): " << dt << std::endl;
+    std::cout << "Default Time step (dt): " << dt_default << std::endl;
     std::cout << "Initial position: [" << pos[0] << ", " << pos[1] << "]" << std::endl;
     std::cout << "Initial velocity: [" << vel[0] << ", " << vel[1] << "]" << std::endl;
     std::cout << "Turn rate: " << turn_rate << " rad/s" << std::endl;
@@ -78,38 +115,10 @@ int main() {
     std::cout << "Use process noise: " << (use_process_noise ? "true" : "false") << std::endl;
     std::cout << "=============================================" << std::endl;
 
-    // Construct the process noise covariance matrix Q for 2D nonlinear tracking
-    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-    double dt2 = dt * dt;
-    double dt3 = dt2 * dt;
-    
-    // Position-position covariance (diagonal)
-    Q(0, 0) = dt3 / 3.0 * V0;
-    Q(1, 1) = dt3 / 3.0 * V1;
-    
-    // Velocity-velocity covariance (diagonal)
-    Q(2, 2) = dt * V0;
-    Q(3, 3) = dt * V1;
-    
-    // Position-velocity cross covariance
-    Q(0, 2) = dt2 / 2.0 * V0;
-    Q(2, 0) = Q(0, 2);
-    Q(1, 3) = dt2 / 2.0 * V1;
-    Q(3, 1) = Q(1, 3);
-
     // Construct the measurement noise covariance matrix R for Cartesian measurements
-    // R = [x_variance    0        ]
-    //     [0            y_variance]
     Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
     R(0, 0) = meas_noise_var;  // X position variance
     R(1, 1) = meas_noise_var;  // Y position variance
-
-    // Validate that Q and R are positive semi-definite
-    Eigen::LLT<Eigen::Matrix4d> lltOfQ(Q);
-    if (lltOfQ.info() != Eigen::Success) {
-        std::cerr << "ERROR: Q matrix is not positive semi-definite!" << std::endl;
-        return -1;
-    }
 
     Eigen::LLT<Eigen::Matrix2d> lltOfR(R);
     if (lltOfR.info() != Eigen::Success) {
@@ -119,7 +128,6 @@ int main() {
 
     std::cout << "Nonlinear system parameters:" << std::endl;
     std::cout << "  Turn rate: " << turn_rate << " rad/s" << std::endl;
-    std::cout << "  Q matrix:" << std::endl << Q << std::endl;
     std::cout << "  R matrix:" << std::endl << R << std::endl;
 
     // Prepare output arrays
@@ -132,29 +140,28 @@ int main() {
         true_states[0] << pos.x(), pos.y(), vel.x(), vel.y();
         
         std::mt19937 gen(base_seed + run);
+        std::normal_distribution<> normal_dist(0.0, 1.0);
         std::vector<Eigen::Vector4d> noisy_states = true_states;
         
-        // Generate correlated process noise using Cholesky decomposition
-        Eigen::Matrix4d L = lltOfQ.matrixL();
-        
         for (int k = 1; k < N; ++k) {
+            const double dt_k = dt_vec[k-1];
             // Nonlinear state prediction using constant turn rate model
-            true_states[k] = predictStateCT(true_states[k-1], dt, turn_rate);
+            true_states[k] = predictStateCT(true_states[k-1], dt_k, turn_rate);
             
             // Apply process noise only if enabled
             if (use_process_noise) {
-                // Generate uncorrelated standard normal noise
-                Eigen::Vector4d uncorrelated_noise;
-                std::normal_distribution<> normal_dist(0.0, 1.0);
-                for (int i = 0; i < 4; ++i) {
-                    uncorrelated_noise[i] = normal_dist(gen);
+                Eigen::Matrix4d Qk = buildQ(V0, dt_k);
+                Eigen::LLT<Eigen::Matrix4d> lltQk(Qk);
+                if (lltQk.info() != Eigen::Success) {
+                    std::cerr << "ERROR: Q(dt_k) is not positive semi-definite at step " << k << std::endl;
+                    return -1;
                 }
-                
-                // Transform to correlated noise using Q = L*L^T
+                Eigen::Matrix4d L = lltQk.matrixL();
+                Eigen::Vector4d uncorrelated_noise;
+                for (int i = 0; i < 4; ++i) uncorrelated_noise[i] = normal_dist(gen);
                 Eigen::Vector4d process_noise = L * uncorrelated_noise;
                 true_states[k] += process_noise;
             }
-            
             noisy_states[k] = true_states[k];
         }
 
@@ -162,18 +169,12 @@ int main() {
         Eigen::Matrix2d L_R = lltOfR.matrixL();
         std::vector<Eigen::Vector2d> noisy_measurements(N);
         for (int k = 0; k < N; ++k) {
-            // Generate uncorrelated standard normal measurement noise
             Eigen::Vector2d uncorrelated_meas_noise;
-            std::normal_distribution<> normal_dist(0.0, 1.0);
             for (int i = 0; i < 2; ++i) {
                 uncorrelated_meas_noise[i] = normal_dist(gen);
             }
-            
-            // Transform to correlated measurement noise
             Eigen::Vector2d measurement_noise = L_R * uncorrelated_meas_noise;
-            
-            // Generate GPS Cartesian position measurement (x, y)
-            Eigen::Vector2d true_measurement = noisy_states[k].head<2>();  // Extract x, y position
+            Eigen::Vector2d true_measurement = noisy_states[k].head<2>();
             noisy_measurements[k] = true_measurement + measurement_noise;
         }
 
@@ -208,12 +209,9 @@ int main() {
     H5::DataSet meas_dataset = meas_file.createDataSet("measurements", H5::PredType::NATIVE_DOUBLE, meas_space);
     meas_dataset.write(measurements.data(), H5::PredType::NATIVE_DOUBLE);
 
-    std::cout << "\nNonlinear data generation complete!" << std::endl;
-    std::cout << "Saved nonlinear states to " << states_h5 << std::endl;
-    std::cout << "Saved nonlinear measurements to " << meas_h5 << std::endl;
-    std::cout << "Motion model: Constant Turn Rate (ω = " << turn_rate << " rad/s)" << std::endl;
-    std::cout << "Measurement model: GPS Cartesian position (x, y)" << std::endl;
-    
+    std::cout << "Saved nonlinear states to: " << states_h5 << std::endl;
+    std::cout << "Saved nonlinear measurements to: " << meas_h5 << std::endl;
+
     return 0;
 }
 

@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import h5py
+import yaml
+import os
 
 # Load the HDF5 file
 h5_path = "../2D-Tracking/Saved_Data/2D_bayesopt_trials.h5"
@@ -61,4 +63,33 @@ plt.ylim(0, 1)
 plt.grid(True, linestyle='--', alpha=0.5)
 plt.legend()
 plt.tight_layout()
-plt.show() 
+plt.show()
+
+# Added: filtered 2D plot around true (q, R)
+try:
+    with open('../scenario_linear.yaml', 'r') as yf:
+        cfg = yaml.safe_load(yf)
+    q_true = float(cfg['Data_Generation']['q'])
+    R_true = float(cfg['Data_Generation']['meas_noise_var'])
+    abs_tol = float(os.environ.get('BO_FILTER_ABS_TOL', '0.2'))  # absolute window, default 0.001
+    q_min, q_max = q_true - abs_tol, q_true + abs_tol
+    R_min, R_max = R_true - abs_tol, R_true + abs_tol
+
+    mask = (Q >= q_min) & (Q <= q_max) & (R >= R_min) & (R <= R_max)
+    Q_f = Q[mask]
+    R_f = R[mask]
+    C_f = C[mask]
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(Q_f, R_f, c=C_f, cmap='viridis', s=60, edgecolor='k')
+    plt.colorbar(label='C (Consistency Metric)')
+    plt.scatter([q_true], [R_true], color='red', s=120, marker='*', label='True (q, R)')
+    plt.xlabel('Q (Process Noise Diagonal)')
+    plt.ylabel('R (Measurement Noise Diagonal)')
+    plt.title(f'Filtered Q–R near true values (±{abs_tol})')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+except Exception as e:
+    print(f"Skipped filtered 2D plot: {e}") 

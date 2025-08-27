@@ -1,0 +1,14 @@
+=== FINAL RESULTS COMPARISON ===
+Optimal (Data Generation) Parameters:
+  q (process noise intensity): 1
+  meas_noise_var: 2
+  nis3 value: 0.000990431
+
+BayesOpt Found Parameters:
+  q (process noise intensity): 1.01718
+  meas_noise_var: 1.9412
+  nis3 value: 0.000664205
+
+Performance Comparison:
+  Improvement: 32.9378%
+  BO is BETTER than optimal

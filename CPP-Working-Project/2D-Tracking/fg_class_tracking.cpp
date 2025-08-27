@@ -98,7 +98,7 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
     
     setupOptimizer();
     
-    // Initialization strategy based on MATLAB student approach
+    // Initialization strategy (configurable)
     if (!do_optimization) {
         // Proposition 3 (NIS3): Initialize exactly at ground truth (no noise)
         for (int k = 0; k < N_; ++k) {
@@ -107,11 +107,32 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
             optimizer_->addVertex(vertices_[k]);
         }
     } else {
-        // Proposition 4 (NIS4): Initialize at zero (matching MATLAB approach)
-        // MATLAB uses: v{n}.setEstimate(0*trueX(:, n))
+        // Proposition 4 (NIS4): Select initialization mode
+        std::mt19937 gen(42);
+        std::normal_distribution<> pos_noise(0.0, init_jitter_pos_std_);
+        std::normal_distribution<> vel_noise(0.0, init_jitter_vel_std_);
         for (int k = 0; k < N_; ++k) {
             vertices_[k]->setId(k);
-            vertices_[k]->setEstimate(Eigen::Vector4d::Zero());  // Initialize at zero
+            Eigen::Vector4d init_state = Eigen::Vector4d::Zero();
+            if (init_mode_ == "zero") {
+                init_state.setZero();
+            } else if (init_mode_ == "measurement") {
+                if (k < static_cast<int>(measurements_.size())) {
+                    init_state << measurements_[k][0], measurements_[k][1], 0.0, 0.0;
+                } else {
+                    init_state.setZero();
+                }
+            } else if (init_mode_ == "truth_plus_jitter") {
+                Eigen::Vector4d jitter;
+                jitter << pos_noise(gen), pos_noise(gen), vel_noise(gen), vel_noise(gen);
+                init_state = true_states_[k] + jitter;
+            } else {
+                // Default fallback
+                if (k < static_cast<int>(measurements_.size())) {
+                    init_state << measurements_[k][0], measurements_[k][1], 0.0, 0.0;
+                }
+            }
+            vertices_[k]->setEstimate(init_state);
             optimizer_->addVertex(vertices_[k]);
         }
     }
@@ -134,12 +155,11 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
         optimizer_->addEdge(e);
     }
     
-        // Only optimize if requested (Proposition 4), skip for Proposition 3
+        // Only optimize if requested (Proposition 4)
     if (do_optimization) {
         optimize();
     } else {
         // For Proposition 3, calculate chi2 WITHOUT optimization (per MATLAB reference)
-        // Since g2o's chi2() requires optimization, we manually calculate chi2 from residuals
         optimizer_->initializeOptimization();
         
         // Manually compute chi2 by iterating through all edges and summing their contributions
@@ -149,7 +169,6 @@ void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_state
             edge->computeError();  // Compute error vector for this edge
             
             // Use g2o's built-in chi2() method for individual edges
-            // This avoids direct access to error vectors and information matrices
             double edge_chi2 = edge->chi2();
             chi2_ += edge_chi2;
         }
@@ -165,7 +184,7 @@ void FactorGraph2DTrajectory::setupOptimizer() {
     OptimizationAlgorithmLevenberg* solver = new OptimizationAlgorithmLevenberg(std::move(blockSolver));
     optimizer_ = std::make_unique<SparseOptimizer>();
     optimizer_->setAlgorithm(solver);
-    optimizer_->setVerbose(false);
+    optimizer_->setVerbose(verbose_);
 
     // Create vertices but don't add them yet - they will be added in run()
     vertices_.resize(N_);
@@ -176,7 +195,7 @@ void FactorGraph2DTrajectory::setupOptimizer() {
 
 void FactorGraph2DTrajectory::optimize() {
     optimizer_->initializeOptimization();
-    optimizer_->optimize(20);
+    optimizer_->optimize(max_iterations_);
     chi2_ = optimizer_->chi2();
 }
 
@@ -296,38 +315,36 @@ std::vector<Eigen::Vector4d> FactorGraph2DTrajectory::getEstimatesInternal() con
     return estimates;
 }
 
+Eigen::Matrix4d FactorGraph2DTrajectory::buildQ(double q_intensity, double dt) const {
+    Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+    double dt2 = dt * dt;
+    double dt3 = dt2 * dt;
+    double V0 = q_intensity;
+    double V1 = q_intensity;
+    double min_variance = 1e-8;
+    double dt_safe = std::max(dt, 1e-9);
+    V0 = std::max(V0, min_variance / dt_safe);
+    V1 = std::max(V1, min_variance / dt_safe);
+    Q(0, 0) = dt3 / 3.0 * V0;
+    Q(1, 1) = dt3 / 3.0 * V1;
+    Q(2, 2) = dt * V0;
+    Q(3, 3) = dt * V1;
+    Q(0, 2) = dt2 / 2.0 * V0;
+    Q(2, 0) = Q(0, 2);
+    Q(1, 3) = dt2 / 2.0 * V1;
+    Q(3, 1) = Q(1, 3);
+    return Q;
+}
+
 void FactorGraph2DTrajectory::setQFromProcessNoiseIntensity(double q_intensity, double dt) {
+    // Store intensity for variable-dt use, and build default Q_ for single-dt path
+    q_intensity_ = q_intensity;
     // Construct the proper Q matrix for 2D linear tracking
     // Q = [dt^3/3 * V₀    0           dt^2/2 * V₀    0        ]
     //     [0               dt^3/3 * V₁ 0               dt^2/2 * V₁]
     //     [dt^2/2 * V₀    0           dt * V₀         0        ]
     //     [0               dt^2/2 * V₁ 0               dt * V₁  ]
-    Q_ = Eigen::Matrix4d::Zero();
-    double dt2 = dt * dt;
-    double dt3 = dt2 * dt;
-    
-    // Use same noise intensity for both x and y directions (V₀ = V₁ = q_intensity)
-    double V0 = q_intensity;
-    double V1 = q_intensity;
-    
-    // Add numerical regularization to ensure positive definiteness and invertibility
-    double min_variance = 1e-8;  // Minimum variance to prevent singularity
-    V0 = std::max(V0, min_variance / dt);  // Ensure minimum process noise intensity
-    V1 = std::max(V1, min_variance / dt);
-    
-    // Position-position covariance (diagonal)
-    Q_(0, 0) = dt3 / 3.0 * V0;  // x position variance
-    Q_(1, 1) = dt3 / 3.0 * V1;  // y position variance
-    
-    // Velocity-velocity covariance (diagonal)
-    Q_(2, 2) = dt * V0;         // x velocity variance
-    Q_(3, 3) = dt * V1;         // y velocity variance
-    
-    // Position-velocity cross covariance
-    Q_(0, 2) = dt2 / 2.0 * V0;  // x position - x velocity covariance
-    Q_(2, 0) = Q_(0, 2);        // symmetric
-    Q_(1, 3) = dt2 / 2.0 * V1;  // y position - y velocity covariance
-    Q_(3, 1) = Q_(1, 3);        // symmetric
+    Q_ = buildQ(q_intensity, dt);
 }
 
 void FactorGraph2DTrajectory::setRFromMeasurementNoise(double sigma_x, double sigma_y) {
@@ -370,6 +387,25 @@ int FactorGraph2DTrajectory::getActualGraphDimX() const {
 
 std::pair<int, int> FactorGraph2DTrajectory::getActualGraphDimensions() const {
     return std::make_pair(getActualGraphDimZ(), getActualGraphDimX());
+}
+
+FactorGraph2DTrajectory::Chi2Breakdown FactorGraph2DTrajectory::computeChi2Breakdown() {
+    Chi2Breakdown out;
+    if (!optimizer_) return out;
+    optimizer_->initializeOptimization();
+    out.totalChi2 = 0.0;
+    out.processChi2 = 0.0;
+    out.measurementChi2 = 0.0;
+    for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) {
+        g2o::OptimizableGraph::Edge* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it);
+        edge->computeError();
+        double edge_chi2 = edge->chi2();
+        out.totalChi2 += edge_chi2;
+        // Dimension 4 edges are process, dimension 2 edges are measurement in this model
+        if (edge->dimension() == 4) out.processChi2 += edge_chi2;
+        else if (edge->dimension() == 2) out.measurementChi2 += edge_chi2;
+    }
+    return out;
 }
 
 // Nonlinear system method implementations
@@ -424,10 +460,25 @@ void FactorGraph2DTrajectory::runNonlinear(const std::vector<Eigen::Vector4d>& t
             optimizer_->addVertex(vertices_[k]);
         }
     } else {
-        // Proposition 4 (NIS4): Initialize at zero (matching MATLAB approach)
+        // Proposition 4 (NIS4): Initialize based on configured mode
+        std::mt19937 gen(42);
+        std::normal_distribution<> pos_noise(0.0, init_jitter_pos_std_);
+        std::normal_distribution<> vel_noise(0.0, init_jitter_vel_std_);
         for (int k = 0; k < N_; ++k) {
             vertices_[k]->setId(k);
-            vertices_[k]->setEstimate(Eigen::Vector4d::Zero());  // Initialize at zero
+            Eigen::Vector4d init_state = Eigen::Vector4d::Zero();
+            if (init_mode_ == "zero") {
+                init_state.setZero();
+            } else if (init_mode_ == "measurement") {
+                if (k < static_cast<int>(measurements_.size())) {
+                    init_state << measurements_[k][0], measurements_[k][1], 0.0, 0.0;
+                }
+            } else if (init_mode_ == "truth_plus_jitter") {
+                Eigen::Vector4d jitter;
+                jitter << pos_noise(gen), pos_noise(gen), vel_noise(gen), vel_noise(gen);
+                init_state = true_states_[k] + jitter;
+            }
+            vertices_[k]->setEstimate(init_state);
             optimizer_->addVertex(vertices_[k]);
         }
     }
@@ -467,7 +518,7 @@ void FactorGraph2DTrajectory::runNonlinear(const std::vector<Eigen::Vector4d>& t
         }
     }
     
-    // Only optimize if requested (Proposition 4), skip for Proposition 3
+    // Only optimize if requested (Proposition 4)
     if (do_optimization) {
         optimize();
     } else {
@@ -485,6 +536,144 @@ void FactorGraph2DTrajectory::runNonlinear(const std::vector<Eigen::Vector4d>& t
             chi2_ += edge_chi2;
         }
     }
+}
+
+void FactorGraph2DTrajectory::run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, const std::vector<double>& dt_vec, bool do_optimization) {
+    if (dt_vec.size() != (true_states.size() - 1)) {
+        throw std::runtime_error("dt_vec length must be N-1 where N is the number of states");
+    }
+    if (R_.isZero()) {
+        throw std::runtime_error("R matrix is not initialized. Please call setRFromMeasurementNoise() or set R_ directly before calling run().");
+    }
+    N_ = true_states.size();
+    true_states_ = true_states;
+    if (measurements) measurements_ = *measurements; else throw std::runtime_error("Measurements are required.");
+    setupOptimizer();
+
+    // Initialize vertices
+    if (!do_optimization) {
+        for (int k = 0; k < N_; ++k) { vertices_[k]->setId(k); vertices_[k]->setEstimate(true_states_[k]); optimizer_->addVertex(vertices_[k]); }
+    } else {
+        std::mt19937 gen(42);
+        std::normal_distribution<> pos_noise(0.0, init_jitter_pos_std_);
+        std::normal_distribution<> vel_noise(0.0, init_jitter_vel_std_);
+        for (int k = 0; k < N_; ++k) {
+            vertices_[k]->setId(k);
+            Eigen::Vector4d init_state = Eigen::Vector4d::Zero();
+            if (init_mode_ == "zero") init_state.setZero();
+            else if (init_mode_ == "measurement") { if (k < static_cast<int>(measurements_.size())) init_state << measurements_[k][0], measurements_[k][1], 0.0, 0.0; }
+            else if (init_mode_ == "truth_plus_jitter") { Eigen::Vector4d jitter; jitter << pos_noise(gen), pos_noise(gen), vel_noise(gen), vel_noise(gen); init_state = true_states_[k] + jitter; }
+            vertices_[k]->setEstimate(init_state);
+            optimizer_->addVertex(vertices_[k]);
+        }
+    }
+
+    // Add process edges with per-edge dt and Q(dt)
+    for (int k = 1; k < N_; ++k) {
+        const double dt_k = dt_vec[k-1];
+        Eigen::Matrix4d Qk = buildQ(q_intensity_, dt_k);
+        Eigen::LLT<Eigen::Matrix4d> lltQk(Qk);
+        if (lltQk.info() != Eigen::Success) {
+            throw std::runtime_error("Q(dt_k) is not positive definite.");
+        }
+        if (motion_model_type_ == "linear") {
+            EdgeProcessModel* e = new EdgeProcessModel(dt_k);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Qk.inverse());
+            optimizer_->addEdge(e);
+        } else if (motion_model_type_ == "constant_turn_rate") {
+            EdgeNonlinearMotionCT* e = new EdgeNonlinearMotionCT(dt_k, turn_rate_);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Qk.inverse());
+            optimizer_->addEdge(e);
+        } else {
+            throw std::runtime_error("Unsupported motion model type: " + motion_model_type_);
+        }
+    }
+
+    // Measurement edges stay the same
+    for (int k = 0; k < N_; ++k) {
+        EdgeGPSMeasurement* e = new EdgeGPSMeasurement();
+        e->setVertex(0, vertices_[k]);
+        e->setMeasurement(measurements_[k]);
+        e->setInformation(R_.inverse());
+        optimizer_->addEdge(e);
+    }
+
+    if (do_optimization) optimize(); else { optimizer_->initializeOptimization(); chi2_ = 0.0; for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) { auto* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it); edge->computeError(); chi2_ += edge->chi2(); } }
+}
+
+void FactorGraph2DTrajectory::runNonlinear(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, const std::vector<double>& dt_vec, bool do_optimization) {
+    if (dt_vec.size() != (true_states.size() - 1)) {
+        throw std::runtime_error("dt_vec length must be N-1 where N is the number of states");
+    }
+    if (R_.isZero()) {
+        throw std::runtime_error("R matrix is not initialized. Please call setRFromMeasurementNoise() or set R_ directly before calling runNonlinear().");
+    }
+    N_ = true_states.size();
+    true_states_ = true_states;
+    if (measurements) measurements_ = *measurements; else throw std::runtime_error("Measurements are required.");
+    setupOptimizer();
+
+    // Initialize vertices (same as other overload)
+    if (!do_optimization) {
+        for (int k = 0; k < N_; ++k) { vertices_[k]->setId(k); vertices_[k]->setEstimate(true_states_[k]); optimizer_->addVertex(vertices_[k]); }
+    } else {
+        std::mt19937 gen(42);
+        std::normal_distribution<> pos_noise(0.0, init_jitter_pos_std_);
+        std::normal_distribution<> vel_noise(0.0, init_jitter_vel_std_);
+        for (int k = 0; k < N_; ++k) {
+            vertices_[k]->setId(k);
+            Eigen::Vector4d init_state = Eigen::Vector4d::Zero();
+            if (init_mode_ == "zero") init_state.setZero();
+            else if (init_mode_ == "measurement") { if (k < static_cast<int>(measurements_.size())) init_state << measurements_[k][0], measurements_[k][1], 0.0, 0.0; }
+            else if (init_mode_ == "truth_plus_jitter") { Eigen::Vector4d jitter; jitter << pos_noise(gen), pos_noise(gen), vel_noise(gen), vel_noise(gen); init_state = true_states_[k] + jitter; }
+            vertices_[k]->setEstimate(init_state);
+            optimizer_->addVertex(vertices_[k]);
+        }
+    }
+
+    // Add process edges with per-edge dt and Q(dt)
+    for (int k = 1; k < N_; ++k) {
+        const double dt_k = dt_vec[k-1];
+        Eigen::Matrix4d Qk = buildQ(q_intensity_, dt_k);
+        Eigen::LLT<Eigen::Matrix4d> lltQk(Qk);
+        if (lltQk.info() != Eigen::Success) {
+            throw std::runtime_error("Q(dt_k) is not positive definite.");
+        }
+        if (motion_model_type_ == "linear") {
+            EdgeProcessModel* e = new EdgeProcessModel(dt_k);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Qk.inverse());
+            optimizer_->addEdge(e);
+        } else if (motion_model_type_ == "constant_turn_rate") {
+            EdgeNonlinearMotionCT* e = new EdgeNonlinearMotionCT(dt_k, turn_rate_);
+            e->setVertex(0, vertices_[k-1]);
+            e->setVertex(1, vertices_[k]);
+            e->setMeasurement(Eigen::Vector4d::Zero());
+            e->setInformation(Qk.inverse());
+            optimizer_->addEdge(e);
+        } else {
+            throw std::runtime_error("Unsupported motion model type: " + motion_model_type_);
+        }
+    }
+
+    // Measurement edges stay the same
+    for (int k = 0; k < N_; ++k) {
+        EdgeGPSMeasurement* e = new EdgeGPSMeasurement();
+        e->setVertex(0, vertices_[k]);
+        e->setMeasurement(measurements_[k]);
+        e->setInformation(R_.inverse());
+        optimizer_->addEdge(e);
+    }
+
+    if (do_optimization) optimize(); else { optimizer_->initializeOptimization(); chi2_ = 0.0; for (auto it = optimizer_->edges().begin(); it != optimizer_->edges().end(); ++it) { auto* edge = static_cast<g2o::OptimizableGraph::Edge*>(*it); edge->computeError(); chi2_ += edge->chi2(); } }
 }
 
  

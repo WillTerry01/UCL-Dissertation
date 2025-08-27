@@ -171,6 +171,12 @@ public:
         bool output_information_matrix = false;
     };
 
+    struct Chi2Breakdown {
+        double processChi2 = 0.0;
+        double measurementChi2 = 0.0;
+        double totalChi2 = 0.0;
+    };
+
     FactorGraph2DTrajectory();
     void setOutputOptions(const OutputOptions& options) { output_options_ = options; }
     OutputOptions getOutputOptions() const { return output_options_; }
@@ -183,6 +189,8 @@ public:
     // Run the factor graph optimization with user-provided true states and optional measurements.
     // If do_optimization is false, graph is built but not optimized (for Proposition 3)
     void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, double dt = 1.0, bool do_optimization = true);
+    // Variable-dt overload (linear model)
+    void run(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, const std::vector<double>& dt_vec, bool do_optimization = true);
     void writeCSV(const std::string& filename = "../H5_Files/2d_trajectory_estimate.csv") const;
     void writeHDF5(const std::string& filename = "../H5_Files/2d_trajectory_estimate.h5") const;
     double getChi2() const;
@@ -203,6 +211,15 @@ public:
     void setMotionModelType(const std::string& model_type, double turn_rate = 0.0);
     void setMeasurementModelType(const std::string& model_type);  // Removed sensor_pos parameter
     void runNonlinear(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements = nullptr, double dt = 1.0, bool do_optimization = true);
+    // Variable-dt overload (nonlinear model)
+    void runNonlinear(const std::vector<Eigen::Vector4d>& true_states, const std::vector<Eigen::Vector2d>* measurements, const std::vector<double>& dt_vec, bool do_optimization = true);
+
+    // Optimizer configuration and initialization controls
+    void setMaxIterations(int max_iters) { max_iterations_ = max_iters; }
+    void setVerbose(bool verbose) { verbose_ = verbose; }
+    void setInitMode(const std::string& mode) { init_mode_ = mode; }
+    void setInitJitter(double pos_std, double vel_std) { init_jitter_pos_std_ = pos_std; init_jitter_vel_std_ = vel_std; }
+    Chi2Breakdown computeChi2Breakdown();
 
 private:
     std::vector<Vertex4D*> vertices_;
@@ -216,6 +233,7 @@ private:
     Eigen::Matrix2d R_;
     OutputOptions output_options_;
     double dt_;  // Add dt as a member variable
+    double q_intensity_ = 0.0;  // Store process noise intensity for variable-dt edges
     
     // Nonlinear system parameters
     std::string motion_model_type_;  // "linear", "constant_turn_rate", "dubins"
@@ -227,4 +245,14 @@ private:
     std::vector<Eigen::Vector4d> getEstimatesInternal() const;
     void setupOptimizer();
     void optimize();
+
+    // Helper to build Q(dt) from q_intensity
+    Eigen::Matrix4d buildQ(double q_intensity, double dt) const;
+
+    // Optimizer config and initialization
+    int max_iterations_ = 100;
+    bool verbose_ = false;
+    std::string init_mode_ = "measurement"; // options: "zero", "measurement", "truth_plus_jitter"
+    double init_jitter_pos_std_ = 0.1;
+    double init_jitter_vel_std_ = 0.5;
 }; 

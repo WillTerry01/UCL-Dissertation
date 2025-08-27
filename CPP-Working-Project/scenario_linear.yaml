@@ -1,19 +1,23 @@
 Data_Generation:
-  dt: 0.5
+  dt: 1.0
   meas_noise_var: 2.0
-  num_graphs: 1000
+  num_graphs: 500
   pos:
     x: 0
     y: 0
-  q: 0.5
+  q: 1.0
   seed: 33333
-  trajectory_length: 50
+  trajectory_length: 200
   use_process_noise: true
   vel:
     x: 1
     y: 1
+  dt_pieces:
+    - {from: 0, to: 67, dt: 1.0}
+    - {from: 68, to: 133, dt: 5}
+    - {from: 134, to: 200, dt: 10}
 bayesopt:
-  consistency_method: nis4
+  consistency_method: nis3
   crit_name: cEI
   ei_kappa: 0.1
   force_jump: 10
@@ -24,14 +28,23 @@ bayesopt:
   noise: 0.01
   surr_name: sGaussianProcess
   verbose_level: 1
+optimizer:
+  max_iterations: 30
+  verbose: false
+  init_mode: measurement
+  init_jitter:
+    pos_std: 0.05
+    vel_std: 0.2
+logging:
+  breakdown_runs: 2
 parameters:
-- lower_bound: 0.001
-  name: q
-  upper_bound: 2.0
-- lower_bound: 0.001
-  name: R
-  upper_bound: 4.0
+  - lower_bound: 0.001
+    name: q
+    upper_bound: 2.0
+  - lower_bound: 0.001
+    name: R
+    upper_bound: 4.0
 validate_filter:
-  R: 100
-  min_objective: 0.052907824319500016
-  q: 100
+  R: 1.9411986653740494
+  min_objective: 0.00066420517825923795
+  q: 1.0171818024334625

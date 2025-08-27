@@ -11,6 +11,7 @@
 #include "H5Cpp.h"
 #include <array>
 #include <yaml-cpp/yaml.h>
+#include <fstream>
 
 // Define Hyper Parameters for BAYESOPT
 void initialisation(bopt_params &params, const YAML::Node& config) {
@@ -65,7 +66,8 @@ public:
                              double lower_bound_R, double upper_bound_R,
                              double dt,
                              const std::string &consistency_method,
-                             double turn_rate)
+                             double turn_rate,
+                             const std::vector<double>& dt_vec = std::vector<double>())
         : bayesopt::ContinuousModel(2, params),
           all_states_(all_states),
           all_measurements_(all_measurements),
@@ -76,7 +78,8 @@ public:
           upper_bound_R_(upper_bound_R),
           dt_(dt),
           consistency_method_(consistency_method),
-          turn_rate_(turn_rate) {}
+          turn_rate_(turn_rate),
+          dt_vec_(dt_vec) {}
 
     double evaluateSample(const boost::numeric::ublas::vector<double> &query) override {
         static int eval_count = 0;
@@ -149,9 +152,12 @@ public:
             opts.output_true_state = true;
             opts.output_information_matrix = true;
             fg.setOutputOptions(opts);
-            
-            // Use NONLINEAR optimization
-            fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_);
+            // Use NONLINEAR optimization with variable dt (if provided)
+            if (!dt_vec_.empty() && static_cast<int>(dt_vec_.size()) == T - 1) {
+                fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_vec_, true);
+            } else {
+                fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_);
+            }
             
             auto est_states = fg.getAllEstimates();
             auto true_states = fg.getAllTrueStates();
@@ -196,8 +202,12 @@ public:
         temp_fg.setMotionModelType("constant_turn_rate", turn_rate_);
         temp_fg.setMeasurementModelType("gps");  // GPS Cartesian position measurements
         temp_fg.setQFromProcessNoiseIntensity(V0, dt_);
-        temp_fg.setRFromMeasurementNoise(meas_noise_std, 0.1);
-        temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_);
+        temp_fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
+        if (!dt_vec_.empty() && static_cast<int>(dt_vec_.size()) == T - 1) {
+            temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_vec_, true);
+        } else {
+            temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_);
+        }
         
         auto [dimZ, dimX] = temp_fg.getActualGraphDimensions();
         int total_dof = dimX;  // For NEES, DOF = total vertex dimensions
@@ -234,9 +244,33 @@ public:
             fg.setQFromProcessNoiseIntensity(V0, dt_);
             fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
             
+            // Configure optimizer (defaults provided if not in YAML)
+            try {
+                YAML::Node cfg = YAML::LoadFile("../scenario_nonlinear.yaml");
+                int max_iters = cfg["optimizer"]["max_iterations"].as<int>(100);
+                bool verbose = cfg["optimizer"]["verbose"].as<bool>(false);
+                std::string init_mode = cfg["optimizer"]["init_mode"].as<std::string>("measurement");
+                double pos_std = cfg["optimizer"]["init_jitter"]["pos_std"].as<double>(0.05);
+                double vel_std = cfg["optimizer"]["init_jitter"]["vel_std"].as<double>(0.2);
+                fg.setMaxIterations(max_iters);
+                fg.setVerbose(verbose);
+                fg.setInitMode(init_mode);
+                fg.setInitJitter(pos_std, vel_std);
+            } catch (const std::exception&) {
+                // Use defaults if YAML not present or fields missing
+                fg.setMaxIterations(100);
+                fg.setVerbose(false);
+                fg.setInitMode("measurement");
+                fg.setInitJitter(0.05, 0.2);
+            }
+
             // Run optimization
             bool do_optimization = (consistency_method_ == "nis4");
-            fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_, do_optimization);
+            if (!dt_vec_.empty() && static_cast<int>(dt_vec_.size()) == T - 1) {
+                fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_vec_, do_optimization);
+            } else {
+                fg.runNonlinear(all_states_[run], &all_measurements_[run], dt_, do_optimization);
+            }
             
             // Get chi-squared value (this represents the NIS for the entire trajectory)
             double chi2 = fg.getChi2();
@@ -264,8 +298,12 @@ public:
         temp_fg.setMotionModelType("constant_turn_rate", turn_rate_);
         temp_fg.setMeasurementModelType("gps");  // GPS Cartesian position measurements
         temp_fg.setQFromProcessNoiseIntensity(V0, dt_);
-        temp_fg.setRFromMeasurementNoise(meas_noise_std, 0.1);
-        temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_, false);
+        temp_fg.setRFromMeasurementNoise(meas_noise_std, meas_noise_std);
+        if (!dt_vec_.empty() && static_cast<int>(dt_vec_.size()) == T - 1) {
+            temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_vec_, false);
+        } else {
+            temp_fg.runNonlinear(all_states_[0], &all_measurements_[0], dt_, false);
+        }
         
         auto [dimZ, dimX] = temp_fg.getActualGraphDimensions();
         int total_dof;
@@ -310,6 +348,7 @@ private:
     double dt_;
     std::string consistency_method_;
     double turn_rate_;
+    std::vector<double> dt_vec_; // Added to store per-step dt schedule
 };
 
 int main() {
@@ -343,6 +382,25 @@ int main() {
     int num_graphs = all_states.size();
     int T = all_states[0].size();
     double dt = config["Data_Generation"]["dt"].as<double>();
+    // Build per-step dt schedule (optional)
+    std::vector<double> dt_vec(std::max(0, T - 1), dt);
+    if (config["Data_Generation"]["dt_pieces"]) {
+        for (const auto& piece : config["Data_Generation"]["dt_pieces"]) {
+            int from = piece["from"].as<int>();
+            int to = piece["to"].as<int>();
+            double dt_piece = piece["dt"].as<double>();
+            from = std::max(0, from);
+            to = std::min(T - 2, to);
+            for (int k = from; k <= to; ++k) dt_vec[k] = dt_piece;
+        }
+    }
+    if (!dt_vec.empty()) {
+        double max_ratio = 1.0;
+        for (size_t i = 1; i < dt_vec.size(); ++i) if (dt_vec[i-1] > 0) max_ratio = std::max(max_ratio, dt_vec[i]/dt_vec[i-1]);
+        std::cout << "dt_vec size: " << dt_vec.size() << ", first 10: ";
+        for (size_t i = 0; i < std::min<size_t>(10, dt_vec.size()); ++i) std::cout << dt_vec[i] << (i+1<10?", ":"\n");
+        std::cout << "Max consecutive dt ratio: " << max_ratio << std::endl;
+    }
     
     // Get parameter bounds
     double lower_bound_Q = config["parameters"][0]["lower_bound"].as<double>();
@@ -367,6 +425,34 @@ int main() {
               << "], R=[" << lower_bound_R << ", " << upper_bound_R << "]" << std::endl;
     std::cout << "Consistency method: " << consistency_method << std::endl;
     
+    // Extract optimal parameters from data generation for comparison
+    double optimal_q = config["Data_Generation"]["q"].as<double>();
+    double optimal_meas_noise_var = config["Data_Generation"]["meas_noise_var"].as<double>();
+    std::cout << "\n=== TESTING OPTIMAL (DATA GENERATION) PARAMETERS ===" << std::endl;
+    std::cout << "Optimal q (process noise intensity): " << optimal_q << std::endl;
+    std::cout << "Optimal measurement noise variance: " << optimal_meas_noise_var << std::endl;
+    auto optimal_start = std::chrono::high_resolution_clock::now();
+    {
+        std::vector<std::array<double, 3>> temp_trials;
+        bopt_params temp_params = initialize_parameters_to_default();
+        initialisation(temp_params, config);
+        CMetricBayesOptNonlinear temp_opt(
+            temp_params, all_states, all_measurements, temp_trials,
+            lower_bound_Q, upper_bound_Q, lower_bound_R, upper_bound_R,
+            dt, consistency_method, turn_rate, dt_vec
+        );
+        boost::numeric::ublas::vector<double> optimal_query(2);
+        optimal_query(0) = optimal_q;
+        optimal_query(1) = optimal_meas_noise_var;
+        // Evaluate optimal parameters
+        double optimal_objective = temp_opt.evaluateSample(optimal_query);
+        auto optimal_end = std::chrono::high_resolution_clock::now();
+        auto optimal_duration = std::chrono::duration_cast<std::chrono::milliseconds>(optimal_end - optimal_start);
+        std::cout << "Optimal parameter evaluation completed in " << optimal_duration.count() << " ms" << std::endl;
+        std::cout << "Optimal " << consistency_method << " value: " << optimal_objective << std::endl;
+        std::cout << "=========================================================\n" << std::endl;
+    }
+    
     // Set up BayesOpt parameters
     bopt_params params = initialize_parameters_to_default();
     initialisation(params, config);
@@ -384,7 +470,7 @@ int main() {
     // Create Bayesian optimization object
     CMetricBayesOptNonlinear bayes_opt(params, all_states, all_measurements, trials,
                                        lower_bound_Q, upper_bound_Q, lower_bound_R, upper_bound_R,
-                                       dt, consistency_method, turn_rate);
+                                       dt, consistency_method, turn_rate, dt_vec);
     bayes_opt.setBoundingBox(lb, ub);
     
     std::cout << "\nStarting Bayesian Optimization for Nonlinear System..." << std::endl;
@@ -407,6 +493,58 @@ int main() {
     std::cout << "Best process noise intensity (q): " << result(0) << std::endl;
     std::cout << "Best measurement noise variance (R): " << result(1) << std::endl;
     std::cout << "Best objective value: " << best_objective << std::endl;
+    
+    // Print comparison between optimal and BO results (mirroring linear script)
+    std::cout << "\n=== FINAL RESULTS COMPARISON ===" << std::endl;
+    std::cout << "Optimal (Data Generation) Parameters:" << std::endl;
+    std::cout << "  q (process noise intensity): " << optimal_q << std::endl;
+    std::cout << "  meas_noise_var: " << config["Data_Generation"]["meas_noise_var"].as<double>() << std::endl;
+    // Recompute optimal objective quickly via a temporary evaluation
+    {
+        std::vector<std::array<double, 3>> tmp_trials;
+        bopt_params tmp_params = initialize_parameters_to_default();
+        initialisation(tmp_params, config);
+        CMetricBayesOptNonlinear tmp_opt(
+            tmp_params, all_states, all_measurements, tmp_trials,
+            lower_bound_Q, upper_bound_Q, lower_bound_R, upper_bound_R,
+            dt, consistency_method, turn_rate, dt_vec
+        );
+        boost::numeric::ublas::vector<double> qv(2);
+        qv(0) = optimal_q;
+        qv(1) = config["Data_Generation"]["meas_noise_var"].as<double>();
+        double optimal_objective = tmp_opt.evaluateSample(qv);
+        std::cout << "  " << consistency_method << " value: " << optimal_objective << std::endl;
+        std::cout << std::endl;
+        std::cout << "BayesOpt Found Parameters:" << std::endl;
+        std::cout << "  q (process noise intensity): " << result(0) << std::endl;
+        std::cout << "  meas_noise_var: " << result(1) << std::endl;
+        std::cout << "  " << consistency_method << " value: " << best_objective << std::endl;
+        std::cout << std::endl;
+        std::cout << "Performance Comparison:" << std::endl;
+        std::cout << "  Improvement: " << ((optimal_objective - best_objective) / optimal_objective * 100.0) << "%" << std::endl;
+        std::cout << "  BO is " << (best_objective < optimal_objective ? "BETTER" : "WORSE") << " than optimal" << std::endl;
+        std::cout << "=================================" << std::endl;
+        
+        // Save both optimal and BO results to file
+        std::ofstream txt("../2D-Tracking/Saved_Data/2D_bayesopt_nonlinear_best.txt");
+        if (txt) {
+            txt << "=== FINAL RESULTS COMPARISON ===" << std::endl;
+            txt << "Optimal (Data Generation) Parameters:" << std::endl;
+            txt << "  q (process noise intensity): " << optimal_q << std::endl;
+            txt << "  meas_noise_var: " << config["Data_Generation"]["meas_noise_var"].as<double>() << std::endl;
+            txt << "  " << consistency_method << " value: " << optimal_objective << std::endl;
+            txt << std::endl;
+            txt << "BayesOpt Found Parameters:" << std::endl;
+            txt << "  q (process noise intensity): " << result(0) << std::endl;
+            txt << "  meas_noise_var: " << result(1) << std::endl;
+            txt << "  " << consistency_method << " value: " << best_objective << std::endl;
+            txt << std::endl;
+            txt << "Performance Comparison:" << std::endl;
+            txt << "  Improvement: " << ((optimal_objective - best_objective) / optimal_objective * 100.0) << "%" << std::endl;
+            txt << "  BO is " << (best_objective < optimal_objective ? "BETTER" : "WORSE") << " than optimal" << std::endl;
+            txt.close();
+        }
+    }
     
     // Save results
     std::string h5_filename = "../2D-Tracking/Saved_Data/2D_bayesopt_nonlinear_trials.h5";
