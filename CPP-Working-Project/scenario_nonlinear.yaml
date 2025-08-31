@@ -1,25 +1,18 @@
 Data_Generation:
   dt: 1.0
-  meas_noise_var: 1.0
+  meas_noise_var: 2.0
   num_graphs: 500
   pos:
     x: 0
     y: 0
-  q: 0.5
+  q: 1.0
   seed: 33333
   trajectory_length: 200
   use_process_noise: true
   vel:
     x: 1
     y: 1
-  turn_rate: 0.01
-  dt_pieces:
-    - {from: 0, to: 99, dt: 1.0}
-    - {from: 100, to: 119, dt: 1.5}
-    - {from: 120, to: 139, dt: 2.0}
-    - {from: 140, to: 159, dt: 3.0}
-    - {from: 160, to: 179, dt: 4.0}
-    - {from: 180, to: 199, dt: 5.0}
+  turn_rate: 0.1
 bayesopt:
   consistency_method: nis3
   crit_name: cEI
@@ -39,10 +32,26 @@ parameters:
   - lower_bound: 0.001
     name: R
     upper_bound: 4.0
+nis_eval:
+  method: nis3
+  output: ../2D-Tracking/Saved_Data/2D_nis_nonlinear.h5
+  tests:
+    - {q: 1.0, R: 2.0}
 validate_filter:
-  R: 0.97963386667573027
-  min_objective: 0.00098025947155031706
-  q: 0.50559703704169545
+  R: 2.2226666666666666
+  min_objective: 0.03370262455633051
+  q: 0.86925252525252528
   optimization_date: 1756207776
   consistency_method: nis3
   turn_rate: 0.01
+grid_search:
+  enabled: true
+  consistency_method: nis4
+  q_min: 0.001
+  q_max: 2.0
+  q_points: 100
+  R_min: 0.001
+  R_max: 4.0
+  R_points: 100
+  save_h5: true
+  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials.h5

@@ -12,10 +12,6 @@ Data_Generation:
   vel:
     x: 1
     y: 1
-  dt_pieces:
-    - {from: 0, to: 67, dt: 1.0}
-    - {from: 68, to: 133, dt: 5}
-    - {from: 134, to: 200, dt: 10}
 bayesopt:
   consistency_method: nis3
   crit_name: cEI
@@ -44,7 +40,23 @@ parameters:
   - lower_bound: 0.001
     name: R
     upper_bound: 4.0
+nis_eval:
+  method: nis3
+  output: ../2D-Tracking/Saved_Data/2D_nis_linear.h5
+  tests:
+    - {q: 1.0, R: 2.0}
 validate_filter:
-  R: 1.9411986653740494
-  min_objective: 0.00066420517825923795
-  q: 1.0171818024334625
+  R: 2.1822727272727271
+  min_objective: 0.034564682482465268
+  q: 0.90963636363636358
+grid_search:
+  enabled: true
+  consistency_method: nis4
+  q_min: 0.001
+  q_max: 2.0
+  q_points: 100
+  R_min: 0.001
+  R_max: 4.0
+  R_points: 100
+  save_h5: true
+  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_trials.h5

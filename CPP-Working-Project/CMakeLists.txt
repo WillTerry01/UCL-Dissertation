@@ -175,6 +175,52 @@ target_include_directories(BO_Tracking_Test_linear
     ${HDF5_INCLUDE_DIRS}
 )
 
+# Add linear grid search executable
+add_executable(GridSearch_Tracking_linear 2D-Tracking/GridSearch_Tracking_linear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(GridSearch_Tracking_linear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(GridSearch_Tracking_linear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Add nonlinear grid search executable
+add_executable(GridSearch_Tracking_Nonlinear 2D-Tracking/GridSearch_Tracking_Nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(GridSearch_Tracking_Nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(GridSearch_Tracking_Nonlinear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
 # Executable for validating filter performance
 add_executable(Validate_QR 2D-Tracking/Validate_QR.cpp 2D-Tracking/fg_class_tracking.cpp)
 target_link_libraries(Validate_QR
@@ -258,6 +304,51 @@ target_link_libraries(test_system_matrices
 )
 
 target_include_directories(test_system_matrices
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# NIS collectors (linear and nonlinear)
+add_executable(collect_nis_linear 2D-Tracking/collect_nis_linear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(collect_nis_linear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(collect_nis_linear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+add_executable(collect_nis_nonlinear 2D-Tracking/collect_nis_nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(collect_nis_nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(collect_nis_nonlinear
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
