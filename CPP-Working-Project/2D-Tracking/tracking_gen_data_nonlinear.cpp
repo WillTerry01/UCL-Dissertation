@@ -40,7 +40,7 @@
 // Function declarations
 Eigen::Vector4d predictStateCT(const Eigen::Vector4d& x, double dt, double turn_rate);
 
-static Eigen::Matrix4d buildQ(double q_intensity, double dt) {
+static Eigen::Matrix4d buildQ(double q_intensity, double dt, double turn_rate = 0.0) {
     Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
     double dt2 = dt * dt;
     double dt3 = dt2 * dt;
@@ -58,6 +58,17 @@ static Eigen::Matrix4d buildQ(double q_intensity, double dt) {
     Q(2, 0) = Q(0, 2);
     Q(1, 3) = dt2 / 2.0 * V1;
     Q(3, 1) = Q(1, 3);
+    // Apply mid-interval rotation for CT to match factor graph dynamics
+    if (std::abs(turn_rate) > 1e-12) {
+        double theta = turn_rate * dt * 0.5;
+        double c = std::cos(theta);
+        double s = std::sin(theta);
+        Eigen::Matrix2d R2; R2 << c, -s, s, c;
+        Eigen::Matrix4d T = Eigen::Matrix4d::Zero();
+        T.block<2,2>(0,0) = R2;
+        T.block<2,2>(2,2) = R2;
+        Q = T * Q * T.transpose();
+    }
     return Q;
 }
 
@@ -150,7 +161,7 @@ int main() {
             
             // Apply process noise only if enabled
             if (use_process_noise) {
-                Eigen::Matrix4d Qk = buildQ(V0, dt_k);
+                Eigen::Matrix4d Qk = buildQ(V0, dt_k, turn_rate);
                 Eigen::LLT<Eigen::Matrix4d> lltQk(Qk);
                 if (lltQk.info() != Eigen::Success) {
                     std::cerr << "ERROR: Q(dt_k) is not positive semi-definite at step " << k << std::endl;

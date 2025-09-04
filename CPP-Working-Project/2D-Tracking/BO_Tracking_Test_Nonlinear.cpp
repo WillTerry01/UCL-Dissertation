@@ -12,6 +12,7 @@
 #include <array>
 #include <yaml-cpp/yaml.h>
 #include <fstream>
+#include <limits>
 
 // Define Hyper Parameters for BAYESOPT
 void initialisation(bopt_params &params, const YAML::Node& config) {
@@ -92,6 +93,8 @@ public:
         double meas_noise_var = query(1);  // Measurement noise variance (R)
         double meas_noise_std = sqrt(meas_noise_var);  // Measurement noise standard deviation
         double consistency_metric = 1e6;
+        double nis_mean = std::numeric_limits<double>::quiet_NaN();
+        double nis_var = std::numeric_limits<double>::quiet_NaN();
         
         if (V0 >= lower_bound_Q_ && V0 <= upper_bound_Q_ && meas_noise_var >= lower_bound_R_ && meas_noise_var <= upper_bound_R_) {
             int num_graphs = all_states_.size();
@@ -105,9 +108,9 @@ public:
             }
             
             if (consistency_method_ == "cnees") {
-                consistency_metric = computeCNEES(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count);
+                consistency_metric = computeCNEES(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count, &nis_mean, &nis_var);
             } else if (consistency_method_ == "nis3" || consistency_method_ == "nis4") {
-                consistency_metric = computeCNIS(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count);
+                consistency_metric = computeCNIS(num_graphs, T, nx, nz, V0, meas_noise_std, eval_count, &nis_mean, &nis_var);
             } else {
                 std::cerr << "Unknown consistency method: " << consistency_method_ << std::endl;
                 return 1e6;
@@ -117,6 +120,8 @@ public:
         // Store trial results
         std::array<double, 3> trial_result = {V0, meas_noise_var, consistency_metric};
         trials_.push_back(trial_result);
+        trial_nis_mean_.push_back(nis_mean);
+        trial_nis_var_.push_back(nis_var);
         
         auto eval_end = std::chrono::high_resolution_clock::now();
         auto eval_duration = std::chrono::duration_cast<std::chrono::milliseconds>(eval_end - eval_start);
@@ -128,7 +133,8 @@ public:
     }
 
     // Method to compute CNEES (Normalized Estimation Error Squared)
-    double computeCNEES(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count) {
+    double computeCNEES(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count,
+                        double* out_mean = nullptr, double* out_var = nullptr) {
         if (eval_count <= 1) {
             std::cout << "Computing CNEES using NEES (state estimation error) for NONLINEAR system..." << std::endl;
         }
@@ -197,6 +203,9 @@ public:
             variance_nees /= (num_graphs - 1);
         }
 
+        if (out_mean) *out_mean = mean_nees;
+        if (out_var) *out_var = variance_nees;
+
         // Step 3: DOF calculation for NEES using actual graph dimensions
         FactorGraph2DTrajectory temp_fg;
         temp_fg.setMotionModelType("constant_turn_rate", turn_rate_);
@@ -225,7 +234,8 @@ public:
     }
 
     // Method to compute CNIS (Normalized Innovation Squared) 
-    double computeCNIS(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count) {
+    double computeCNIS(int num_graphs, int T, int nx, int nz, double V0, double meas_noise_std, int eval_count,
+                       double* out_mean = nullptr, double* out_var = nullptr) {
         if (eval_count <= 1) {
             std::cout << "Computing CNIS using NIS (measurement innovation) for NONLINEAR system with method: " << consistency_method_ << std::endl;
         }
@@ -247,9 +257,9 @@ public:
             // Configure optimizer (defaults provided if not in YAML)
             try {
                 YAML::Node cfg = YAML::LoadFile("../scenario_nonlinear.yaml");
-                int max_iters = cfg["optimizer"]["max_iterations"].as<int>(100);
+                int max_iters = cfg["optimizer"]["max_iterations"].as<int>(20);
                 bool verbose = cfg["optimizer"]["verbose"].as<bool>(false);
-                std::string init_mode = cfg["optimizer"]["init_mode"].as<std::string>("measurement");
+                std::string init_mode = cfg["optimizer"]["init_mode"].as<std::string>("zero");
                 double pos_std = cfg["optimizer"]["init_jitter"]["pos_std"].as<double>(0.05);
                 double vel_std = cfg["optimizer"]["init_jitter"]["vel_std"].as<double>(0.2);
                 fg.setMaxIterations(max_iters);
@@ -258,9 +268,9 @@ public:
                 fg.setInitJitter(pos_std, vel_std);
             } catch (const std::exception&) {
                 // Use defaults if YAML not present or fields missing
-                fg.setMaxIterations(100);
+                fg.setMaxIterations(20);
                 fg.setVerbose(false);
-                fg.setInitMode("measurement");
+                fg.setInitMode("zero");
                 fg.setInitJitter(0.05, 0.2);
             }
 
@@ -292,6 +302,9 @@ public:
         if (num_graphs > 1) {
             variance_nis /= (num_graphs - 1);
         }
+        
+        if (out_mean) *out_mean = mean_nis;
+        if (out_var) *out_var = variance_nis;
         
         // Get actual graph dimensions for DOF calculation
         FactorGraph2DTrajectory temp_fg;
@@ -340,6 +353,9 @@ public:
         return CNIS;
     }
 
+    const std::vector<double>& getTrialMeans() const { return trial_nis_mean_; }
+    const std::vector<double>& getTrialVars() const { return trial_nis_var_; }
+
 private:
     const std::vector<std::vector<Eigen::Vector4d>> &all_states_;
     const std::vector<std::vector<Eigen::Vector2d>> &all_measurements_;
@@ -349,6 +365,8 @@ private:
     std::string consistency_method_;
     double turn_rate_;
     std::vector<double> dt_vec_; // Added to store per-step dt schedule
+    std::vector<double> trial_nis_mean_;
+    std::vector<double> trial_nis_var_;
 };
 
 int main() {
@@ -489,10 +507,72 @@ int main() {
     // Get best result
     double best_objective = bayes_opt.getValueAtMinimum();
     
+    // Compute NIS stats at BayesOpt best
+    double bo_nis_mean = std::numeric_limits<double>::quiet_NaN();
+    double bo_nis_var = std::numeric_limits<double>::quiet_NaN();
+    double bo_nis_log_mean = 0.0;
+    double bo_nis_log_var = 0.0;
+    {
+        // Reuse the same evaluator path as CNIS to compute raw NIS moments
+        // by calling evaluateSample side-effect data is from all runs; however we want a clean compute
+        const int num_graphs = static_cast<int>(all_states.size());
+        const int Tloc = static_cast<int>(all_states[0].size());
+        const double meas_std = std::sqrt(result(1));
+        std::vector<double> nis_values(num_graphs, 0.0);
+        #pragma omp parallel for
+        for (int run = 0; run < num_graphs; ++run) {
+            FactorGraph2DTrajectory fg;
+            fg.setMotionModelType("constant_turn_rate", turn_rate);
+            fg.setMeasurementModelType("gps");
+            fg.setQFromProcessNoiseIntensity(result(0), dt);
+            fg.setRFromMeasurementNoise(meas_std, meas_std);
+            bool do_optimization = (consistency_method == "nis4");
+            if (!dt_vec.empty() && static_cast<int>(dt_vec.size()) == Tloc - 1) {
+                fg.runNonlinear(all_states[run], &all_measurements[run], dt_vec, do_optimization);
+            } else {
+                fg.runNonlinear(all_states[run], &all_measurements[run], dt, do_optimization);
+            }
+            nis_values[run] = fg.getChi2();
+        }
+        bo_nis_mean = 0.0;
+        for (int i = 0; i < num_graphs; ++i) bo_nis_mean += nis_values[i];
+        bo_nis_mean /= static_cast<double>(num_graphs);
+        bo_nis_var = 0.0;
+        for (int i = 0; i < num_graphs; ++i) { double d = nis_values[i] - bo_nis_mean; bo_nis_var += d * d; }
+        if (num_graphs > 1) bo_nis_var /= static_cast<double>(num_graphs - 1);
+        
+        // Calculate CNIS components
+        FactorGraph2DTrajectory temp_fg;
+        temp_fg.setMotionModelType("constant_turn_rate", turn_rate);
+        temp_fg.setMeasurementModelType("gps");
+        temp_fg.setQFromProcessNoiseIntensity(result(0), dt);
+        temp_fg.setRFromMeasurementNoise(meas_std, meas_std);
+        if (!dt_vec.empty() && static_cast<int>(dt_vec.size()) == Tloc - 1) {
+            temp_fg.runNonlinear(all_states[0], &all_measurements[0], dt_vec, false);
+        } else {
+            temp_fg.runNonlinear(all_states[0], &all_measurements[0], dt, false);
+        }
+        auto [dimZ, dimX] = temp_fg.getActualGraphDimensions();
+        int total_dof;
+        if (consistency_method == "nis3") {
+            total_dof = dimZ;
+        } else if (consistency_method == "nis4") {
+            total_dof = dimZ - dimX;
+        } else {
+            total_dof = 2; // fallback
+        }
+        bo_nis_log_mean = std::log(bo_nis_mean / total_dof);
+        bo_nis_log_var = (bo_nis_var > 0) ? std::log(bo_nis_var / (2.0 * total_dof)) : 0.0;
+    }
+    
     std::cout << "\n=== OPTIMIZATION RESULTS ===" << std::endl;
     std::cout << "Best process noise intensity (q): " << result(0) << std::endl;
     std::cout << "Best measurement noise variance (R): " << result(1) << std::endl;
     std::cout << "Best objective value: " << best_objective << std::endl;
+    std::cout << "NIS mean at best: " << bo_nis_mean << std::endl;
+    std::cout << "NIS variance at best: " << bo_nis_var << std::endl;
+    std::cout << "CNIS log_mean at best: " << bo_nis_log_mean << std::endl;
+    std::cout << "CNIS log_variance at best: " << bo_nis_log_var << std::endl;
     
     // Print comparison between optimal and BO results (mirroring linear script)
     std::cout << "\n=== FINAL RESULTS COMPARISON ===" << std::endl;
@@ -519,6 +599,10 @@ int main() {
         std::cout << "  q (process noise intensity): " << result(0) << std::endl;
         std::cout << "  meas_noise_var: " << result(1) << std::endl;
         std::cout << "  " << consistency_method << " value: " << best_objective << std::endl;
+        std::cout << "  NIS mean: " << bo_nis_mean << std::endl;
+        std::cout << "  NIS variance: " << bo_nis_var << std::endl;
+        std::cout << "  CNIS log_mean: " << bo_nis_log_mean << std::endl;
+        std::cout << "  CNIS log_variance: " << bo_nis_log_var << std::endl;
         std::cout << std::endl;
         std::cout << "Performance Comparison:" << std::endl;
         std::cout << "  Improvement: " << ((optimal_objective - best_objective) / optimal_objective * 100.0) << "%" << std::endl;
@@ -538,6 +622,10 @@ int main() {
             txt << "  q (process noise intensity): " << result(0) << std::endl;
             txt << "  meas_noise_var: " << result(1) << std::endl;
             txt << "  " << consistency_method << " value: " << best_objective << std::endl;
+            txt << "  NIS mean: " << bo_nis_mean << std::endl;
+            txt << "  NIS variance: " << bo_nis_var << std::endl;
+            txt << "  CNIS log_mean: " << bo_nis_log_mean << std::endl;
+            txt << "  CNIS log_variance: " << bo_nis_log_var << std::endl;
             txt << std::endl;
             txt << "Performance Comparison:" << std::endl;
             txt << "  Improvement: " << ((optimal_objective - best_objective) / optimal_objective * 100.0) << "%" << std::endl;
@@ -557,6 +645,8 @@ int main() {
         r_values.push_back(trial[1]);
         objective_values.push_back(trial[2]);
     }
+    const auto& nis_means = bayes_opt.getTrialMeans();
+    const auto& nis_vars = bayes_opt.getTrialVars();
     
     hsize_t trials_dims[1] = {static_cast<hsize_t>(trials.size())};
     H5::DataSpace trials_space(1, trials_dims);
@@ -568,6 +658,14 @@ int main() {
     q_dataset.write(q_values.data(), H5::PredType::NATIVE_DOUBLE);
     r_dataset.write(r_values.data(), H5::PredType::NATIVE_DOUBLE);
     obj_dataset.write(objective_values.data(), H5::PredType::NATIVE_DOUBLE);
+
+    // Save mean/variance if available and matching length
+    if (nis_means.size() == trials.size() && nis_vars.size() == trials.size()) {
+        H5::DataSet mean_dataset = file.createDataSet("nis_mean_values", H5::PredType::NATIVE_DOUBLE, trials_space);
+        H5::DataSet var_dataset  = file.createDataSet("nis_variance_values", H5::PredType::NATIVE_DOUBLE, trials_space);
+        mean_dataset.write(nis_means.data(), H5::PredType::NATIVE_DOUBLE);
+        var_dataset.write(nis_vars.data(), H5::PredType::NATIVE_DOUBLE);
+    }
     
     file.close();
     
@@ -600,6 +698,22 @@ int main() {
     std::cout << "  q: " << result(0) << std::endl;
     std::cout << "  R: " << result(1) << std::endl;
     std::cout << "  min_objective: " << best_objective << std::endl;
+    std::cout << "  nis_mean: " << bo_nis_mean << std::endl;
+    std::cout << "  nis_covariance: " << bo_nis_var << std::endl;
+    std::cout << "  cnis_log_mean: " << bo_nis_log_mean << std::endl;
+    std::cout << "  cnis_log_variance: " << bo_nis_log_var << std::endl;
+    // Also append NIS stats to YAML validate_filter
+    try {
+        yaml_config["validate_filter"]["nis_mean"] = bo_nis_mean;
+        yaml_config["validate_filter"]["nis_covariance"] = bo_nis_var; // variance of chi2 across runs
+        yaml_config["validate_filter"]["cnis_log_mean"] = bo_nis_log_mean;
+        yaml_config["validate_filter"]["cnis_log_variance"] = bo_nis_log_var;
+        std::ofstream yaml_file2(yaml_filename);
+        yaml_file2 << yaml_config;
+        yaml_file2.close();
+    } catch (const std::exception &e) {
+        std::cerr << "Warning: Failed to append NIS stats to YAML: " << e.what() << std::endl;
+    }
     
     return 0;
 } 

@@ -1,13 +1,13 @@
 Data_Generation:
   dt: 1.0
   meas_noise_var: 2.0
-  num_graphs: 500
+  num_graphs: 10000
   pos:
     x: 0
     y: 0
   q: 1.0
   seed: 33333
-  trajectory_length: 200
+  trajectory_length: 100
   use_process_noise: true
   vel:
     x: 1
@@ -46,17 +46,21 @@ nis_eval:
   tests:
     - {q: 1.0, R: 2.0}
 validate_filter:
-  R: 2.1822727272727271
-  min_objective: 0.034564682482465268
-  q: 0.90963636363636358
+  R: 1.8780816326530609
+  min_objective: 0.0063931376809150762
+  q: 1.184081632653061
+  nis_mean: 593.21305670521338
+  nis_covariance: 1192.391435085515
+  cnis_log_mean: -0.0046870464146504219
+  cnis_log_variance: 0.00032833123225629814
 grid_search:
   enabled: true
   consistency_method: nis4
   q_min: 0.001
   q_max: 2.0
-  q_points: 100
+  q_points: 50
   R_min: 0.001
   R_max: 4.0
-  R_points: 100
+  R_points: 50
   save_h5: true
-  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_trials.h5
+  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_trials_nis4.h5

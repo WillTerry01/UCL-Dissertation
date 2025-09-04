@@ -2,13 +2,17 @@
 Optimal (Data Generation) Parameters:
   q (process noise intensity): 1
   meas_noise_var: 2
-  nis3 value: 0.000990431
+  nis3 value: 0.0119351
 
 BayesOpt Found Parameters:
-  q (process noise intensity): 1.01718
-  meas_noise_var: 1.9412
-  nis3 value: 0.000664205
+  q (process noise intensity): 1.00943
+  meas_noise_var: 1.9953
+  nis3 value: 0.00501538
+  NIS mean: 593.213
+  NIS variance: 1192.39
+  CNIS log_mean component: -0.00468705
+  CNIS log_variance component: 0.000328331
 
 Performance Comparison:
-  Improvement: 32.9378%
+  Improvement: 57.978%
   BO is BETTER than optimal

@@ -333,6 +333,17 @@ Eigen::Matrix4d FactorGraph2DTrajectory::buildQ(double q_intensity, double dt) c
     Q(2, 0) = Q(0, 2);
     Q(1, 3) = dt2 / 2.0 * V1;
     Q(3, 1) = Q(1, 3);
+    // If using CT model, rotate Q by mid-interval rotation to better match dynamics
+    if (motion_model_type_ == "constant_turn_rate" && std::abs(turn_rate_) > 1e-12) {
+        double theta = turn_rate_ * dt * 0.5;  // mid-interval rotation
+        double c = std::cos(theta);
+        double s = std::sin(theta);
+        Eigen::Matrix2d R2; R2 << c, -s, s, c;
+        Eigen::Matrix4d T = Eigen::Matrix4d::Zero();
+        T.block<2,2>(0,0) = R2;
+        T.block<2,2>(2,2) = R2;
+        Q = T * Q * T.transpose();
+    }
     return Q;
 }
 

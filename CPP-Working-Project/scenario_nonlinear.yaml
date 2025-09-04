@@ -1,13 +1,13 @@
 Data_Generation:
   dt: 1.0
   meas_noise_var: 2.0
-  num_graphs: 500
+  num_graphs: 10000
   pos:
     x: 0
     y: 0
   q: 1.0
   seed: 33333
-  trajectory_length: 200
+  trajectory_length: 100
   use_process_noise: true
   vel:
     x: 1
@@ -21,10 +21,17 @@ bayesopt:
   lcb_alpha: 1.0
   n_init_samples: 100
   n_inner_iterations: 200
-  n_iterations: 800
+  n_iterations: 750
   noise: 0.01
   surr_name: sGaussianProcess
   verbose_level: 1
+optimizer:
+  max_iterations: 100
+  verbose: false
+  init_mode: measurement
+  init_jitter:
+    pos_std: 0.05
+    vel_std: 0.2
 parameters:
   - lower_bound: 0.001
     name: q
@@ -33,25 +40,29 @@ parameters:
     name: R
     upper_bound: 4.0
 nis_eval:
-  method: nis3
+  method: nis4
   output: ../2D-Tracking/Saved_Data/2D_nis_nonlinear.h5
   tests:
     - {q: 1.0, R: 2.0}
 validate_filter:
-  R: 2.2226666666666666
-  min_objective: 0.03370262455633051
-  q: 0.86925252525252528
-  optimization_date: 1756207776
-  consistency_method: nis3
-  turn_rate: 0.01
+  R: 2.1229183673469385
+  min_objective: 0.006152163981352622
+  q: 0.98010204081632646
+  optimization_date: 1756990654
+  consistency_method: nis4
+  turn_rate: 0.10000000000000001
+  nis_mean: 35.952707444454937
+  nis_covariance: 71.996545274002671
+  cnis_log_mean: -0.0013145457352474984
+  cnis_log_variance: -4.7983456706147365e-05
 grid_search:
   enabled: true
-  consistency_method: nis4
+  consistency_method: nis3
   q_min: 0.001
   q_max: 2.0
-  q_points: 100
+  q_points: 50
   R_min: 0.001
   R_max: 4.0
-  R_points: 100
+  R_points: 50
   save_h5: true
   output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials.h5

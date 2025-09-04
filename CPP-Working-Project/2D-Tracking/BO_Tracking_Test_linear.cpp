@@ -55,6 +55,79 @@ void infer_problem_size_h5(const std::string& filename, int& num_graphs, int& Tr
     }
 }
 
+// Compute NIS mean and variance for given parameters (linear model)
+static void compute_nis_stats_linear(
+    const std::vector<std::vector<Eigen::Vector4d>> &all_states,
+    const std::vector<std::vector<Eigen::Vector2d>> &all_measurements,
+    const std::vector<double> &dt_vec,
+    double dt,
+    double q,
+    double meas_noise_var,
+    const std::string &consistency_method,
+    double &out_mean,
+    double &out_var,
+    double &out_log_mean_component,
+    double &out_log_var_component)
+{
+    const int num_graphs = static_cast<int>(all_states.size());
+    const int T = static_cast<int>(all_states[0].size());
+    const double meas_std = std::sqrt(meas_noise_var);
+
+    std::vector<double> nis_full_system(num_graphs, 0.0);
+
+    #pragma omp parallel for
+    for (int run = 0; run < num_graphs; ++run) {
+        FactorGraph2DTrajectory fg;
+        fg.setQFromProcessNoiseIntensity(q, dt);
+        fg.setRFromMeasurementNoise(meas_std, meas_std);
+        const bool do_optimization = (consistency_method == "nis4");
+        if (!dt_vec.empty() && static_cast<int>(dt_vec.size()) == T - 1) {
+            fg.run(all_states[run], &all_measurements[run], dt_vec, do_optimization);
+        } else {
+            fg.run(all_states[run], &all_measurements[run], dt, do_optimization);
+        }
+        nis_full_system[run] = fg.getChi2();
+    }
+
+    double mean_nis = 0.0;
+    for (int run = 0; run < num_graphs; ++run) mean_nis += nis_full_system[run];
+    mean_nis /= static_cast<double>(num_graphs);
+
+    double var_nis = 0.0;
+    for (int run = 0; run < num_graphs; ++run) {
+        double d = nis_full_system[run] - mean_nis;
+        var_nis += d * d;
+    }
+    if (num_graphs > 1) var_nis /= static_cast<double>(num_graphs - 1);
+
+    // Calculate CNIS components (same logic as in the class)
+    FactorGraph2DTrajectory temp_fg;
+    temp_fg.setQFromProcessNoiseIntensity(q, dt);
+    temp_fg.setRFromMeasurementNoise(meas_std, meas_std);
+    if (!dt_vec.empty() && static_cast<int>(dt_vec.size()) == T - 1) {
+        temp_fg.run(all_states[0], &all_measurements[0], dt_vec, (consistency_method == "nis4"));
+    } else {
+        temp_fg.run(all_states[0], &all_measurements[0], dt, (consistency_method == "nis4"));
+    }
+    auto [dimZ, dimX] = temp_fg.getActualGraphDimensions();
+    int total_dof;
+    if (consistency_method == "nis3") {
+        total_dof = dimZ;
+    } else if (consistency_method == "nis4") {
+        total_dof = dimZ - dimX;
+    } else {
+        total_dof = 2; // fallback
+    }
+    
+    double log_mean = std::log(mean_nis / total_dof);
+    double log_variance = (var_nis > 0) ? std::log(var_nis / (2.0 * total_dof)) : 0.0;
+
+    out_mean = mean_nis;
+    out_var = var_nis;
+    out_log_mean_component = log_mean;
+    out_log_var_component = log_variance;
+}
+
 
 
 class CMetricBayesOpt : public bayesopt::ContinuousModel {
@@ -469,7 +542,7 @@ int main() {
     
     std::cout << "Optimal parameter evaluation completed in " << optimal_duration.count() << " seconds." << std::endl;
     std::cout << "Optimal " << consistency_method << " value: " << optimal_objective << std::endl;
-    std::cout << "========================================================="\
+    std::cout << "========================================================="
  << std::endl;
 
     // Prepare to collect trials
@@ -520,6 +593,11 @@ int main() {
     yaml_out << out_config;
     yaml_out.close();
 
+    // Compute NIS stats for BayesOpt best
+    double bo_nis_mean = 0.0, bo_nis_var = 0.0;
+    double bo_nis_log_mean = 0.0, bo_nis_log_var = 0.0;
+    compute_nis_stats_linear(all_states, all_measurements, dt_vec, dt, result(0), result(1), consistency_method, bo_nis_mean, bo_nis_var, bo_nis_log_mean, bo_nis_log_var);
+
     // Print comparison between optimal and BO results
     std::cout << "\n=== FINAL RESULTS COMPARISON ===" << std::endl;
     std::cout << "Optimal (Data Generation) Parameters:" << std::endl;
@@ -532,6 +610,10 @@ int main() {
     std::cout << "  q (process noise intensity): " << result(0) << std::endl;
     std::cout << "  meas_noise_var: " << result(1) << std::endl;
     std::cout << "  " << consistency_method << " value: " << minC << std::endl;
+    std::cout << "  NIS mean: " << bo_nis_mean << std::endl;
+    std::cout << "  NIS variance: " << bo_nis_var << std::endl;
+    std::cout << "  CNIS log_mean component: " << bo_nis_log_mean << std::endl;
+    std::cout << "  CNIS log_variance component: " << bo_nis_log_var << std::endl;
     std::cout << std::endl;
     
     std::cout << "Performance Comparison:" << std::endl;
@@ -553,11 +635,29 @@ int main() {
     cfile << "  q (process noise intensity): " << result(0) << std::endl;
     cfile << "  meas_noise_var: " << result(1) << std::endl;
     cfile << "  " << consistency_method << " value: " << minC << std::endl;
+    cfile << "  NIS mean: " << bo_nis_mean << std::endl;
+    cfile << "  NIS variance: " << bo_nis_var << std::endl;
+    cfile << "  CNIS log_mean component: " << bo_nis_log_mean << std::endl;
+    cfile << "  CNIS log_variance component: " << bo_nis_log_var << std::endl;
     cfile << std::endl;
     cfile << "Performance Comparison:" << std::endl;
     cfile << "  Improvement: " << ((optimal_objective - minC) / optimal_objective * 100.0) << "%" << std::endl;
     cfile << "  BO is " << (minC < optimal_objective ? "BETTER" : "WORSE") << " than optimal" << std::endl;
     cfile.close();
+
+    // Also save NIS statistics for best parameters into YAML validate_filter
+    try {
+        YAML::Node out2 = YAML::LoadFile("../scenario_linear.yaml");
+        out2["validate_filter"]["nis_mean"] = bo_nis_mean;
+        out2["validate_filter"]["nis_covariance"] = bo_nis_var; // variance of chi2 across runs
+        out2["validate_filter"]["cnis_log_mean"] = bo_nis_log_mean;
+        out2["validate_filter"]["cnis_log_variance"] = bo_nis_log_var;
+        std::ofstream yaml_out2("../scenario_linear.yaml");
+        yaml_out2 << out2;
+        yaml_out2.close();
+    } catch (const std::exception &e) {
+        std::cerr << "Warning: Failed to append NIS stats to YAML: " << e.what() << std::endl;
+    }
 
     return 0;
 } 

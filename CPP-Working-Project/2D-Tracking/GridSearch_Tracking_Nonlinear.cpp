@@ -271,6 +271,7 @@ int main() {
             double q = q_vals[iq];
             double R = R_vals[iR];
             double meas_std = std::sqrt(R);
+            auto item_start = std::chrono::high_resolution_clock::now();
             double metric = 0.0;
             if (consistency_method == "nis3" || consistency_method == "nis4") {
                 metric = computeCNIS_nonlinear(all_states, all_measurements, dt_vec, dt, q, meas_std,
@@ -278,6 +279,13 @@ int main() {
             } else {
                 metric = computeCNEES_nonlinear(all_states, all_measurements, dt_vec, dt, q, meas_std, turn_rate);
             }
+            auto item_end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> item_dur = item_end - item_start;
+            std::cout << "  Cell (row " << (iq + 1) << "/" << q_points
+                      << ", col " << (iR + 1) << "/" << R_points
+                      << ") q=" << q << ", R=" << R
+                      << ", turn_rate=" << turn_rate
+                      << " took " << item_dur.count() << " s" << std::endl;
             q_out.push_back(q);
             r_out.push_back(R);
             obj_out.push_back(metric);

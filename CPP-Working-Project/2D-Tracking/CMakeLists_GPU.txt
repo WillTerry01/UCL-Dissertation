@@ -1,0 +1,130 @@
+# CMakeLists.txt with GPU support
+cmake_minimum_required(VERSION 3.18)  # Required for CUDA support
+project(FactorGraph2DTracking LANGUAGES CXX CUDA)
+
+# C++ Standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# CUDA Configuration
+enable_language(CUDA)
+find_package(CUDAToolkit REQUIRED)
+
+# Check if CUDA is available
+if(CUDAToolkit_FOUND)
+    message(STATUS "CUDA found: ${CUDAToolkit_VERSION}")
+    set(CUDA_AVAILABLE TRUE)
+else()
+    message(STATUS "CUDA not found, building CPU-only version")
+    set(CUDA_AVAILABLE FALSE)
+endif()
+
+# Find packages
+find_package(PkgConfig REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+
+# Find g2o
+find_package(g2o REQUIRED)
+
+# Include directories
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${HDF5_INCLUDE_DIRS})
+
+# Compiler flags
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+
+# CUDA flags
+if(CUDA_AVAILABLE)
+    set(CMAKE_CUDA_FLAGS "-O3 -arch=sm_70")  # Adjust for your GPU architecture
+    add_definitions(-DGPU_AVAILABLE)
+endif()
+
+# Libraries to link
+set(COMMON_LIBRARIES
+    ${HDF5_LIBRARIES}
+    OpenMP::OpenMP_CXX
+    g2o::core
+    g2o::solver_csparse
+    g2o::csparse_extension
+    g2o::stuff
+)
+
+# Add CUDA libraries if available
+if(CUDA_AVAILABLE)
+    list(APPEND COMMON_LIBRARIES
+        CUDA::cublas
+        CUDA::cusolver
+        CUDA::curand
+    )
+endif()
+
+# Common source files
+set(COMMON_SOURCES
+    fg_class_tracking.cpp
+    2D_h5_loader.h
+)
+
+# GPU-specific sources
+if(CUDA_AVAILABLE)
+    list(APPEND COMMON_SOURCES
+        gpu_accelerated_example.cpp
+    )
+endif()
+
+# Executable definitions
+add_executable(convergence_test_nonlinear convergence_test_nonlinear.cpp ${COMMON_SOURCES})
+add_executable(convergence_test_linear convergence_test_linear.cpp ${COMMON_SOURCES})
+add_executable(BO_Tracking_Test_Nonlinear BO_Tracking_Test_Nonlinear.cpp ${COMMON_SOURCES})
+add_executable(BO_Tracking_Test_linear BO_Tracking_Test_linear.cpp ${COMMON_SOURCES})
+
+# GPU example executable (only if CUDA available)
+if(CUDA_AVAILABLE)
+    add_executable(gpu_accelerated_example gpu_accelerated_example.cpp)
+    target_link_libraries(gpu_accelerated_example ${COMMON_LIBRARIES})
+endif()
+
+# Link libraries
+target_link_libraries(convergence_test_nonlinear ${COMMON_LIBRARIES})
+target_link_libraries(convergence_test_linear ${COMMON_LIBRARIES})
+target_link_libraries(BO_Tracking_Test_Nonlinear ${COMMON_LIBRARIES})
+target_link_libraries(BO_Tracking_Test_linear ${COMMON_LIBRARIES})
+
+# Conditional compilation messages
+if(CUDA_AVAILABLE)
+    message(STATUS "Building with GPU acceleration support")
+    message(STATUS "CUDA Libraries: ${CUDA_LIBRARIES}")
+else()
+    message(STATUS "Building CPU-only version")
+endif()
+
+# Installation
+install(TARGETS 
+    convergence_test_nonlinear 
+    convergence_test_linear 
+    BO_Tracking_Test_Nonlinear 
+    BO_Tracking_Test_linear
+    DESTINATION bin
+)
+
+if(CUDA_AVAILABLE)
+    install(TARGETS gpu_accelerated_example DESTINATION bin)
+endif()
+
+# Print configuration summary
+message(STATUS "")
+message(STATUS "Configuration Summary:")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Eigen3: ${EIGEN3_VERSION}")
+message(STATUS "  OpenMP: ${OpenMP_CXX_VERSION}")
+message(STATUS "  HDF5: ${HDF5_VERSION}")
+if(CUDA_AVAILABLE)
+    message(STATUS "  CUDA: ${CUDAToolkit_VERSION}")
+    message(STATUS "  GPU Support: Enabled")
+else()
+    message(STATUS "  GPU Support: Disabled")
+endif()
+message(STATUS "") 

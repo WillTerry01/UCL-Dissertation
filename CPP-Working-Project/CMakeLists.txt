@@ -563,3 +563,68 @@ target_include_directories(nonlinear_sanity_checks
     ${EIGEN3_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIRS}
 )
+
+add_executable(CrossSection_Tracking_Nonlinear 2D-Tracking/CrossSection_Tracking_Nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(CrossSection_Tracking_Nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(CrossSection_Tracking_Nonlinear
+    PRIVATE
+    ${BAYESOPT_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for CNIS convergence test (nonlinear)
+add_executable(convergence_test_nonlinear 2D-Tracking/convergence_test_nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(convergence_test_nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(convergence_test_nonlinear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Executable for CNIS convergence test (linear)
+add_executable(convergence_test_linear 2D-Tracking/convergence_test_linear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(convergence_test_linear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+target_include_directories(convergence_test_linear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    ${HDF5_INCLUDE_DIRS}
+)

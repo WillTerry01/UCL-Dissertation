@@ -273,6 +273,7 @@ int main() {
             double q = q_vals[iq];
             double R = R_vals[iR];
             double meas_std = std::sqrt(R);
+            auto item_start = std::chrono::high_resolution_clock::now();
             double metric = 0.0;
             if (consistency_method == "nis3" || consistency_method == "nis4") {
                 metric = computeCNIS_linear(all_states, all_measurements, dt_vec, dt, q, meas_std,
@@ -280,6 +281,12 @@ int main() {
             } else {
                 metric = computeCNEES_linear(all_states, all_measurements, dt_vec, dt, q, meas_std);
             }
+            auto item_end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> item_dur = item_end - item_start;
+            std::cout << "  Cell (row " << (iq + 1) << "/" << q_points
+                      << ", col " << (iR + 1) << "/" << R_points
+                      << ") q=" << q << ", R=" << R
+                      << " took " << item_dur.count() << " s" << std::endl;
             trials.push_back({q, R, metric});
             if (metric < best_obj) { best_obj = metric; best_q = q; best_R = R; }
         }
