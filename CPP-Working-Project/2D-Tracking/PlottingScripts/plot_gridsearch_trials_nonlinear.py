@@ -9,7 +9,7 @@ from matplotlib import colors
 import argparse
 
 PLOTS_DIR = "../2D-Tracking/plots"
-DEFAULT_H5 = "../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials.h5"
+DEFAULT_H5 = "../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials_nis4.h5"
 DEFAULT_SCENARIO = "../scenario_nonlinear.yaml"
 
 

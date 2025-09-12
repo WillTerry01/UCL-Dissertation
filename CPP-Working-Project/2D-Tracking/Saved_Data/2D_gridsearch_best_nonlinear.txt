@@ -1,0 +1,4 @@
+Best q: 1.0209
+Best R: 1.95969
+Best objective: 0.00980697
+q_points: 50, R_points: 50

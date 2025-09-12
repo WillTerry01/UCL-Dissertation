@@ -7,14 +7,14 @@ Data_Generation:
     y: 0
   q: 1.0
   seed: 33333
-  trajectory_length: 100
+  trajectory_length: 50
   use_process_noise: true
   vel:
     x: 1
     y: 1
   turn_rate: 0.1
 bayesopt:
-  consistency_method: nis3
+  consistency_method: nis4
   crit_name: cEI
   ei_kappa: 0.1
   force_jump: 10
@@ -44,17 +44,20 @@ nis_eval:
   output: ../2D-Tracking/Saved_Data/2D_nis_nonlinear.h5
   tests:
     - {q: 1.0, R: 2.0}
+    - {q: 0.821865, R: 2.18042}
+    - {q: 1.04119, R: 1.96594}
+    - {q: 0.857714, R: 2.53098}
 validate_filter:
-  R: 2.1229183673469385
-  min_objective: 0.006152163981352622
-  q: 0.98010204081632646
-  optimization_date: 1756990654
+  R: 1.9596938775510202
+  min_objective: 0.009806966627235944
+  q: 1.0208979591836733
+  optimization_date: 1757544828
   consistency_method: nis4
   turn_rate: 0.10000000000000001
-  nis_mean: 35.952707444454937
-  nis_covariance: 71.996545274002671
-  cnis_log_mean: -0.0013145457352474984
-  cnis_log_variance: -4.7983456706147365e-05
+  nis_mean: 94.678630724367494
+  nis_covariance: 192.0491548603537
+  cnis_log_mean: -0.013859869068926042
+  cnis_log_variance: 0.00025598213145396363
 grid_search:
   enabled: true
   consistency_method: nis3
@@ -65,4 +68,21 @@ grid_search:
   R_max: 4.0
   R_points: 50
   save_h5: true
-  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials.h5
+  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials_nis4.h5
+mse_grid_search:
+  enabled: true
+  q_min: 0.001
+  q_max: 2.0
+  q_points: 50
+  R_min: 0.001
+  R_max: 4.0
+  R_points: 50
+  save_h5: true
+  output_filename: ../2D-Tracking/Saved_Data/2D_gridsearch_nonlinear_trials_mse.h5
+mse_eval:
+  tests:
+    - {q: 1.0, R: 2.0}
+    - {q: 1.00617, R: 2.00855}
+    - {q: 0.821865, R: 2.18042}
+    - {q: 0.01, R: 5.0}
+    - {q: 5.0, R: 0.01}

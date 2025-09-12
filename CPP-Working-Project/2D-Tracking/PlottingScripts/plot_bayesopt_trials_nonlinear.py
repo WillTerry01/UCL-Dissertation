@@ -153,7 +153,7 @@ def main():
     Main function to load and plot nonlinear BO trials
     """
     # File path for nonlinear BO trials
-    h5_path = "../2D-Tracking/Saved_Data/2D_bayesopt_nonlinear_trials.h5"
+    h5_path = "../2D-Tracking/Saved_Data/2D_bayesopt_nonlinear_trials_run1.h5"
     
     # Load trials
     print("Loading nonlinear BO trials...")

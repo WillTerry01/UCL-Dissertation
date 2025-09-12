@@ -126,8 +126,8 @@ int main(int argc, char* argv[]) {
         }
 
         // R sweep when locking Q
-        const double r_min = 1.5;
-        const double r_max = 2.5;
+        const double r_min = 1.95;
+        const double r_max = 2.05;
         std::vector<double> r_values(num_points);
         std::vector<double> c_lockQ(num_points);
         std::vector<double> c_lockQ_mean(num_points);
@@ -138,12 +138,12 @@ int main(int argc, char* argv[]) {
             c_lockQ[i] = compute_cnis_for_candidate(all_states, all_measurements, dt_vec, dt, q_true, r_values[i], method, turn_rate, &tmean, &tvar);
             c_lockQ_mean[i] = tmean;
             c_lockQ_var[i] = tvar;
-            if ((i % 50) == 0) std::cout << "[lock Q] i=" << i << "/" << num_points << " R=" << r_values[i] << " C=" << c_lockQ[i] << std::endl;
+            std::cout << "[lock Q] i=" << i << "/" << num_points << " R=" << r_values[i] << " C=" << c_lockQ[i] << std::endl;
         }
 
         // Q sweep when locking R
-        const double q_min = 0.75;
-        const double q_max = 1.25;
+        const double q_min = 0.97;
+        const double q_max = 1.03;
         std::vector<double> q_values(num_points);
         std::vector<double> c_lockR(num_points);
         std::vector<double> c_lockR_mean(num_points);

@@ -112,160 +112,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named nonlinear_sanity_checks
+# Target rules for targets named Evaluate_MSE_Points_Nonlinear
 
 # Build rule for target.
-nonlinear_sanity_checks: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 nonlinear_sanity_checks
-.PHONY : nonlinear_sanity_checks
+Evaluate_MSE_Points_Nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Evaluate_MSE_Points_Nonlinear
+.PHONY : Evaluate_MSE_Points_Nonlinear
 
 # fast build rule for target.
-nonlinear_sanity_checks/fast:
-	$(MAKE) -f CMakeFiles/nonlinear_sanity_checks.dir/build.make CMakeFiles/nonlinear_sanity_checks.dir/build
-.PHONY : nonlinear_sanity_checks/fast
-
-#=============================================================================
-# Target rules for targets named test_extreme_parameter_validation
-
-# Build rule for target.
-test_extreme_parameter_validation: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_extreme_parameter_validation
-.PHONY : test_extreme_parameter_validation
-
-# fast build rule for target.
-test_extreme_parameter_validation/fast:
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/build
-.PHONY : test_extreme_parameter_validation/fast
-
-#=============================================================================
-# Target rules for targets named generate_trajectory_comparison_data
-
-# Build rule for target.
-generate_trajectory_comparison_data: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 generate_trajectory_comparison_data
-.PHONY : generate_trajectory_comparison_data
-
-# fast build rule for target.
-generate_trajectory_comparison_data/fast:
-	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/build
-.PHONY : generate_trajectory_comparison_data/fast
-
-#=============================================================================
-# Target rules for targets named test_tuned_parameters_performance
-
-# Build rule for target.
-test_tuned_parameters_performance: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_tuned_parameters_performance
-.PHONY : test_tuned_parameters_performance
-
-# fast build rule for target.
-test_tuned_parameters_performance/fast:
-	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/build
-.PHONY : test_tuned_parameters_performance/fast
-
-#=============================================================================
-# Target rules for targets named test_zero_noise_validation_v2
-
-# Build rule for target.
-test_zero_noise_validation_v2: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_zero_noise_validation_v2
-.PHONY : test_zero_noise_validation_v2
-
-# fast build rule for target.
-test_zero_noise_validation_v2/fast:
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/build
-.PHONY : test_zero_noise_validation_v2/fast
-
-#=============================================================================
-# Target rules for targets named collect_nis_nonlinear
-
-# Build rule for target.
-collect_nis_nonlinear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 collect_nis_nonlinear
-.PHONY : collect_nis_nonlinear
-
-# fast build rule for target.
-collect_nis_nonlinear/fast:
-	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/build
-.PHONY : collect_nis_nonlinear/fast
-
-#=============================================================================
-# Target rules for targets named 1D_main
-
-# Build rule for target.
-1D_main: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 1D_main
-.PHONY : 1D_main
-
-# fast build rule for target.
-1D_main/fast:
-	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/build
-.PHONY : 1D_main/fast
-
-#=============================================================================
-# Target rules for targets named convergence_test_linear
-
-# Build rule for target.
-convergence_test_linear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 convergence_test_linear
-.PHONY : convergence_test_linear
-
-# fast build rule for target.
-convergence_test_linear/fast:
-	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/build
-.PHONY : convergence_test_linear/fast
-
-#=============================================================================
-# Target rules for targets named BO_Tracking_Test_linear
-
-# Build rule for target.
-BO_Tracking_Test_linear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_linear
-.PHONY : BO_Tracking_Test_linear
-
-# fast build rule for target.
-BO_Tracking_Test_linear/fast:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/build
-.PHONY : BO_Tracking_Test_linear/fast
-
-#=============================================================================
-# Target rules for targets named tracking_gen_data_linear
-
-# Build rule for target.
-tracking_gen_data_linear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_linear
-.PHONY : tracking_gen_data_linear
-
-# fast build rule for target.
-tracking_gen_data_linear/fast:
-	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/build
-.PHONY : tracking_gen_data_linear/fast
-
-#=============================================================================
-# Target rules for targets named CrossSection_Tracking_Nonlinear
-
-# Build rule for target.
-CrossSection_Tracking_Nonlinear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 CrossSection_Tracking_Nonlinear
-.PHONY : CrossSection_Tracking_Nonlinear
-
-# fast build rule for target.
-CrossSection_Tracking_Nonlinear/fast:
-	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build
-.PHONY : CrossSection_Tracking_Nonlinear/fast
-
-#=============================================================================
-# Target rules for targets named Validate_QR
-
-# Build rule for target.
-Validate_QR: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Validate_QR
-.PHONY : Validate_QR
-
-# fast build rule for target.
-Validate_QR/fast:
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/build
-.PHONY : Validate_QR/fast
+Evaluate_MSE_Points_Nonlinear/fast:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build
+.PHONY : Evaluate_MSE_Points_Nonlinear/fast
 
 #=============================================================================
 # Target rules for targets named convergence_test_nonlinear
@@ -281,17 +138,95 @@ convergence_test_nonlinear/fast:
 .PHONY : convergence_test_nonlinear/fast
 
 #=============================================================================
-# Target rules for targets named tracking_gen_data_nonlinear
+# Target rules for targets named GridSearch_Tracking_Nonlinear_MSE
 
 # Build rule for target.
-tracking_gen_data_nonlinear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_nonlinear
-.PHONY : tracking_gen_data_nonlinear
+GridSearch_Tracking_Nonlinear_MSE: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 GridSearch_Tracking_Nonlinear_MSE
+.PHONY : GridSearch_Tracking_Nonlinear_MSE
 
 # fast build rule for target.
-tracking_gen_data_nonlinear/fast:
-	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/build
-.PHONY : tracking_gen_data_nonlinear/fast
+GridSearch_Tracking_Nonlinear_MSE/fast:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build
+.PHONY : GridSearch_Tracking_Nonlinear_MSE/fast
+
+#=============================================================================
+# Target rules for targets named 1D_single_run
+
+# Build rule for target.
+1D_single_run: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_single_run
+.PHONY : 1D_single_run
+
+# fast build rule for target.
+1D_single_run/fast:
+	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/build
+.PHONY : 1D_single_run/fast
+
+#=============================================================================
+# Target rules for targets named debug_optimal_parameters
+
+# Build rule for target.
+debug_optimal_parameters: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 debug_optimal_parameters
+.PHONY : debug_optimal_parameters
+
+# fast build rule for target.
+debug_optimal_parameters/fast:
+	$(MAKE) -f CMakeFiles/debug_optimal_parameters.dir/build.make CMakeFiles/debug_optimal_parameters.dir/build
+.PHONY : debug_optimal_parameters/fast
+
+#=============================================================================
+# Target rules for targets named demo_linear_tracking
+
+# Build rule for target.
+demo_linear_tracking: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 demo_linear_tracking
+.PHONY : demo_linear_tracking
+
+# fast build rule for target.
+demo_linear_tracking/fast:
+	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/build
+.PHONY : demo_linear_tracking/fast
+
+#=============================================================================
+# Target rules for targets named GridSearch_Tracking_linear
+
+# Build rule for target.
+GridSearch_Tracking_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 GridSearch_Tracking_linear
+.PHONY : GridSearch_Tracking_linear
+
+# fast build rule for target.
+GridSearch_Tracking_linear/fast:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/build
+.PHONY : GridSearch_Tracking_linear/fast
+
+#=============================================================================
+# Target rules for targets named BO_Tracking_Test_Nonlinear
+
+# Build rule for target.
+BO_Tracking_Test_Nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_Nonlinear
+.PHONY : BO_Tracking_Test_Nonlinear
+
+# fast build rule for target.
+BO_Tracking_Test_Nonlinear/fast:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build
+.PHONY : BO_Tracking_Test_Nonlinear/fast
+
+#=============================================================================
+# Target rules for targets named Validate_QR
+
+# Build rule for target.
+Validate_QR: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Validate_QR
+.PHONY : Validate_QR
+
+# fast build rule for target.
+Validate_QR/fast:
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/build
+.PHONY : Validate_QR/fast
 
 #=============================================================================
 # Target rules for targets named demo_nonlinear_tracking
@@ -307,17 +242,95 @@ demo_nonlinear_tracking/fast:
 .PHONY : demo_nonlinear_tracking/fast
 
 #=============================================================================
-# Target rules for targets named collect_nis_linear
+# Target rules for targets named CrossSection_Tracking_Nonlinear
 
 # Build rule for target.
-collect_nis_linear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 collect_nis_linear
-.PHONY : collect_nis_linear
+CrossSection_Tracking_Nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 CrossSection_Tracking_Nonlinear
+.PHONY : CrossSection_Tracking_Nonlinear
 
 # fast build rule for target.
-collect_nis_linear/fast:
-	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/build
-.PHONY : collect_nis_linear/fast
+CrossSection_Tracking_Nonlinear/fast:
+	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build
+.PHONY : CrossSection_Tracking_Nonlinear/fast
+
+#=============================================================================
+# Target rules for targets named tracking_gen_data_linear
+
+# Build rule for target.
+tracking_gen_data_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_linear
+.PHONY : tracking_gen_data_linear
+
+# fast build rule for target.
+tracking_gen_data_linear/fast:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_linear.dir/build.make CMakeFiles/tracking_gen_data_linear.dir/build
+.PHONY : tracking_gen_data_linear/fast
+
+#=============================================================================
+# Target rules for targets named tracking_gen_data_nonlinear
+
+# Build rule for target.
+tracking_gen_data_nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tracking_gen_data_nonlinear
+.PHONY : tracking_gen_data_nonlinear
+
+# fast build rule for target.
+tracking_gen_data_nonlinear/fast:
+	$(MAKE) -f CMakeFiles/tracking_gen_data_nonlinear.dir/build.make CMakeFiles/tracking_gen_data_nonlinear.dir/build
+.PHONY : tracking_gen_data_nonlinear/fast
+
+#=============================================================================
+# Target rules for targets named BO_Tracking_Test_linear
+
+# Build rule for target.
+BO_Tracking_Test_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_linear
+.PHONY : BO_Tracking_Test_linear
+
+# fast build rule for target.
+BO_Tracking_Test_linear/fast:
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/build
+.PHONY : BO_Tracking_Test_linear/fast
+
+#=============================================================================
+# Target rules for targets named GridSearch_Tracking_Linear_MSE
+
+# Build rule for target.
+GridSearch_Tracking_Linear_MSE: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 GridSearch_Tracking_Linear_MSE
+.PHONY : GridSearch_Tracking_Linear_MSE
+
+# fast build rule for target.
+GridSearch_Tracking_Linear_MSE/fast:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build
+.PHONY : GridSearch_Tracking_Linear_MSE/fast
+
+#=============================================================================
+# Target rules for targets named convergence_test_linear
+
+# Build rule for target.
+convergence_test_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 convergence_test_linear
+.PHONY : convergence_test_linear
+
+# fast build rule for target.
+convergence_test_linear/fast:
+	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/build
+.PHONY : convergence_test_linear/fast
+
+#=============================================================================
+# Target rules for targets named 1D_main
+
+# Build rule for target.
+1D_main: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 1D_main
+.PHONY : 1D_main
+
+# fast build rule for target.
+1D_main/fast:
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/build
+.PHONY : 1D_main/fast
 
 #=============================================================================
 # Target rules for targets named demo_nonlinear_pure_measurement
@@ -346,32 +359,6 @@ test_system_matrices/fast:
 .PHONY : test_system_matrices/fast
 
 #=============================================================================
-# Target rules for targets named BO_Tracking_Test_Nonlinear
-
-# Build rule for target.
-BO_Tracking_Test_Nonlinear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 BO_Tracking_Test_Nonlinear
-.PHONY : BO_Tracking_Test_Nonlinear
-
-# fast build rule for target.
-BO_Tracking_Test_Nonlinear/fast:
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build
-.PHONY : BO_Tracking_Test_Nonlinear/fast
-
-#=============================================================================
-# Target rules for targets named GridSearch_Tracking_linear
-
-# Build rule for target.
-GridSearch_Tracking_linear: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 GridSearch_Tracking_linear
-.PHONY : GridSearch_Tracking_linear
-
-# fast build rule for target.
-GridSearch_Tracking_linear/fast:
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/build
-.PHONY : GridSearch_Tracking_linear/fast
-
-#=============================================================================
 # Target rules for targets named GridSearch_Tracking_Nonlinear
 
 # Build rule for target.
@@ -385,43 +372,108 @@ GridSearch_Tracking_Nonlinear/fast:
 .PHONY : GridSearch_Tracking_Nonlinear/fast
 
 #=============================================================================
-# Target rules for targets named debug_optimal_parameters
+# Target rules for targets named collect_nis_linear
 
 # Build rule for target.
-debug_optimal_parameters: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 debug_optimal_parameters
-.PHONY : debug_optimal_parameters
+collect_nis_linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 collect_nis_linear
+.PHONY : collect_nis_linear
 
 # fast build rule for target.
-debug_optimal_parameters/fast:
-	$(MAKE) -f CMakeFiles/debug_optimal_parameters.dir/build.make CMakeFiles/debug_optimal_parameters.dir/build
-.PHONY : debug_optimal_parameters/fast
+collect_nis_linear/fast:
+	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/build
+.PHONY : collect_nis_linear/fast
 
 #=============================================================================
-# Target rules for targets named 1D_single_run
+# Target rules for targets named collect_nis_nonlinear
 
 # Build rule for target.
-1D_single_run: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 1D_single_run
-.PHONY : 1D_single_run
+collect_nis_nonlinear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 collect_nis_nonlinear
+.PHONY : collect_nis_nonlinear
 
 # fast build rule for target.
-1D_single_run/fast:
-	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/build
-.PHONY : 1D_single_run/fast
+collect_nis_nonlinear/fast:
+	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/build
+.PHONY : collect_nis_nonlinear/fast
 
 #=============================================================================
-# Target rules for targets named demo_linear_tracking
+# Target rules for targets named test_zero_noise_validation_v2
 
 # Build rule for target.
-demo_linear_tracking: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 demo_linear_tracking
-.PHONY : demo_linear_tracking
+test_zero_noise_validation_v2: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_zero_noise_validation_v2
+.PHONY : test_zero_noise_validation_v2
 
 # fast build rule for target.
-demo_linear_tracking/fast:
-	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/build
-.PHONY : demo_linear_tracking/fast
+test_zero_noise_validation_v2/fast:
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/build
+.PHONY : test_zero_noise_validation_v2/fast
+
+#=============================================================================
+# Target rules for targets named test_tuned_parameters_performance
+
+# Build rule for target.
+test_tuned_parameters_performance: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_tuned_parameters_performance
+.PHONY : test_tuned_parameters_performance
+
+# fast build rule for target.
+test_tuned_parameters_performance/fast:
+	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/build
+.PHONY : test_tuned_parameters_performance/fast
+
+#=============================================================================
+# Target rules for targets named generate_trajectory_comparison_data
+
+# Build rule for target.
+generate_trajectory_comparison_data: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 generate_trajectory_comparison_data
+.PHONY : generate_trajectory_comparison_data
+
+# fast build rule for target.
+generate_trajectory_comparison_data/fast:
+	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/build
+.PHONY : generate_trajectory_comparison_data/fast
+
+#=============================================================================
+# Target rules for targets named test_extreme_parameter_validation
+
+# Build rule for target.
+test_extreme_parameter_validation: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_extreme_parameter_validation
+.PHONY : test_extreme_parameter_validation
+
+# fast build rule for target.
+test_extreme_parameter_validation/fast:
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/build
+.PHONY : test_extreme_parameter_validation/fast
+
+#=============================================================================
+# Target rules for targets named nonlinear_sanity_checks
+
+# Build rule for target.
+nonlinear_sanity_checks: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 nonlinear_sanity_checks
+.PHONY : nonlinear_sanity_checks
+
+# fast build rule for target.
+nonlinear_sanity_checks/fast:
+	$(MAKE) -f CMakeFiles/nonlinear_sanity_checks.dir/build.make CMakeFiles/nonlinear_sanity_checks.dir/build
+.PHONY : nonlinear_sanity_checks/fast
+
+#=============================================================================
+# Target rules for targets named Evaluate_MSE_Points_Linear
+
+# Build rule for target.
+Evaluate_MSE_Points_Linear: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Evaluate_MSE_Points_Linear
+.PHONY : Evaluate_MSE_Points_Linear
+
+# fast build rule for target.
+Evaluate_MSE_Points_Linear/fast:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/build
+.PHONY : Evaluate_MSE_Points_Linear/fast
 
 #=============================================================================
 # Target rules for targets named uninstall
@@ -858,8 +910,8 @@ yaml-cpp-sandbox/fast:
 
 # target to build an object file
 1D/1D_factor_graph_trajectory.cpp.o:
-	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.o
 	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.o
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.o
 .PHONY : 1D/1D_factor_graph_trajectory.cpp.o
 
 1D/1D_factor_graph_trajectory.i: 1D/1D_factor_graph_trajectory.cpp.i
@@ -868,8 +920,8 @@ yaml-cpp-sandbox/fast:
 
 # target to preprocess a source file
 1D/1D_factor_graph_trajectory.cpp.i:
-	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.i
 	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.i
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.i
 .PHONY : 1D/1D_factor_graph_trajectory.cpp.i
 
 1D/1D_factor_graph_trajectory.s: 1D/1D_factor_graph_trajectory.cpp.s
@@ -878,8 +930,8 @@ yaml-cpp-sandbox/fast:
 
 # target to generate assembly for a file
 1D/1D_factor_graph_trajectory.cpp.s:
-	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.s
 	$(MAKE) -f CMakeFiles/1D_single_run.dir/build.make CMakeFiles/1D_single_run.dir/1D/1D_factor_graph_trajectory.cpp.s
+	$(MAKE) -f CMakeFiles/1D_main.dir/build.make CMakeFiles/1D_main.dir/1D/1D_factor_graph_trajectory.cpp.s
 .PHONY : 1D/1D_factor_graph_trajectory.cpp.s
 
 1D/1D_main.o: 1D/1D_main.cpp.o
@@ -1017,6 +1069,87 @@ yaml-cpp-sandbox/fast:
 	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/CrossSection_Tracking_Nonlinear.cpp.s
 .PHONY : 2D-Tracking/CrossSection_Tracking_Nonlinear.cpp.s
 
+2D-Tracking/Evaluate_MSE_Points_Linear.o: 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.o
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.o
+
+# target to build an object file
+2D-Tracking/Evaluate_MSE_Points_Linear.cpp.o:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/Evaluate_MSE_Points_Linear.cpp.o
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.o
+
+2D-Tracking/Evaluate_MSE_Points_Linear.i: 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.i
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.i
+
+# target to preprocess a source file
+2D-Tracking/Evaluate_MSE_Points_Linear.cpp.i:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/Evaluate_MSE_Points_Linear.cpp.i
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.i
+
+2D-Tracking/Evaluate_MSE_Points_Linear.s: 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.s
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.s
+
+# target to generate assembly for a file
+2D-Tracking/Evaluate_MSE_Points_Linear.cpp.s:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/Evaluate_MSE_Points_Linear.cpp.s
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Linear.cpp.s
+
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.o: 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.o
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.o
+
+# target to build an object file
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.o:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.o
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.o
+
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.i: 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.i
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.i
+
+# target to preprocess a source file
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.i:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.i
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.i
+
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.s: 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.s
+
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.s
+
+# target to generate assembly for a file
+2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.s:
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.s
+.PHONY : 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp.s
+
+2D-Tracking/GridSearch_Tracking_Linear_MSE.o: 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.o
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.o
+
+# target to build an object file
+2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.o:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.o
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.o
+
+2D-Tracking/GridSearch_Tracking_Linear_MSE.i: 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.i
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.i
+
+# target to preprocess a source file
+2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.i:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.i
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.i
+
+2D-Tracking/GridSearch_Tracking_Linear_MSE.s: 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.s
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.s
+
+# target to generate assembly for a file
+2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.s:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.s
+.PHONY : 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp.s
+
 2D-Tracking/GridSearch_Tracking_Nonlinear.o: 2D-Tracking/GridSearch_Tracking_Nonlinear.cpp.o
 
 .PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear.o
@@ -1043,6 +1176,33 @@ yaml-cpp-sandbox/fast:
 2D-Tracking/GridSearch_Tracking_Nonlinear.cpp.s:
 	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/GridSearch_Tracking_Nonlinear.cpp.s
 .PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear.cpp.s
+
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.o: 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.o
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.o
+
+# target to build an object file
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.o:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.o
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.o
+
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.i: 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.i
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.i
+
+# target to preprocess a source file
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.i:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.i
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.i
+
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.s: 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.s
+
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.s
+
+# target to generate assembly for a file
+2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.s:
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.s
+.PHONY : 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp.s
 
 2D-Tracking/GridSearch_Tracking_linear.o: 2D-Tracking/GridSearch_Tracking_linear.cpp.o
 
@@ -1455,25 +1615,29 @@ yaml-cpp-sandbox/fast:
 
 # target to build an object file
 2D-Tracking/fg_class_tracking.cpp.o:
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
 	$(MAKE) -f CMakeFiles/convergence_test_nonlinear.dir/build.make CMakeFiles/convergence_test_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.o
 	$(MAKE) -f CMakeFiles/debug_optimal_parameters.dir/build.make CMakeFiles/debug_optimal_parameters.dir/2D-Tracking/fg_class_tracking.cpp.o
 	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.o
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/fg_class_tracking.cpp.o
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.o
 
 2D-Tracking/fg_class_tracking.i: 2D-Tracking/fg_class_tracking.cpp.i
@@ -1482,25 +1646,29 @@ yaml-cpp-sandbox/fast:
 
 # target to preprocess a source file
 2D-Tracking/fg_class_tracking.cpp.i:
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
 	$(MAKE) -f CMakeFiles/convergence_test_nonlinear.dir/build.make CMakeFiles/convergence_test_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.i
 	$(MAKE) -f CMakeFiles/debug_optimal_parameters.dir/build.make CMakeFiles/debug_optimal_parameters.dir/2D-Tracking/fg_class_tracking.cpp.i
 	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.i
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/fg_class_tracking.cpp.i
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.i
 
 2D-Tracking/fg_class_tracking.s: 2D-Tracking/fg_class_tracking.cpp.s
@@ -1509,25 +1677,29 @@ yaml-cpp-sandbox/fast:
 
 # target to generate assembly for a file
 2D-Tracking/fg_class_tracking.cpp.s:
-	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/convergence_test_nonlinear.dir/build.make CMakeFiles/convergence_test_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
-	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/debug_optimal_parameters.dir/build.make CMakeFiles/debug_optimal_parameters.dir/2D-Tracking/fg_class_tracking.cpp.s
 	$(MAKE) -f CMakeFiles/demo_linear_tracking.dir/build.make CMakeFiles/demo_linear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_linear.dir/build.make CMakeFiles/GridSearch_Tracking_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_Nonlinear.dir/build.make CMakeFiles/BO_Tracking_Test_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/Validate_QR.dir/build.make CMakeFiles/Validate_QR.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/demo_nonlinear_tracking.dir/build.make CMakeFiles/demo_nonlinear_tracking.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/CrossSection_Tracking_Nonlinear.dir/build.make CMakeFiles/CrossSection_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/BO_Tracking_Test_linear.dir/build.make CMakeFiles/BO_Tracking_Test_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/build.make CMakeFiles/GridSearch_Tracking_Linear_MSE.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/convergence_test_linear.dir/build.make CMakeFiles/convergence_test_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/demo_nonlinear_pure_measurement.dir/build.make CMakeFiles/demo_nonlinear_pure_measurement.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_system_matrices.dir/build.make CMakeFiles/test_system_matrices.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/GridSearch_Tracking_Nonlinear.dir/build.make CMakeFiles/GridSearch_Tracking_Nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/collect_nis_linear.dir/build.make CMakeFiles/collect_nis_linear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/collect_nis_nonlinear.dir/build.make CMakeFiles/collect_nis_nonlinear.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_zero_noise_validation_v2.dir/build.make CMakeFiles/test_zero_noise_validation_v2.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_tuned_parameters_performance.dir/build.make CMakeFiles/test_tuned_parameters_performance.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/generate_trajectory_comparison_data.dir/build.make CMakeFiles/generate_trajectory_comparison_data.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/test_extreme_parameter_validation.dir/build.make CMakeFiles/test_extreme_parameter_validation.dir/2D-Tracking/fg_class_tracking.cpp.s
+	$(MAKE) -f CMakeFiles/Evaluate_MSE_Points_Linear.dir/build.make CMakeFiles/Evaluate_MSE_Points_Linear.dir/2D-Tracking/fg_class_tracking.cpp.s
 .PHONY : 2D-Tracking/fg_class_tracking.cpp.s
 
 2D-Tracking/nonlinear_sanity_checks.o: 2D-Tracking/nonlinear_sanity_checks.cpp.o
@@ -1617,32 +1789,36 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... rebuild_cache"
-	@echo "... edit_cache"
-	@echo "... nonlinear_sanity_checks"
-	@echo "... test_extreme_parameter_validation"
-	@echo "... generate_trajectory_comparison_data"
-	@echo "... test_tuned_parameters_performance"
-	@echo "... test_zero_noise_validation_v2"
-	@echo "... collect_nis_nonlinear"
-	@echo "... 1D_main"
-	@echo "... convergence_test_linear"
-	@echo "... BO_Tracking_Test_linear"
-	@echo "... tracking_gen_data_linear"
-	@echo "... CrossSection_Tracking_Nonlinear"
-	@echo "... Validate_QR"
+	@echo "... Evaluate_MSE_Points_Nonlinear"
 	@echo "... convergence_test_nonlinear"
-	@echo "... tracking_gen_data_nonlinear"
+	@echo "... GridSearch_Tracking_Nonlinear_MSE"
+	@echo "... 1D_single_run"
+	@echo "... debug_optimal_parameters"
+	@echo "... demo_linear_tracking"
+	@echo "... GridSearch_Tracking_linear"
+	@echo "... BO_Tracking_Test_Nonlinear"
+	@echo "... Validate_QR"
 	@echo "... demo_nonlinear_tracking"
-	@echo "... collect_nis_linear"
+	@echo "... CrossSection_Tracking_Nonlinear"
+	@echo "... tracking_gen_data_linear"
+	@echo "... tracking_gen_data_nonlinear"
+	@echo "... BO_Tracking_Test_linear"
+	@echo "... GridSearch_Tracking_Linear_MSE"
+	@echo "... convergence_test_linear"
+	@echo "... 1D_main"
 	@echo "... demo_nonlinear_pure_measurement"
 	@echo "... test_system_matrices"
-	@echo "... BO_Tracking_Test_Nonlinear"
-	@echo "... GridSearch_Tracking_linear"
 	@echo "... GridSearch_Tracking_Nonlinear"
-	@echo "... debug_optimal_parameters"
-	@echo "... 1D_single_run"
-	@echo "... demo_linear_tracking"
+	@echo "... collect_nis_linear"
+	@echo "... collect_nis_nonlinear"
+	@echo "... test_zero_noise_validation_v2"
+	@echo "... rebuild_cache"
+	@echo "... test_tuned_parameters_performance"
+	@echo "... generate_trajectory_comparison_data"
+	@echo "... test_extreme_parameter_validation"
+	@echo "... nonlinear_sanity_checks"
+	@echo "... Evaluate_MSE_Points_Linear"
+	@echo "... edit_cache"
 	@echo "... uninstall"
 	@echo "... NightlyMemCheck"
 	@echo "... NightlyTest"
@@ -1694,9 +1870,21 @@ help:
 	@echo "... 2D-Tracking/CrossSection_Tracking_Nonlinear.o"
 	@echo "... 2D-Tracking/CrossSection_Tracking_Nonlinear.i"
 	@echo "... 2D-Tracking/CrossSection_Tracking_Nonlinear.s"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Linear.o"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Linear.i"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Linear.s"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Nonlinear.o"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Nonlinear.i"
+	@echo "... 2D-Tracking/Evaluate_MSE_Points_Nonlinear.s"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Linear_MSE.o"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Linear_MSE.i"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Linear_MSE.s"
 	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear.o"
 	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear.i"
 	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear.s"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.o"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.i"
+	@echo "... 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.s"
 	@echo "... 2D-Tracking/GridSearch_Tracking_linear.o"
 	@echo "... 2D-Tracking/GridSearch_Tracking_linear.i"
 	@echo "... 2D-Tracking/GridSearch_Tracking_linear.s"

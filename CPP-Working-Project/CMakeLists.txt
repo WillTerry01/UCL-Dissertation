@@ -221,6 +221,52 @@ target_include_directories(GridSearch_Tracking_Nonlinear
     ${HDF5_INCLUDE_DIRS}
 )
 
+# Add nonlinear grid search (MSE metric) executable
+add_executable(GridSearch_Tracking_Nonlinear_MSE 2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(GridSearch_Tracking_Nonlinear_MSE
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(GridSearch_Tracking_Nonlinear_MSE
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Add evaluator for MSE at specific points (nonlinear)
+add_executable(Evaluate_MSE_Points_Nonlinear 2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(Evaluate_MSE_Points_Nonlinear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(Evaluate_MSE_Points_Nonlinear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
 # Executable for validating filter performance
 add_executable(Validate_QR 2D-Tracking/Validate_QR.cpp 2D-Tracking/fg_class_tracking.cpp)
 target_link_libraries(Validate_QR
@@ -626,5 +672,51 @@ target_include_directories(convergence_test_linear
     PRIVATE
     ${EIGEN3_INCLUDE_DIR}
     ${G2O_INCLUDE_DIRS}
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Add linear MSE grid search executable
+add_executable(GridSearch_Tracking_Linear_MSE 2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(GridSearch_Tracking_Linear_MSE
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(GridSearch_Tracking_Linear_MSE
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
+    ${HDF5_INCLUDE_DIRS}
+)
+
+# Add linear point-evaluator for MSE
+add_executable(Evaluate_MSE_Points_Linear 2D-Tracking/Evaluate_MSE_Points_Linear.cpp 2D-Tracking/fg_class_tracking.cpp)
+target_link_libraries(Evaluate_MSE_Points_Linear
+    PRIVATE
+    Eigen3::Eigen
+    OpenMP::OpenMP_CXX
+    g2o_solver_csparse
+    g2o_csparse_extension
+    g2o_core
+    g2o_stuff
+    g2o_solver_dense
+    ${HDF5_LIBRARIES}
+    yaml-cpp
+)
+
+target_include_directories(Evaluate_MSE_Points_Linear
+    PRIVATE
+    ${EIGEN3_INCLUDE_DIR}
+    ${G2O_INCLUDE_DIRS}
+    /usr/local/include
     ${HDF5_INCLUDE_DIRS}
 )
