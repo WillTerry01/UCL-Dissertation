@@ -2,6 +2,7 @@
 """
 Visualize the first 2 trajectories from HDF5 files
 Shows states and measurements for the first 2 Monte Carlo runs
+Also supports plotting a single selected trajectory in a separate 8x6 figure
 """
 
 import h5py
@@ -9,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import os
+
 
 def load_h5_trajectories(states_file, measurements_file, num_trajectories=2):
     """
@@ -21,6 +23,7 @@ def load_h5_trajectories(states_file, measurements_file, num_trajectories=2):
         measurements = f['measurements'][:num_trajectories, :, :]  # Shape: (num_traj, N, 2)
     
     return states, measurements
+
 
 def plot_trajectories(states, measurements, dt=0.1, save_plots=True):
     """
@@ -110,6 +113,36 @@ def plot_trajectories(states, measurements, dt=0.1, save_plots=True):
     
     plt.show()
 
+
+def plot_single_trajectory(states, measurements, traj_idx=0, save_plot=True):
+    """
+    Plot a single trajectory (XY with measurements) in an 8x6 figure
+    """
+    x_pos = states[traj_idx, :, 0]
+    y_pos = states[traj_idx, :, 1]
+    x_meas = measurements[traj_idx, :, 0]
+    y_meas = measurements[traj_idx, :, 1]
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(x_pos, y_pos, color='blue', linewidth=2, label='True')
+    plt.scatter(x_meas, y_meas, color='orange', s=15, alpha=0.7, label='Measurements')
+    plt.scatter(x_pos[0], y_pos[0], color='green', s=80, marker='s', label='Start', zorder=5)
+    plt.scatter(x_pos[-1], y_pos[-1], color='red', s=80, marker='^', label='End', zorder=5)
+    plt.xlabel('X Position')
+    plt.ylabel('Y Position')
+    plt.title(f'Linear Trajectory (run {traj_idx})')
+    plt.axis('equal')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    if save_plot:
+        os.makedirs('../2D-Tracking/plots', exist_ok=True)
+        out = f"../2D-Tracking/plots/linear_single_trajectory_{traj_idx}.png"
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        print(f"Saved: {out}")
+    plt.show()
+
+
 def print_trajectory_stats(states, measurements, dt=0.1):
     """
     Print statistics about the trajectories
@@ -153,10 +186,14 @@ def print_trajectory_stats(states, measurements, dt=0.1):
         process_noise_std = np.std(vel_changes)
         print(f"  Process noise std: {process_noise_std:.3f} units/s")
 
+
 def main():
     """
     Main function to load and visualize trajectories
     """
+    # Configuration: set the trajectory index to plot (0-based)
+    selected_traj_idx = 1  # <-- change this to choose which trajectory to plot
+
     # File paths
     states_file = '../2D-Tracking/Saved_Data/2D_noisy_states.h5'
     measurements_file = '../2D-Tracking/Saved_Data/2D_noisy_measurements.h5'
@@ -175,23 +212,24 @@ def main():
     print("Loading trajectory data...")
     
     try:
-        # Load the first 2 trajectories
-        states, measurements = load_h5_trajectories(states_file, measurements_file, num_trajectories=2)
-        
-        print(f"Loaded {states.shape[0]} trajectories with {states.shape[1]} time steps")
-        print(f"State dimensions: {states.shape[2]} (x, y, vx, vy)")
-        print(f"Measurement dimensions: {measurements.shape[2]} (x, y)")
-        
-        # Print statistics
-        print_trajectory_stats(states, measurements)
-        
-        # Create visualizations
-        print("\nCreating trajectory visualizations...")
-        plot_trajectories(states, measurements)
+        # Determine total available trajectories and clamp index
+        with h5py.File(states_file, 'r') as f:
+            total_traj = f['states'].shape[0]
+        tidx = max(0, min(selected_traj_idx, total_traj - 1))
+
+        # Load only the selected trajectory
+        with h5py.File(states_file, 'r') as f:
+            s_one = f['states'][tidx:tidx+1, :, :]
+        with h5py.File(measurements_file, 'r') as f:
+            m_one = f['measurements'][tidx:tidx+1, :, :]
+
+        print(f"Plotting single trajectory index {tidx} (of {total_traj})")
+        plot_single_trajectory(s_one, m_one, traj_idx=0, save_plot=True)
         
     except Exception as e:
         print(f"Error loading or processing data: {e}")
         print("Please ensure the HDF5 files are properly formatted.")
+
 
 if __name__ == "__main__":
     main() 

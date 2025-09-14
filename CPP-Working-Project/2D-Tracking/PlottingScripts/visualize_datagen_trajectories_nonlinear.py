@@ -2,6 +2,7 @@
 """
 Visualize the first 2 nonlinear trajectories from HDF5 files
 Shows states and GPS-like (Cartesian x,y) measurements for the first 2 Monte Carlo runs
+Also supports plotting a single selected trajectory in an 8x6 figure
 """
 
 import h5py
@@ -9,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import os
+
 
 def load_h5_trajectories(states_file, measurements_file, num_trajectories=2):
     """
@@ -21,6 +23,7 @@ def load_h5_trajectories(states_file, measurements_file, num_trajectories=2):
         measurements = f['measurements'][:num_trajectories, :, :]  # Shape: (num_traj, N, 2)
     
     return states, measurements
+
 
 def plot_trajectories(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np.array([-10.0, 0.0]), save_plots=True):
     """
@@ -122,7 +125,6 @@ def plot_trajectories(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np
     axes[1, 2].set_ylabel('Measured Y')
     axes[1, 2].set_title('Measured Y vs Time')
     axes[1, 2].legend()
-    axes[1, 2].grid(True, alpha=0.3)
     
     plt.tight_layout()
     
@@ -131,6 +133,36 @@ def plot_trajectories(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np
         print("Plot saved as '../2D-Tracking/plots/nonlinear_trajectories_visualization.png'")
     
     plt.show()
+
+
+def plot_single_trajectory(states, measurements, traj_idx=0, save_plot=True):
+    """
+    Plot a single nonlinear trajectory (XY with measurements) in an 8x6 figure
+    """
+    x_pos = states[traj_idx, :, 0]
+    y_pos = states[traj_idx, :, 1]
+    x_meas = measurements[traj_idx, :, 0]
+    y_meas = measurements[traj_idx, :, 1]
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(x_pos, y_pos, color='blue', linewidth=2, label='True')
+    plt.scatter(x_meas, y_meas, color='orange', s=15, alpha=0.7, label='Measurements')
+    plt.scatter(x_pos[0], y_pos[0], color='green', s=80, marker='s', label='Start', zorder=5)
+    plt.scatter(x_pos[-1], y_pos[-1], color='red', s=80, marker='^', label='End', zorder=5)
+    plt.xlabel('X Position')
+    plt.ylabel('Y Position')
+    plt.title(f'Nonlinear Trajectory (run {traj_idx})')
+    plt.axis('equal')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    if save_plot:
+        os.makedirs('../2D-Tracking/plots', exist_ok=True)
+        out = f"../2D-Tracking/plots/nonlinear_single_trajectory_{traj_idx}.png"
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        print(f"Saved: {out}")
+    plt.show()
+
 
 def print_trajectory_stats(states, measurements, dt=0.5, turn_rate=0.1, sensor_pos=np.array([-10.0, 0.0])):
     """
@@ -189,10 +221,14 @@ def print_trajectory_stats(states, measurements, dt=0.5, turn_rate=0.1, sensor_p
             avg_curvature = np.mean(curvature[1:-1])  # Exclude endpoints
             print(f"Average curvature: {avg_curvature:.4f}")
 
+
 def main():
     """
     Main function to load and visualize nonlinear trajectories
     """
+    # Choose which trajectory to plot (0-based)
+    selected_traj_idx = 0  # <-- change this to select the trajectory index
+
     # File paths for nonlinear data
     states_file = "../2D-Tracking/Saved_Data/2D_nonlinear_states.h5"
     measurements_file = "../2D-Tracking/Saved_Data/2D_nonlinear_measurements.h5"
@@ -210,14 +246,17 @@ def main():
     
     # Load trajectories
     print("Loading nonlinear trajectories...")
-    states, measurements = load_h5_trajectories(states_file, measurements_file, num_trajectories=2)
-    
-    # Print statistics
-    print_trajectory_stats(states, measurements)
-    
-    # Plot trajectories
-    print("\nPlotting nonlinear trajectories...")
-    plot_trajectories(states, measurements, save_plots=True)
+    with h5py.File(states_file, 'r') as f:
+        total_traj = f['states'].shape[0]
+    tidx = max(0, min(selected_traj_idx, total_traj - 1))
+    with h5py.File(states_file, 'r') as f:
+        s_one = f['states'][tidx:tidx+1, :, :]
+    with h5py.File(measurements_file, 'r') as f:
+        m_one = f['measurements'][tidx:tidx+1, :, :]
+
+    print(f"Plotting single nonlinear trajectory index {tidx} (of {total_traj})")
+    plot_single_trajectory(s_one, m_one, traj_idx=0, save_plot=True)
+
 
 if __name__ == "__main__":
     main() 

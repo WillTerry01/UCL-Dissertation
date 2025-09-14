@@ -1,3 +1,0 @@
-CNIS summary (nis3):
-  test 1: q=1, R=2, DOF=116, mean(chi2)=113.027, var(chi2)=187.456, CNIS=0.239151
-Saved NIS (chi2) to: /home/will/Dissertation/UCL-Dissertation/CPP-Working-Project/2D-Tracking/Saved_Data/2D_nis_nonlinear_run3.h5

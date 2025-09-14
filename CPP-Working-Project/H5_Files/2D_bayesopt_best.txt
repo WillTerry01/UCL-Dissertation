@@ -1,1 +1,0 @@
-Best V0: 66.0118, Best meas_noise_std²: 1.61233, Best CNEES: 1.06088

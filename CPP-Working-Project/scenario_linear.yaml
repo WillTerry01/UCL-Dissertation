@@ -7,7 +7,7 @@ Data_Generation:
     y: 0
   q: 1.0
   seed: 33333
-  trajectory_length: 50
+  trajectory_length: 100
   use_process_noise: true
   vel:
     x: 1
