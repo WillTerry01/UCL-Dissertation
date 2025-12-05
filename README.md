@@ -1,125 +1,454 @@
-# 2D-Tracking programs: what they do and how to run them
+# Automatic Tuning of Factor Graph-Based Estimation Using Bayesian Optimization
 
-> WARNING: This was a AI generated README file to be used as a place holder, a full version is on the way
+**Author:** Will Terry  
+**Institution:** University College London (UCL)  
+**Publication:** *To be determined*
 
-This project uses CMake. Build once from the repo root, then run the executables from the `build/` directory.
+---
+
+## Overview
+
+This repository implements a framework for **automatically tuning factor graph-based state estimation systems** using **Bayesian Optimization (BO)**. The primary focus is on a **2D GPS tracking problem** where we optimize noise covariance parameters (process noise `Q` and measurement noise `R`) to achieve optimal filter consistency.
+
+### Key Features
+
+- **Factor Graph Optimization**: Leverages the g2o library for efficient graph-based SLAM and state estimation
+- **Bayesian Optimization**: Uses BayesOpt library to intelligently search the parameter space
+- **Consistency Metrics**: Implements CNIS (Consistency-based Normalized Innovation Squared) and CNEES (Consistency-based Normalized Estimation Error Squared) for filter tuning
+- **Dual Motion Models**: Supports both linear (constant velocity) and nonlinear (constant turn-rate) motion models
+- **Comprehensive Pipeline**: From data generation to parameter optimization and validation
+
+### Current Application
+
+The current implementation focuses on a **2D GPS estimation problem** with:
+- Linear motion model (constant velocity)
+- Nonlinear motion model (constant turn-rate)
+- GPS position measurements
+- Automatic tuning of process and measurement noise parameters
+
+### Future Work
+
+The next phase will extend this framework to a **2D monocular camera tracking system** using bearing and range measurements to landmarks, demonstrating the generalizability of the approach.
+
+---
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Dependencies](#dependencies)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Version Information](#version-information)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Installation
+
+### Prerequisites
+
+Ensure you have the following installed on your system:
+
+- **CMake** (≥ 3.10)
+- **C++ Compiler** with C++17 support (GCC, Clang, or MSVC)
+- **Eigen3** (Linear algebra library)
+- **HDF5** (Data storage)
+- **Boost** (Required by BayesOpt)
+- **OpenMP** (Optional, for parallel execution)
+
+### System-Specific Installation
+
+#### macOS (using Homebrew)
 
 ```bash
-mkdir -p build && cd build
-cmake ..
-make -j
+brew install cmake eigen hdf5 boost libomp
 ```
 
-Before running, configure the scenario files:
-- `CPP-Working-Project/scenario_linear.yaml`
-- `CPP-Working-Project/scenario_nonlinear.yaml`
+#### Ubuntu/Debian
 
-Both support variable time steps via `Data_Generation.dt_pieces`. Outputs are written to `CPP-Working-Project/2D-Tracking/Saved_Data/`.
+```bash
+sudo apt-get update
+sudo apt-get install cmake libeigen3-dev libhdf5-dev libboost-all-dev libomp-dev
+```
 
-## Data generation
-- `2D-Tracking/tracking_gen_data_linear.cpp`
-  - Generates linear (constant-velocity) trajectories + noisy measurements
-  - Reads: `../scenario_linear.yaml`
-  - Writes: `Saved_Data/2D_noisy_states.h5`, `Saved_Data/2D_noisy_measurements.h5`
-  - Run: `./tracking_gen_data_linear`
+### Building the Project
 
-- `2D-Tracking/tracking_gen_data_nonlinear.cpp`
-  - Generates nonlinear (constant turn-rate) trajectories + Cartesian measurements
-  - Reads: `../scenario_nonlinear.yaml`
-  - Writes: `Saved_Data/2D_nonlinear_states.h5`, `Saved_Data/2D_nonlinear_measurements.h5`
-  - Run: `./tracking_gen_data_nonlinear`
+**Important:** The build must be performed in a specific location within the repository structure.
 
-## Core factor-graph code
-- `2D-Tracking/fg_class_tracking.h, .cpp`
-  - Factor-graph model (vertices, edges, optimizers), linear and CT (nonlinear) motion, GPS measurements
-- `2D-Tracking/2D_h5_loader.h`
-  - Helpers to load HDF5 states/measurements
+1. **Clone the repository:**
 
-## Grid search (consistency metrics, CNIS/CNEES)
-- `2D-Tracking/GridSearch_Tracking_linear.cpp`
-  - Dense grid over Q (process noise intensity) and R (measurement noise variance)
-  - Uses `bayesopt.consistency_method` (e.g., `nis3`, `nis4`) from YAML; honors `dt_pieces`
-  - Reads linear H5 files; writes an H5 of tried points and objectives
-  - Run: `./GridSearch_Tracking_linear`
+```bash
+git clone https://github.com/WillTerry01/UCL-Dissertation.git
+cd UCL-Dissertation
+```
 
-- `2D-Tracking/GridSearch_Tracking_Nonlinear.cpp`
-  - Same as above for nonlinear data/model (CT motion)
-  - Run: `./GridSearch_Tracking_Nonlinear`
+2. **Build BayesOpt library** (included in repository):
 
-## Grid search (average position MSE)
-- `2D-Tracking/GridSearch_Tracking_Linear_MSE.cpp`
-  - Grid over Q,R; runs optimization; objective is average position MSE across runs
-  - Prefers `mse_grid_search` block in YAML (falls back to `grid_search`)
-  - Writes `..._linear_trials_mse.h5`
-  - Run: `./GridSearch_Tracking_Linear_MSE`
+The BayesOpt library is included in the `bayesopt/` directory and will be built automatically when you build the main project. The library is statically linked.
 
-- `2D-Tracking/GridSearch_Tracking_Nonlinear_MSE.cpp`
-  - Same as above for nonlinear data/model
-  - Writes `..._nonlinear_trials_mse.h5`
-  - Run: `./GridSearch_Tracking_Nonlinear_MSE`
+3. **Handle g2o dependency:**
 
-## Evaluate MSE at specific points
-- `2D-Tracking/Evaluate_MSE_Points_Linear.cpp`
-  - Evaluates average position MSE at specific (Q,R) pairs
-  - Reads pairs from `mse_eval.tests` in `scenario_linear.yaml` (fallback to `nis_eval.tests`)
-  - Writes `Saved_Data/2D_linear_mse_point_evals.h5` and `.csv`
-  - Run: `./Evaluate_MSE_Points_Linear`
+The g2o library is used for factor graph optimization. While a `g2o/` directory exists in the repository, **you should install g2o system-wide** for easier use:
 
-- `2D-Tracking/Evaluate_MSE_Points_Nonlinear.cpp`
-  - Same for nonlinear data/model
-  - Writes `Saved_Data/2D_mse_point_evals.h5` and `.csv`
-  - Run: `./Evaluate_MSE_Points_Nonlinear`
+**macOS:**
+```bash
+brew install g2o
+```
 
-## Bayesian Optimization (CNIS/CNEES-driven)
-- `2D-Tracking/BO_Tracking_Test_linear.cpp`
-  - Runs BO over Q,R using the chosen consistency metric; honors variable `dt`
-  - Reads: linear H5 + `scenario_linear.yaml`
-  - Run: `./BO_Tracking_Test_linear`
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install libg2o-dev
+```
 
-- `2D-Tracking/BO_Tracking_Test_Nonlinear.cpp`
-  - Same for nonlinear data/model
-  - Run: `./BO_Tracking_Test_Nonlinear`
+Alternatively, you can build g2o from source and install it locally. The CMakeLists.txt currently points to a local installation path that you'll need to update:
 
-## NIS collection utilities
-- `2D-Tracking/collect_nis_linear.cpp`
-  - Computes and aggregates NIS values over runs (linear)
-  - Run: `./collect_nis_linear`
+```cmake
+# In CPP-Working-Project/CMakeLists.txt, line 22
+# Update this path to your g2o installation:
+set(g2o_DIR "/path/to/your/g2o/installation/lib/cmake/g2o")
+```
 
-- `2D-Tracking/collect_nis_nonlinear.cpp`
-  - Same for nonlinear
-  - Run: `./collect_nis_nonlinear`
+**Note:** The g2o submodule is primarily used for calculating CNEES values. For most use cases focusing on CNIS metrics, the standard g2o library installation is sufficient.
 
-## Convergence tests
-- `2D-Tracking/convergence_test_linear.cpp`
-  - Stress-test optimization convergence across runs (linear)
-  - Run: `./convergence_test_linear`
+4. **Build the project:**
 
-- `2D-Tracking/convergence_test_nonlinear.cpp`
-  - Same for nonlinear
-  - Run: `./convergence_test_nonlinear`
+Navigate to the `CPP-Working-Project` directory and build:
 
-## Misc/advanced
-- `2D-Tracking/CrossSection_Tracking_Nonlinear.cpp`
-  - Slices the objective (e.g., CNIS/MSE) along one parameter while holding the other fixed for landscape diagnostics
-  - Run: `./CrossSection_Tracking_Nonlinear`
+```bash
+cd CPP-Working-Project
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)
+```
 
-- `2D-Tracking/run_nonlinear_bo_5x.sh`
-  - Convenience script to run multiple nonlinear BO trials; edit and execute as needed
-  - Run: `bash 2D-Tracking/run_nonlinear_bo_5x.sh`
+All executables will be generated in the `build/` directory.
 
-## Typical workflow
-1) Configure `scenario_linear.yaml` and/or `scenario_nonlinear.yaml` (including `dt_pieces` if varying time steps)
-2) Generate data:
-   - Linear: `./tracking_gen_data_linear`
-   - Nonlinear: `./tracking_gen_data_nonlinear`
-3) Explore parameters via grid search or BO:
-   - CNIS/CNEES grid: `./GridSearch_Tracking_linear` or `./GridSearch_Tracking_Nonlinear`
-   - MSE grid: `./GridSearch_Tracking_Linear_MSE` or `./GridSearch_Tracking_Nonlinear_MSE`
-   - BO: `./BO_Tracking_Test_linear` or `./BO_Tracking_Test_Nonlinear`
-4) Evaluate specific points (optional):
-   - Linear: `./Evaluate_MSE_Points_Linear`
-   - Nonlinear: `./Evaluate_MSE_Points_Nonlinear`
+---
 
-Notes:
-- Outputs are saved under `2D-Tracking/Saved_Data/`. The `2D-Tracking/plots/` folder is for images produced by separate plotting scripts (not covered here).
-- All tools honor per-step `dt` schedules derived from `dt_pieces` where applicable.
+## Dependencies
+
+### Required Libraries
+
+| Library | Version | Purpose | Installation |
+|---------|---------|---------|--------------|
+| **CMake** | ≥ 3.10 | Build system | System package manager |
+| **Eigen3** | ≥ 3.3 | Linear algebra | System package manager |
+| **HDF5** | Latest | Data I/O | System package manager |
+| **Boost** | ≥ 1.65 | BayesOpt dependency | System package manager |
+| **g2o** | Latest | Factor graph optimization | System package manager or build from source |
+| **OpenMP** | Latest | Parallelization (optional) | Usually included with compiler |
+
+### Included Libraries
+
+| Library | Location | Purpose |
+|---------|----------|---------|
+| **BayesOpt** | `bayesopt/` | Bayesian optimization engine |
+| **yaml-cpp** | Fetched by CMake | YAML configuration parsing |
+
+---
+
+## Project Structure
+
+```
+UCL-Dissertation/
+├── README.md                          # This file
+├── bayesopt/                          # BayesOpt library (included)
+├── g2o/                               # g2o placeholder (install system-wide instead)
+├── CPP-Working-Project/
+│   ├── CMakeLists.txt                # Main build configuration
+│   ├── scenario_linear.yaml          # Configuration for linear motion model
+│   ├── scenario_nonlinear.yaml       # Configuration for nonlinear motion model
+│   └── 2D-Tracking/                  # Main source code directory
+│       ├── fg_class_tracking.h/cpp   # Factor graph implementation
+│       ├── 2D_h5_loader.h            # HDF5 data loading utilities
+│       ├── tracking_gen_data_*.cpp   # Data generation programs
+│       ├── BO_Tracking_Test_*.cpp    # Bayesian optimization programs
+│       ├── GridSearch_Tracking_*.cpp # Grid search programs
+│       ├── Evaluate_MSE_Points_*.cpp # MSE evaluation programs
+│       ├── collect_nis_*.cpp         # NIS collection utilities
+│       ├── convergence_test_*.cpp    # Convergence testing
+│       ├── PlottingScripts/          # Python visualization scripts
+│       └── Saved_Data/               # Output directory (generated)
+└── build/                            # Build directory (generated)
+```
+
+---
+
+## Quick Start
+
+### 1. Generate Synthetic Data
+
+First, generate synthetic trajectory data with noisy measurements:
+
+```bash
+cd CPP-Working-Project/build
+
+# For linear motion model
+./tracking_gen_data_linear
+
+# For nonlinear motion model
+./tracking_gen_data_nonlinear
+```
+
+This reads configuration from `scenario_linear.yaml` or `scenario_nonlinear.yaml` and generates HDF5 files in `2D-Tracking/Saved_Data/`.
+
+### 2. Run Bayesian Optimization
+
+Optimize the filter parameters using Bayesian Optimization:
+
+```bash
+# For linear model
+./BO_Tracking_Test_linear
+
+# For nonlinear model
+./BO_Tracking_Test_Nonlinear
+```
+
+The optimization will search for optimal `Q` and `R` parameters that minimize the chosen consistency metric (CNIS or CNEES).
+
+### 3. Evaluate Results
+
+Evaluate the performance at specific parameter values:
+
+```bash
+# For linear model
+./Evaluate_MSE_Points_Linear
+
+# For nonlinear model
+./Evaluate_MSE_Points_Nonlinear
+```
+
+---
+
+## Usage
+
+### Pipeline Workflow
+
+The typical workflow for using this framework is:
+
+1. **Configure Scenario**: Edit `scenario_linear.yaml` or `scenario_nonlinear.yaml` to set:
+   - Trajectory parameters (length, initial conditions)
+   - Noise parameters (for data generation)
+   - Bayesian optimization settings
+   - Grid search parameters (if using grid search)
+
+2. **Generate Data**: Run the data generation executable to create synthetic trajectories and measurements
+
+3. **Parameter Optimization**: Choose one of the following approaches:
+   - **Bayesian Optimization** (recommended): Efficient search using BO
+   - **Grid Search**: Exhaustive search over a parameter grid
+   - **Point Evaluation**: Test specific parameter combinations
+
+4. **Analyze Results**: Use the plotting scripts in `2D-Tracking/PlottingScripts/` to visualize results
+
+### Configuration Files
+
+All executables read their configuration from YAML files. The key sections are:
+
+- **`Data_Generation`**: Controls synthetic data generation
+- **`bayesopt`**: Bayesian optimization parameters
+- **`grid_search`**: Grid search parameters
+- **`parameters`**: Parameter bounds for optimization
+- **`optimizer`**: Factor graph optimizer settings
+
+Example configuration snippet:
+
+```yaml
+Data_Generation:
+  trajectory_length: 100
+  dt: 1.0
+  q: 1.0                    # True process noise
+  meas_noise_var: 2.0       # True measurement noise
+  num_graphs: 10000         # Number of Monte Carlo runs
+
+bayesopt:
+  consistency_method: nis4  # CNIS metric variant
+  n_iterations: 500         # BO iterations
+  n_init_samples: 100       # Initial random samples
+
+parameters:
+  - name: q
+    lower_bound: 0.001
+    upper_bound: 2.0
+  - name: R
+    lower_bound: 0.001
+    upper_bound: 4.0
+```
+
+### Available Executables
+
+All executables should be run from the `CPP-Working-Project/build/` directory:
+
+#### Data Generation
+- `tracking_gen_data_linear` - Generate linear motion data
+- `tracking_gen_data_nonlinear` - Generate nonlinear motion data
+
+#### Bayesian Optimization
+- `BO_Tracking_Test_linear` - BO for linear model
+- `BO_Tracking_Test_Nonlinear` - BO for nonlinear model
+
+#### Grid Search (CNIS/CNEES)
+- `GridSearch_Tracking_linear` - Grid search using consistency metrics (linear)
+- `GridSearch_Tracking_Nonlinear` - Grid search using consistency metrics (nonlinear)
+
+#### Grid Search (MSE)
+- `GridSearch_Tracking_Linear_MSE` - Grid search using MSE metric (linear)
+- `GridSearch_Tracking_Nonlinear_MSE` - Grid search using MSE metric (nonlinear)
+
+#### Evaluation
+- `Evaluate_MSE_Points_Linear` - Evaluate MSE at specific points (linear)
+- `Evaluate_MSE_Points_Nonlinear` - Evaluate MSE at specific points (nonlinear)
+
+#### Analysis Tools
+- `collect_nis_linear` - Collect NIS statistics (linear)
+- `collect_nis_nonlinear` - Collect NIS statistics (nonlinear)
+- `convergence_test_linear` - Test optimization convergence (linear)
+- `convergence_test_nonlinear` - Test optimization convergence (nonlinear)
+- `CrossSection_Tracking_Nonlinear` - Parameter landscape analysis
+
+---
+
+## Configuration
+
+### Modifying Scenarios
+
+To customize the experiments, edit the YAML configuration files:
+
+- **`CPP-Working-Project/scenario_linear.yaml`** - Linear motion model settings
+- **`CPP-Working-Project/scenario_nonlinear.yaml`** - Nonlinear motion model settings
+
+### Key Configuration Parameters
+
+**Data Generation:**
+- `trajectory_length`: Number of time steps
+- `dt`: Time step size (or use `dt_pieces` for variable time steps)
+- `num_graphs`: Number of Monte Carlo runs
+- `q`: True process noise intensity
+- `meas_noise_var`: True measurement noise variance
+
+**Bayesian Optimization:**
+- `consistency_method`: Metric to optimize (`nis3`, `nis4`, etc.)
+- `n_iterations`: Number of BO iterations
+- `n_init_samples`: Initial random samples before BO starts
+- `surr_name`: Surrogate model type
+- `crit_name`: Acquisition function
+
+**Parameter Bounds:**
+- Define search space for `q` and `R` parameters
+
+---
+
+## Version Information
+
+### Tested Environment
+
+This project has been developed and tested with the following versions:
+
+- **CMake**: 3.10+
+- **C++ Standard**: C++17
+- **Eigen**: 3.3+
+- **HDF5**: 1.10+
+- **Boost**: 1.65+
+- **g2o**: Latest stable release
+- **yaml-cpp**: 0.8.0 (fetched automatically)
+
+**Note:** While the project may work with other versions, these are the versions used during development. If you encounter issues with different versions, please report them.
+
+### Platform Support
+
+- **macOS**: Expected to work (dependencies available)
+- **Linux (Ubuntu/Debian)**: Fully Tested
+- **Windows**: Not tested (may require modifications)
+
+---
+
+## Output Files
+
+All output files are saved to `CPP-Working-Project/2D-Tracking/Saved_Data/`:
+
+- **Data files**: `2D_noisy_states.h5`, `2D_noisy_measurements.h5`, etc.
+- **Grid search results**: `2D_gridsearch_trials_*.h5`
+- **MSE evaluations**: `2D_*_mse_point_evals.h5` and `.csv`
+- **NIS collections**: `2D_nis_*.h5`
+
+Visualization outputs can be found in `CPP-Working-Project/2D-Tracking/plots/` (generated by plotting scripts).
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**1. g2o not found during CMake configuration**
+
+Update the `g2o_DIR` path in `CPP-Working-Project/CMakeLists.txt` (line 22) to point to your g2o installation:
+
+```cmake
+set(g2o_DIR "/path/to/g2o/lib/cmake/g2o")
+```
+
+Or install g2o system-wide using your package manager.
+
+**2. HDF5 library errors**
+
+Ensure HDF5 is installed with C++ support:
+```bash
+# macOS
+brew install hdf5
+
+# Ubuntu/Debian
+sudo apt-get install libhdf5-dev
+```
+
+**3. OpenMP not found**
+
+OpenMP is optional but recommended for parallel execution. Install it:
+```bash
+# macOS
+brew install libomp
+
+# Ubuntu/Debian (usually included with GCC)
+sudo apt-get install libomp-dev
+```
+
+---
+
+## Contributing
+
+This is a research project. For questions or collaboration inquiries, please contact the author.
+
+---
+
+## License
+
+*License information to be added*
+
+---
+
+## Citation
+
+If you use this work in your research, please cite:
+
+```
+@misc{terry2025autotuning,
+  author = {Terry, Will},
+  title = {Automatic Tuning of Factor Graph-Based Estimation Using Bayesian Optimization},
+  year = {2025},
+  institution = {University College London},
+  note = {Publication pending}
+}
+```
+
+---
+
+## Acknowledgments
+
+This project uses the following open-source libraries:
+- [g2o](https://github.com/RainerKuemmerle/g2o) - General Graph Optimization
+- [BayesOpt](https://github.com/rmcantin/bayesopt) - Bayesian Optimization Library
+- [Eigen](https://eigen.tuxfamily.org/) - Linear Algebra Library
+- [HDF5](https://www.hdfgroup.org/solutions/hdf5/) - High-Performance Data Management
+- [yaml-cpp](https://github.com/jbeder/yaml-cpp) - YAML Parser
